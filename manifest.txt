@@ -33,3 +33,8 @@
 # scripts
 .local/bin/setwall
 .local/bin/cheatsheet
+
+# gtk
+.config/gtk-3.0/gtk.css
+.config/gtk-4.0/gtk.css
+.config/matugen/templates/gtk-colors.css

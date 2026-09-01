@@ -38,3 +38,12 @@ ansi_yellow  = { color = "#e0c000", blend = true }
 ansi_blue    = { color = "#0060ff", blend = true }
 ansi_magenta = { color = "#c000c0", blend = true }
 ansi_cyan    = { color = "#00c0c0", blend = true }
+
+[templates.gtk3]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-3.0/colors.css'
+post_hook = 'gsettings set org.gnome.desktop.interface gtk-theme ""; gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-{{mode}}'
+
+[templates.gtk4]
+input_path = '~/.config/matugen/templates/gtk-colors.css'
+output_path = '~/.config/gtk-4.0/colors.css'
