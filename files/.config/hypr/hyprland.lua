@@ -84,6 +84,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("discord")
     hl.exec_cmd("kitty --class layout-sysmon -e btop")
     hl.exec_cmd("kitty --class layout-term")
+    hl.exec_cmd("/home/holla/.local/bin/relayout")
 end)
 
 -------------------------------
@@ -228,6 +229,20 @@ hl.window_rule({
     border_size = 0,
 })
 
+-- everything defaults to workspace 2
+hl.window_rule({
+    name  = "default-away-from-1",
+    match = { class = ".*" },
+    workspace = "emptym silent",
+})
+
+-- the layout apps belong on 1
+hl.window_rule({
+    name  = "layout-apps-ws1",
+    match = { class = "^(Spotify|slack|discord|layout-sysmon|layout-term)$" },
+               workspace = "1 silent",
+})
+
 hl.window_rule({
     name  = "translucent-all",
     match = { class = ".*" },
@@ -240,58 +255,31 @@ hl.window_rule({
                opacity = "1 override 0.92 override 1.0 override",
 })
 
---------------------------------
----- FIXED WORKSPACE 1 LAYOUT --
---------------------------------
-
-local L = {
-    monitor   = "HDMI-A-1",   -- change to whichever display holds the layout
-    workspace = "1",
-    bar       = 46,           -- waybar footprint (height 34 + margin 6 + slack)
-    gap       = 8,
-    left      = 0.28,
-    mid       = 0.44,
-    right     = 0.28,
+-- Bind every workspace to a monitor.
+--
+-- The r[N-M] range selector is accepted by the parser but never actually
+-- matches: workspaces kept being created on whichever monitor happened to be
+-- focused. Verified by focusing HDMI-A-2 and switching to ws2 — it was created
+-- on HDMI-A-2 under the range rule, and on HDMI-A-1 once ws2 was named
+-- explicitly. So enumerate them.
+--
+--   HDMI-A-1  1 = dashboard slot, 2 = work, 3-5 spare
+--   DP-2      6 = dashboard slot, 7 = work, 8 spare
+--   HDMI-A-2  9, 10
+local WS_MONITOR = {
+    [1] = "HDMI-A-1", [2] = "HDMI-A-1", [3] = "HDMI-A-1",
+    [4] = "HDMI-A-1", [5] = "HDMI-A-1",
+    [6] = "DP-2",     [7] = "DP-2",     [8] = "DP-2",
+    [9] = "HDMI-A-2", [10] = "HDMI-A-2",
 }
-
-local function slot(name, class, x, y, w, h)
-hl.window_rule({
-    name  = name,
-    match = { class = class },
-
-    float     = true,
-    monitor   = L.monitor .. " silent",
-    workspace = L.workspace .. " silent",
-    move      = x .. " " .. y,
-    size      = w .. " " .. h,
-})
+for ws = 1, 10 do
+    hl.workspace_rule({ workspace = tostring(ws), monitor = WS_MONITOR[ws] })
 end
 
-local g     = L.gap
-local top   = L.bar
-local fullH = "monitor_h-" .. (L.bar + g)
-local halfH = "(monitor_h-" .. (L.bar + g * 2) .. ")*0.5"
-
-local xL = tostring(g)
-local xM = "monitor_w*" .. L.left
-local xR = "monitor_w*" .. (L.left + L.mid)
-
-local wL = "monitor_w*" .. L.left .. "-" .. (g * 2)
-local wM = "monitor_w*" .. L.mid .. "-" .. (g * 2)
-local wR = "monitor_w*" .. L.right .. "-" .. (g * 2)
-
-local yBot = "monitor_h*0.5+" .. math.floor(L.bar / 2)
-
--- left: Spotify, full height
-slot("layout-spotify", "^(Spotify)$", xL, top, wL, fullH)
-
--- middle: Slack over Discord
-slot("layout-slack",   "^(slack)$",   xM, top,  wM, halfH)
-slot("layout-discord", "^(discord)$", xM, yBot, wM, halfH)
-
--- right: btop over terminal (dedicated classes, see below)
-slot("layout-sysmon", "^(layout-sysmon)$", xR, top,  wR, halfH)
-slot("layout-term",   "^(layout-term)$",   xR, yBot, wR, halfH)
+-- which workspace each monitor shows when it first appears
+hl.workspace_rule({ workspace = "1", monitor = "HDMI-A-1", default = true })
+hl.workspace_rule({ workspace = "6", monitor = "DP-2",     default = true })
+hl.workspace_rule({ workspace = "9", monitor = "HDMI-A-2", default = true })
 
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
@@ -376,6 +364,7 @@ hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("kitty --class cheatsheet -e ~/.l
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/holla/.local/bin/relayout"))
+hl.bind(mainMod .. " + ALT + R",   hl.dsp.exec_cmd("/home/holla/.local/bin/relayout toggle"))
 
 -- Move windows with mainMod + SHIFT + arrow keys
 hl.bind(mainMod .. " + SHIFT + left",  hl.dsp.window.move({ direction = "left" }))
