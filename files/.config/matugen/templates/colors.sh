@@ -1,0 +1,17 @@
+PRIMARY=#{{colors.primary.default.hex_stripped}}
+SECONDARY=#{{colors.secondary.default.hex_stripped}}
+TERTIARY=#{{colors.tertiary.default.hex_stripped}}
+SURFACE=#{{colors.surface.default.hex_stripped}}
+SURFACE_CONTAINER_HIGH=#{{colors.surface_container_high.default.hex_stripped}}
+ON_SURFACE=#{{colors.on_surface.default.hex_stripped}}
+ERROR=#{{colors.error.default.hex_stripped}}
+ON_ERROR=#{{colors.on_error.default.hex_stripped}}
+ON_PRIMARY=#{{colors.on_primary.default.hex_stripped}}
+ON_SECONDARY=#{{colors.on_secondary.default.hex_stripped}}
+ON_TERTIARY=#{{colors.on_tertiary.default.hex_stripped}}
+ANSI_RED=#{{colors.ansi_red.default.hex_stripped}}
+ANSI_GREEN=#{{colors.ansi_green.default.hex_stripped}}
+ANSI_YELLOW=#{{colors.ansi_yellow.default.hex_stripped}}
+ANSI_BLUE=#{{colors.ansi_blue.default.hex_stripped}}
+ANSI_MAGENTA=#{{colors.ansi_magenta.default.hex_stripped}}
+ANSI_CYAN=#{{colors.ansi_cyan.default.hex_stripped}}

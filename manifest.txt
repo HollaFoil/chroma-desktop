@@ -18,14 +18,17 @@
 # kitty
 .config/kitty/kitty.conf
 
+# fish
+.config/fish/config.fish
+
 # matugen
 .config/matugen/config.toml
 .config/matugen/templates/colors.css
+.config/matugen/templates/colors.sh
 .config/matugen/templates/hypr-colors.lua
 .config/matugen/templates/kitty-colors.conf
 .config/matugen/templates/fuzzel-colors.ini
 .config/matugen/templates/hyprlock-colors.conf
-.config/matugen/templates/cheatsheet-colors.sh
 
 # scripts
 .local/bin/setwall
