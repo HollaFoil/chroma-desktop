@@ -30,3 +30,11 @@ output_path = '~/.config/fuzzel/colors.ini'
 [templates.colorsh]
 input_path = '~/.config/matugen/templates/colors.sh'
 output_path = '~/.config/matugen/colors.sh'
+
+[config.custom_colors]
+ansi_red     = { color = "#ff0000", blend = true }
+ansi_green   = { color = "#00c000", blend = true }
+ansi_yellow  = { color = "#e0c000", blend = true }
+ansi_blue    = { color = "#0060ff", blend = true }
+ansi_magenta = { color = "#c000c0", blend = true }
+ansi_cyan    = { color = "#00c0c0", blend = true }
