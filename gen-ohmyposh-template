@@ -1,0 +1,40 @@
+#!/bin/bash
+set -euo pipefail
+
+SRC="$HOME/.config/oh-my-posh/themes/agnoster.omp.json"
+OUT="$HOME/.config/oh-my-posh/current.omp.json"
+COLORS="$HOME/.config/matugen/colors.sh"
+
+if [[ ! -f "$COLORS" ]]; then
+    echo "no colours yet, run setwall first" >&2
+    exit 1
+fi
+
+source "$COLORS"
+
+jq \
+  --arg root      "$ERROR" \
+  --arg onRoot    "$ON_ERROR" \
+  --arg session   "$SURFACE_CONTAINER_HIGH" \
+  --arg onSession "$ON_SURFACE" \
+  --arg path      "$PRIMARY" \
+  --arg onPath    "$ON_PRIMARY" \
+  --arg git       "$TERTIARY" \
+  --arg onGit     "$ON_TERTIARY" \
+  --arg python    "$SECONDARY" \
+  --arg onPython  "$ON_SECONDARY" \
+  --arg status    "$ERROR" \
+  --arg onStatus  "$ON_ERROR" \
+  '
+  .blocks[].segments |= map(
+    if   .type == "root"    then .background = $root    | .foreground = $onRoot
+    elif .type == "session" then .background = $session | .foreground = $onSession
+    elif .type == "path"    then .background = $path    | .foreground = $onPath
+    elif .type == "git"     then .background = $git     | .foreground = $onGit
+    elif .type == "python"  then .background = $python  | .foreground = $onPython
+    elif .type == "status"  then .background = $status  | .foreground = $onStatus
+    else . end
+  )
+  ' "$SRC" > "$OUT"
+
+echo "wrote $OUT"

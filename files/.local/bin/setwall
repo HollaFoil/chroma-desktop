@@ -18,5 +18,6 @@ fi
 
 awww img "$WALL"
 matugen image "$WALL" -m dark --source-color-index 0
+~/dotfiles/gen-ohmyposh-template
 
 echo "setwall: applied $WALL"
