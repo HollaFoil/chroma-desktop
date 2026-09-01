@@ -1,0 +1,262 @@
+#!/bin/bash
+# Run with: ~/dotfiles/hyprtest    (takes ~3 min, moves windows around)
+# Automated checks for the relayout / window-management setup.
+set -uo pipefail
+export RELAYOUT_QUIET=1
+R="$HOME/.local/bin/relayout"
+PASS=0; FAIL=0; FAILED=()
+
+ok()   { PASS=$((PASS+1)); printf '    \033[32mok\033[0m   %s\n' "$1"; }
+bad()  { FAIL=$((FAIL+1)); FAILED+=("$1"); printf '    \033[31mFAIL\033[0m %s\n' "$1"; }
+chk()  { if [[ "$2" == "$3" ]]; then ok "$1"; else bad "$1 (got '$2', want '$3')"; fi; }
+head_() { printf '\n\033[1m== %s\033[0m\n' "$1"; }
+
+J()    { hyprctl clients -j; }
+cls()  { J | jq -r --arg c "$1" --arg f "$2" '[.[]|select(.class==$c)]|if length==0 then "" else .[0][$f]|tostring end'; }
+wsof() { cls "$1" workspace | jq -r . 2>/dev/null || true; }
+cws()  { J | jq -r --arg c "$1" '[.[]|select(.class==$c)]|if length==0 then "" else (.[0].workspace.id|tostring) end'; }
+cmon() { J | jq -r --arg c "$1" '[.[]|select(.class==$c)]|if length==0 then "" else (.[0].monitor|tostring) end'; }
+monws(){ hyprctl monitors -j | jq -r --arg m "$1" '.[]|select(.name==$m)|.activeWorkspace.id'; }
+monid(){ hyprctl monitors -j | jq -r --arg m "$1" '.[]|select(.name==$m)|.id'; }
+afocus(){ hyprctl activewindow -j | jq -r '.address // ""'; }
+
+spawn() { setsid kitty --class "$1" -e sleep 900 >/dev/null 2>&1 & sleep 2.2; }
+killc() {
+  local a
+  for a in $(J | jq -r --arg c "$1" '.[]|select(.class==$c)|.address'); do
+    hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$a\" }) ; dispatch hl.dsp.window.kill()" >/dev/null
+  done
+  sleep 1
+}
+
+# geometry invariants for the active dashboard
+geom_check() {
+  local mon="$1" ws="$2"; shift 2
+  local apps=("$@")
+  local MX MY MW MH
+  read -r MX MY MW MH < <(hyprctl monitors -j | jq -r --arg m "$mon" '.[]|select(.name==$m)|"\(.x) \(.y) \(.width) \(.height)"')
+  local UX=$MX UY=$((MY+46)) UW=$MW UH=$((MH-46))
+  local j data="" a
+  for a in "${apps[@]}"; do
+    local w; w=$(cws "$a")
+    if [[ "$w" != "$ws" ]]; then bad "$a on ws$ws"; continue; fi
+    ok "$a on ws$ws"
+    [[ "$(cls "$a" floating)" == "true" ]] && ok "$a floating" || bad "$a floating"
+    local x y ww hh
+    x=$(J|jq -r --arg c "$a" '[.[]|select(.class==$c)][0].at[0]')
+    y=$(J|jq -r --arg c "$a" '[.[]|select(.class==$c)][0].at[1]')
+    ww=$(J|jq -r --arg c "$a" '[.[]|select(.class==$c)][0].size[0]')
+    hh=$(J|jq -r --arg c "$a" '[.[]|select(.class==$c)][0].size[1]')
+    if (( x >= UX-2 && y >= UY-2 && x+ww <= UX+UW+2 && y+hh <= UY+UH+2 )); then
+      ok "$a inside $mon usable area"
+    else
+      bad "$a inside $mon usable area (x=$x y=$y ${ww}x${hh}; usable ${UX},${UY} ${UW}x${UH})"
+    fi
+    data+="$a $x $y $ww $hh"$'\n'
+  done
+  # pairwise overlap
+  local overlaps
+  overlaps=$(printf '%s' "$data" | awk '
+    {n++; c[n]=$1; x[n]=$2; y[n]=$3; w[n]=$4; h[n]=$5}
+    END{ for(i=1;i<=n;i++) for(j=i+1;j<=n;j++){
+        ox = (x[i]+w[i] < x[j]+w[j] ? x[i]+w[i] : x[j]+w[j]) - (x[i] > x[j] ? x[i] : x[j]);
+        oy = (y[i]+h[i] < y[j]+h[j] ? y[i]+h[i] : y[j]+h[j]) - (y[i] > y[j] ? y[i] : y[j]);
+        if (ox > 2 && oy > 2) printf "%s/%s(%dx%d) ", c[i], c[j], ox, oy }}')
+  [[ -z "$overlaps" ]] && ok "no overlaps on $mon" || bad "no overlaps on $mon (got: $overlaps)"
+  # coverage
+  local cov
+  cov=$(printf '%s' "$data" | awk -v tot=$((UW*UH)) '{s+=$4*$5} END{printf "%d", s*100/tot}')
+  if (( cov >= 88 )); then ok "coverage ${cov}% of $mon"; else bad "coverage ${cov}% of $mon (want >=88)"; fi
+}
+
+snapshot() { J | jq -Sc '[.[]|select(.class|test("^(Spotify|slack|discord|layout-sysmon|layout-term)$"))|{class,ws:.workspace.id,at,size,floating}]|sort_by(.class,.at[0],.at[1])'; }
+# every window that is not part of the dashboard
+usersnap() { J | jq -Sc '[.[]|select(.class|test("^(Spotify|slack|discord|layout-sysmon|layout-term|zztest|zzcyc)$")|not)|{class,ws:.workspace.id,at,size}]|sort_by(.class,.at[0])'; }
+specials() { hyprctl monitors -j | jq -r '[.[]|select(.specialWorkspace.name != "")|.name]|join(",")'; }
+
+# ============================================================
+head_ "1. dashboard on main"
+$R main >/dev/null 2>&1; sleep 1
+geom_check HDMI-A-1 1 Spotify slack discord layout-sysmon layout-term
+chk "HDMI-A-1 shows dashboard ws1" "$(monws HDMI-A-1)" "1"
+
+head_ "2. dashboard on alt (Spotify excluded)"
+$R alt >/dev/null 2>&1; sleep 1
+geom_check DP-2 6 slack discord layout-sysmon layout-term
+chk "DP-2 shows dashboard ws6" "$(monws DP-2)" "6"
+chk "Spotify parked in scratchpad" "$(cws Spotify)" "-98"
+chk "HDMI-A-1 left vacated ws1" "$([[ "$(monws HDMI-A-1)" == "1" ]] && echo bad || echo good)" "good"
+
+head_ "3. toggle is idempotent (alt -> main -> alt)"
+A1=$(snapshot); $R toggle >/dev/null 2>&1; sleep 1; $R toggle >/dev/null 2>&1; sleep 1; A2=$(snapshot)
+chk "state identical after round-trip" "$([[ "$A1" == "$A2" ]] && echo same || echo differs)" "same"
+B1=$(snapshot); $R >/dev/null 2>&1; sleep 1; B2=$(snapshot)
+chk "re-apply is a no-op" "$([[ "$B1" == "$B2" ]] && echo same || echo differs)" "same"
+
+head_ "4. perturb the dashboard, then retile"
+SL=$(J|jq -r '.[]|select(.class=="slack")|.address')
+DC=$(J|jq -r '.[]|select(.class=="discord")|.address')
+TM=$(J|jq -r '.[]|select(.class=="layout-term")|.address')
+SM=$(J|jq -r '.[]|select(.class=="layout-sysmon")|.address')
+hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$SL\" }) ; dispatch hl.dsp.window.move({ x = 300, y = 700 }) ; dispatch hl.dsp.window.resize({ x = 500, y = 400 })" >/dev/null
+hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$DC\" }) ; dispatch hl.dsp.window.fullscreen({ action = \"set\", mode = \"fullscreen\" })" >/dev/null
+hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$TM\" }) ; dispatch hl.dsp.window.pin({ action = \"enable\" })" >/dev/null
+hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$SM\" }) ; dispatch hl.dsp.window.float({ action = \"disable\" }) ; dispatch hl.dsp.window.move({ workspace = 9 })" >/dev/null
+sleep 1
+echo "    (perturbed: moved+resized slack, fullscreened discord, pinned term, tiled sysmon onto ws9)"
+$R >/dev/null 2>&1; sleep 1.5
+T=$(cat ~/.cache/relayout-target)
+if [[ "$T" == "main" ]]; then geom_check HDMI-A-1 1 Spotify slack discord layout-sysmon layout-term
+else geom_check DP-2 6 slack discord layout-sysmon layout-term; fi
+chk "discord no longer fullscreen" "$(cls discord fullscreen)" "0"
+chk "layout-term no longer pinned"  "$(cls layout-term pinned)" "false"
+
+head_ "5. a random window must not disturb the dashboard"
+$R alt >/dev/null 2>&1; sleep 1
+BEFORE=$(snapshot)
+hyprctl dispatch 'hl.dsp.focus({ workspace = 6 })' >/dev/null; sleep 0.4   # focus the dashboard
+killc zztest; spawn zztest
+W=$(cws zztest)
+chk "opened on dashboard ws does NOT stay there" "$([[ "$W" == "6" ]] && echo squatted || echo bounced)" "bounced"
+chk "bounced to the work ws (7)" "$W" "7"
+DASH_NOW=$(J | jq -Sc '[.[]|select(.class|test("^(slack|discord|layout-sysmon|layout-term)$"))|{class,ws:.workspace.id,at,size}]|sort_by(.class)')
+DASH_WAS=$(printf '%s' "$BEFORE" | jq -Sc '[.[]|select(.class|test("^(slack|discord|layout-sysmon|layout-term)$"))|{class,ws,at,size}]|sort_by(.class)')
+chk "dashboard geometry untouched" "$([[ "$DASH_NOW" == "$DASH_WAS" ]] && echo same || echo moved)" "same"
+killc zztest
+
+head_ "6. ordinary windows share a workspace and can be cycled"
+hyprctl dispatch 'hl.dsp.focus({ workspace = 2 })' >/dev/null; sleep 0.4
+spawn zztest; spawn zztest; spawn zztest
+N=$(J|jq -r '[.[]|select(.class=="zztest")]|length')
+chk "3 windows opened" "$N" "3"
+U=$(J|jq -r '[.[]|select(.class=="zztest")|.workspace.id]|unique|length')
+chk "all on ONE workspace (not scattered)" "$U" "1"
+TILED=$(J|jq -r '[.[]|select(.class=="zztest" and .floating==false)]|length')
+chk "all tiled" "$TILED" "3"
+# SUPER+TAB / ALT+TAB cycling must visit every window on the workspace
+F0=$(afocus); hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F1=$(afocus)
+hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F2=$(afocus)
+hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F3=$(afocus)
+SEEN=$(printf '%s\n%s\n%s\n' "$F0" "$F1" "$F2" | sort -u | wc -l)
+chk "cycling visits 3 distinct windows" "$SEEN" "3"
+chk "cycling wraps back to the start"   "$F3" "$F0"
+killc zztest
+
+head_ "7. a restarted dashboard app lands in the right slot"
+$R alt >/dev/null 2>&1; sleep 1
+killc layout-term
+hyprctl dispatch 'hl.dsp.focus({ workspace = 2 })' >/dev/null; sleep 0.4   # relaunch from the OTHER monitor
+setsid kitty --class layout-term >/dev/null 2>&1 & sleep 2.5
+chk "layout-term rejoined dashboard ws6 (not hardcoded ws1)" "$(cws layout-term)" "6"
+$R >/dev/null 2>&1; sleep 1
+geom_check DP-2 6 slack discord layout-sysmon layout-term
+
+head_ "8. a workspace stranded on the wrong monitor is repaired"
+hyprctl dispatch 'hl.dsp.focus({ monitor = "HDMI-A-2" })' >/dev/null; sleep 0.3
+hyprctl dispatch 'hl.dsp.focus({ workspace = 3 })' >/dev/null; sleep 0.3
+spawn zztest
+hyprctl dispatch 'hl.dsp.workspace.move({ workspace = "3", monitor = "HDMI-A-2" })' >/dev/null; sleep 0.5
+chk "ws3 stranded on HDMI-A-2" "$(hyprctl workspaces -j|jq -r '.[]|select(.id==3)|.monitor')" "HDMI-A-2"
+$R >/dev/null 2>&1; sleep 1
+chk "relayout re-homed ws3 to HDMI-A-1" "$(hyprctl workspaces -j|jq -r '.[]|select(.id==3)|.monitor')" "HDMI-A-1"
+killc zztest
+
+head_ "9. the scratchpad is never left showing"
+$R main >/dev/null 2>&1; sleep 1
+chk "no special workspace visible after main" "$(specials)" ""
+$R alt  >/dev/null 2>&1; sleep 1
+chk "no special workspace visible after alt (Spotify stashed)" "$(specials)" ""
+hyprctl dispatch 'hl.dsp.focus({ workspace = 6 })' >/dev/null; sleep 0.4
+killc zztest; spawn zztest
+chk "window opened after a stash does not land in the scratchpad" "$(cws zztest)" "7"
+killc zztest
+
+head_ "10. windows that are not part of the dashboard are left alone"
+$R alt >/dev/null 2>&1; sleep 1
+U1=$(usersnap); $R toggle >/dev/null 2>&1; sleep 1; $R toggle >/dev/null 2>&1; sleep 1; U2=$(usersnap)
+if [[ "$U1" == "$U2" ]]; then ok "user windows unmoved across a toggle round-trip"
+else bad "user windows unmoved across a toggle round-trip"; diff <(echo "$U1"|jq -S '.[]') <(echo "$U2"|jq -S '.[]')|head -20; fi
+
+head_ "11. focus is left where it was"
+$R alt >/dev/null 2>&1; sleep 1
+hyprctl dispatch 'hl.dsp.focus({ workspace = 2 })' >/dev/null; sleep 0.3
+spawn zztest
+KEEP=$(afocus)
+$R >/dev/null 2>&1; sleep 1.5
+chk "focus preserved across relayout" "$(afocus)" "$KEEP"
+chk "dashboard still visible on DP-2" "$(monws DP-2)" "6"
+killc zztest
+
+head_ "12. deliberate overlays still open on the dashboard"
+$R main >/dev/null 2>&1; sleep 1
+hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })' >/dev/null; sleep 0.4
+killc cheatsheet; setsid kitty --class cheatsheet -e sleep 60 >/dev/null 2>&1 & sleep 2.4
+chk "cheatsheet (SUPER+/) opens on the dashboard ws" "$(cws cheatsheet)" "1"
+chk "cheatsheet is floating"                          "$(cls cheatsheet floating)" "true"
+chk "HDMI-A-1 still showing the dashboard"            "$(monws HDMI-A-1)" "1"
+killc cheatsheet
+
+head_ "13. mashing the keybind does not half-apply the layout"
+$R alt >/dev/null 2>&1; sleep 1
+( $R toggle >/dev/null 2>&1 & $R toggle >/dev/null 2>&1 & $R toggle >/dev/null 2>&1 & wait ) 2>/dev/null
+sleep 1.5
+T=$(cat ~/.cache/relayout-target)
+if [[ "$T" == "main" ]]; then geom_check HDMI-A-1 1 Spotify slack discord layout-sysmon layout-term
+else geom_check DP-2 6 slack discord layout-sysmon layout-term; fi
+
+head_ "14. scenario: browser on the left, coding on main, dashboard on main"
+$R main >/dev/null 2>&1; sleep 1
+killc zzbrowser; killc zzcode
+hyprctl dispatch 'hl.dsp.focus({ workspace = 7 })' >/dev/null; sleep 0.4      # left monitor
+setsid kitty --class zzbrowser -e sleep 900 >/dev/null 2>&1 & sleep 2.3
+chk "browser stays on the left monitor (ws7/DP-2)" "$(cws zzbrowser)" "7"
+chk "browser is on DP-2"                           "$(cmon zzbrowser)" "$(monid DP-2)"
+hyprctl dispatch 'hl.dsp.focus({ workspace = 2 })' >/dev/null; sleep 0.4      # main work ws
+for i in 1 2 3; do setsid kitty --class zzcode -e sleep 900 >/dev/null 2>&1 & sleep 2.2; done
+chk "3 coding windows all on ws2"  "$(J|jq -r '[.[]|select(.class=="zzcode")|.workspace.id]|unique|map(tostring)|join(",")')" "2"
+chk "all tiled on main"            "$(J|jq -r '[.[]|select(.class=="zzcode" and .floating==false)]|length')" "3"
+chk "all on HDMI-A-1"              "$(J|jq -r '[.[]|select(.class=="zzcode")|.monitor]|unique|length')" "1"
+F0=$(afocus); hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F1=$(afocus)
+hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F2=$(afocus)
+chk "tab cycles the coding windows" "$(printf '%s\n%s\n%s\n' "$F0" "$F1" "$F2"|sort -u|wc -l)" "3"
+chk "dashboard untouched on ws1"    "$(cws slack)" "1"
+chk "browser still on the left"     "$(cws zzbrowser)" "7"
+hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })' >/dev/null; sleep 0.4
+chk "SUPER+1 brings the dashboard back on HDMI-A-1" "$(monws HDMI-A-1)" "1"
+chk "left monitor unaffected by that"               "$(monws DP-2)" "7"
+killc zzcode
+
+head_ "15. scenario: left monitor free, dashboard moves there, main is all mine"
+$R alt >/dev/null 2>&1; sleep 1
+chk "dashboard on DP-2 ws6" "$(cws slack)" "6"
+chk "DP-2 shows it"         "$(monws DP-2)" "6"
+hyprctl dispatch 'hl.dsp.focus({ workspace = 1 })' >/dev/null; sleep 0.4
+killc zzcode
+for i in 1 2 3; do setsid kitty --class zzcode -e sleep 900 >/dev/null 2>&1 & sleep 2.2; done
+chk "main ws1 now free for ordinary windows" "$(J|jq -r '[.[]|select(.class=="zzcode")|.workspace.id]|unique|map(tostring)|join(",")')" "1"
+chk "all tiled"                              "$(J|jq -r '[.[]|select(.class=="zzcode" and .floating==false)]|length')" "3"
+F0=$(afocus); hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F1=$(afocus)
+hyprctl dispatch 'hl.dsp.window.cycle_next()' >/dev/null; sleep 0.35; F2=$(afocus)
+chk "tab cycles them" "$(printf '%s\n%s\n%s\n' "$F0" "$F1" "$F2"|sort -u|wc -l)" "3"
+geom_check DP-2 6 slack discord layout-sysmon layout-term
+killc zzcode; killc zzbrowser
+
+head_ "16. the run lock is never leaked into a launched app"
+lockholders() {
+  local pid n=0
+  for pid in $(ls /proc | grep -E '^[0-9]+$'); do
+    ls -l /proc/$pid/fd 2>/dev/null | grep -q 'relayout\.lock' && n=$((n+1))
+  done
+  echo $n
+}
+$R toggle >/dev/null 2>&1; sleep 1
+chk "nothing holds relayout.lock after a run" "$(lockholders)" "0"
+ERR=$($R toggle 2>&1 >/dev/null); sleep 1
+chk "the keybind is not locked out"           "$(grep -c 'already running' <<<"$ERR")" "0"
+ERR=$($R 2>&1 >/dev/null); sleep 1
+chk "and still not on the next press"         "$(grep -c 'already running' <<<"$ERR")" "0"
+
+# ============================================================
+printf '\n\033[1m%s\033[0m\n' "----------------------------------------"
+printf 'passed: %d   failed: %d\n' "$PASS" "$FAIL"
+if ((FAIL)); then printf '\nfailures:\n'; printf '  - %s\n' "${FAILED[@]}"; exit 1; fi
