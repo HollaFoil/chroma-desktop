@@ -9,6 +9,8 @@ SUPER + V | Toggle floating
 SUPER + P | Pseudo-tile
 SUPER + J | Toggle split direction
 SUPER + arrows | Move focus
+SUPER + TAB | Cycle windows on this workspace
+ALT + TAB | Cycle windows on this workspace
 SUPER + LMB drag | Move window
 SUPER + RMB drag | Resize window
 SUPER + SHIFT + arrows | Move window
@@ -17,14 +19,15 @@ SUPER + SHIFT + arrows | Move window
 SUPER + 1-0 | Switch to workspace
 SUPER + SHIFT + 1-0 | Move window to workspace
 SUPER + scroll | Cycle workspaces
-SUPER + S | Toggle scratchpad
+SUPER + S | Toggle scratchpad (Spotify parks here in alt layout)
 SUPER + ALT + S | Send window to scratchpad
 
 # Utilities
 SUPER + SHIFT + S | Screenshot region to clipboard
 SUPER + SHIFT + N | Toggle notification panel
 SUPER + SHIFT + C | Clipboard history
-SUPER + SHIFT + R | Reset workspace 1 layout
+SUPER + SHIFT + R | Re-apply the dashboard layout
+SUPER + ALT + R | Move dashboard to the other monitor
 SUPER + slash | This cheatsheet
 
 # Session
