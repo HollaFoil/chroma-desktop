@@ -1,0 +1,26 @@
+#!/bin/bash
+set -uo pipefail
+
+REPO="$HOME/dotfiles"
+MANIFEST="$REPO/manifest.txt"
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+
+    SRC="$HOME/$line"
+    DST="$REPO/files/$line"
+
+    if [[ -L "$SRC" ]]; then
+        echo "skip (already linked): $line"
+        continue
+    fi
+
+    if [[ ! -e "$SRC" ]]; then
+        echo "MISSING: $line"
+        continue
+    fi
+
+    mkdir -p "$(dirname "$DST")"
+    cp -a "$SRC" "$DST"
+    echo "adopted: $line"
+done < "$MANIFEST"

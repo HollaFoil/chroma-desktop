@@ -1,0 +1,38 @@
+#!/bin/bash
+set -uo pipefail
+
+DATA="$HOME/.config/hypr/keybinds.txt"
+COLORS="$HOME/.config/hypr/cheatsheet-colors.sh"
+
+# fallbacks if matugen hasn't run
+PRIMARY=8ad0ee
+ON_SURFACE=dde4e1
+OUTLINE=899390
+[[ -f "$COLORS" ]] && source "$COLORS"
+
+fg() {
+    local h="$1"
+    printf '\033[38;2;%d;%d;%dm' \
+        "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
+}
+RESET=$'\033[0m'
+BOLD=$'\033[1m'
+
+clear
+printf '\n'
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    if [[ -z "$line" ]]; then
+        printf '\n'
+    elif [[ "$line" == \#* ]]; then
+        printf '  %s%s%s%s\n\n' "$BOLD" "$(fg "$PRIMARY")" "${line#\# }" "$RESET"
+    else
+        IFS='|' read -r key desc <<< "$line"
+        printf '    %s%-24s%s%s%s%s\n' \
+            "$(fg "$ON_SURFACE")" "$(echo $key)" "$RESET" \
+            "$(fg "$OUTLINE")" "$(echo $desc)" "$RESET"
+    fi
+done < "$DATA"
+
+printf '\n  %sPress any key to close%s\n' "$(fg "$OUTLINE")" "$RESET"
+read -rsn1

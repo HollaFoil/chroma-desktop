@@ -1,0 +1,32 @@
+# Hyprland
+.config/hypr/hyprland.lua
+.config/hypr/monitors.lua
+.config/hypr/keybinds.txt
+.config/hypr/hypridle.conf
+.config/hypr/hyprlock.conf
+
+# Waybar
+.config/waybar/config.jsonc
+.config/waybar/style.css
+
+# swaync
+.config/swaync/style.css
+
+# fuzzel
+.config/fuzzel/fuzzel.ini
+
+# kitty
+.config/kitty/kitty.conf
+
+# matugen
+.config/matugen/config.toml
+.config/matugen/templates/colors.css
+.config/matugen/templates/hypr-colors.lua
+.config/matugen/templates/kitty-colors.conf
+.config/matugen/templates/fuzzel-colors.ini
+.config/matugen/templates/hyprlock-colors.conf
+.config/matugen/templates/cheatsheet-colors.sh
+
+# scripts
+.local/bin/setwall
+.local/bin/cheatsheet

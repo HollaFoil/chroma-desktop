@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+WALL="${1:-}"
+
+if [[ -z "$WALL" ]]; then
+    echo "usage: setwall <path-to-image>" >&2
+    exit 1
+fi
+
+# make the path absolute so awww gets what it expects
+WALL="$(realpath "$WALL")"
+
+if [[ ! -f "$WALL" ]]; then
+    echo "setwall: no such file: $WALL" >&2
+    exit 1
+fi
+
+awww img "$WALL"
+matugen image "$WALL" -m dark --source-color-index 0
+
+echo "setwall: applied $WALL"

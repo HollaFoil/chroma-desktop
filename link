@@ -1,0 +1,39 @@
+#!/bin/bash
+set -uo pipefail
+
+REPO="$HOME/dotfiles"
+MANIFEST="$REPO/manifest.txt"
+BACKUP="$REPO/backup-$(date +%Y%m%d-%H%M%S)"
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ -z "$line" || "$line" == \#* ]] && continue
+
+    SRC="$HOME/$line"
+    DST="$REPO/files/$line"
+
+    if [[ ! -e "$DST" ]]; then
+        echo "not in repo, run ./adopt first: $line"
+        continue
+    fi
+
+    # already correctly linked?
+    if [[ -L "$SRC" && "$(readlink -f "$SRC")" == "$(readlink -f "$DST")" ]]; then
+        echo "ok: $line"
+        continue
+    fi
+
+    # back up anything real that's in the way
+    if [[ -e "$SRC" && ! -L "$SRC" ]]; then
+        mkdir -p "$BACKUP/$(dirname "$line")"
+        mv "$SRC" "$BACKUP/$line"
+        echo "backed up: $line"
+    elif [[ -L "$SRC" ]]; then
+        rm "$SRC"
+    fi
+
+    mkdir -p "$(dirname "$SRC")"
+    ln -s "$DST" "$SRC"
+    echo "linked: $line"
+done < "$MANIFEST"
+
+[[ -d "$BACKUP" ]] && echo "" && echo "originals backed up to: $BACKUP"

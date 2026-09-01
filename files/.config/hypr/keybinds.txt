@@ -1,0 +1,31 @@
+# Apps
+SUPER + Q | Terminal (kitty)
+SUPER + E | File manager (dolphin)
+SUPER + R | App launcher
+
+# Windows
+SUPER + C | Close window
+SUPER + V | Toggle floating
+SUPER + P | Pseudo-tile
+SUPER + J | Toggle split direction
+SUPER + arrows | Move focus
+SUPER + LMB drag | Move window
+SUPER + RMB drag | Resize window
+SUPER + SHIFT + arrows | Move window
+
+# Workspaces
+SUPER + 1-0 | Switch to workspace
+SUPER + SHIFT + 1-0 | Move window to workspace
+SUPER + scroll | Cycle workspaces
+SUPER + S | Toggle scratchpad
+SUPER + ALT + S | Send window to scratchpad
+
+# Utilities
+SUPER + SHIFT + S | Screenshot region to clipboard
+SUPER + SHIFT + N | Toggle notification panel
+SUPER + SHIFT + C | Clipboard history
+SUPER + slash | This cheatsheet
+
+# Session
+SUPER + M | Exit Hyprland
+SUPER + L | Lock screen

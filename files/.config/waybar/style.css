@@ -1,0 +1,71 @@
+@import "colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+}
+
+window#waybar {
+    background: transparent;
+    color: @on_surface;
+}
+
+/* the pills */
+#workspaces,
+#submap,
+#window,
+#clock,
+#cpu,
+#memory,
+#network,
+#pulseaudio,
+#tray {
+background-color: alpha(@surface_container, 0.85);
+color: @on_surface;
+border-radius: 12px;
+padding: 2px 12px;
+margin: 4px 3px;
+}
+
+#workspaces { padding: 2px 4px; }
+
+#workspaces button {
+padding: 0 8px;
+margin: 2px;
+border-radius: 8px;
+background: transparent;
+color: @on_surface_variant;
+}
+
+#workspaces button:hover {
+background-color: alpha(@surface_container_high, 0.9);
+color: @on_surface;
+}
+
+#workspaces button.active {
+background-color: @primary;
+color: @on_primary;
+}
+
+#workspaces button.urgent {
+background-color: @error;
+color: @on_error;
+}
+
+#window {
+font-style: italic;
+color: @on_surface_variant;
+}
+window#waybar.empty #window { background: transparent; }
+
+#clock      { color: @primary; }
+#pulseaudio { color: @secondary; }
+#network    { color: @tertiary; }
+
+#tray menu {
+background-color: @surface_container;
+color: @on_surface;
+}
