@@ -38,3 +38,7 @@
 .config/gtk-3.0/gtk.css
 .config/gtk-4.0/gtk.css
 .config/matugen/templates/gtk-colors.css
+
+# kde / qt
+.config/kdeglobals
+.config/matugen/templates/Matugen.colors
