@@ -14,10 +14,6 @@ input_path = '~/.config/matugen/templates/hypr-colors.lua'
 output_path = '~/.config/hypr/colors.lua'
 post_hook = 'hyprctl reload'
 
-[templates.cheatsheet]
-input_path = '~/.config/matugen/templates/cheatsheet-colors.sh'
-output_path = '~/.config/hypr/cheatsheet-colors.sh'
-
 [templates.kitty]
 input_path = '~/.config/matugen/templates/kitty-colors.conf'
 output_path = '~/.config/kitty/colors.conf'

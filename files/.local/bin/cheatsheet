@@ -2,7 +2,7 @@
 set -uo pipefail
 
 DATA="$HOME/.config/hypr/keybinds.txt"
-COLORS="$HOME/.config/hypr/cheatsheet-colors.sh"
+COLORS="$HOME/.config/matugen/colors.sh"
 
 # fallbacks if matugen hasn't run
 PRIMARY=8ad0ee
@@ -11,7 +11,7 @@ OUTLINE=899390
 [[ -f "$COLORS" ]] && source "$COLORS"
 
 fg() {
-    local h="$1"
+    local h="${1#\#}"
     printf '\033[38;2;%d;%d;%dm' \
         "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
 }
