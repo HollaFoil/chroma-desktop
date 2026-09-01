@@ -24,6 +24,7 @@ SUPER + ALT + S | Send window to scratchpad
 SUPER + SHIFT + S | Screenshot region to clipboard
 SUPER + SHIFT + N | Toggle notification panel
 SUPER + SHIFT + C | Clipboard history
+SUPER + SHIFT + R | Reset workspace 1 layout
 SUPER + slash | This cheatsheet
 
 # Session

@@ -1,43 +1,90 @@
 {
   "layer": "top",
   "position": "top",
-  "height": 25,
-  "spacing": 4,
-
+  "height": 34,
   "margin-top": 6,
   "margin-left": 10,
   "margin-right": 10,
-  "margin-bottom": 0,
   "spacing": 0,
 
-  "modules-left": ["hyprland/workspaces", "hyprland/submap"],
-  "modules-center": ["hyprland/window"],
-  "modules-right": ["pulseaudio", "cpu", "memory", "network", "clock", "tray"],
+  "modules-left": ["group/stats", "hyprland/workspaces", "hyprland/submap"],
+  "modules-center": ["clock"],
+  "modules-right": ["tray", "group/right"],
+
+  "group/right": {
+    "orientation": "horizontal",
+    "modules": ["mpris", "pulseaudio", "custom/power"]
+  },
+
+  "custom/power": {
+    "format": "󰐥",
+    "on-click": "~/.local/bin/powermenu",
+    "tooltip": false
+  },
+
+  "group/stats": {
+    "orientation": "horizontal",
+    "modules": ["cpu", "memory", "custom/gpu", "temperature"]
+  },
+
+  "cpu": {
+    "format": "CPU {usage}%",
+    "interval": 3
+  },
+
+  "memory": {
+    "format": "RAM {percentage}%",
+    "interval": 5
+  },
+
+  "custom/gpu": {
+    "exec": "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
+    "format": "GPU {}%",
+    "interval": 3,
+    "tooltip": false
+  },
+
+  "temperature": {
+    "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input",
+    "format": "TMP {temperatureC}°C",
+    "interval": 5,
+    "critical-threshold": 80
+  },
 
   "hyprland/workspaces": {
     "format": "{name}"
   },
-  "hyprland/window": {
-    "separate-outputs": true,
-    "max-length": 60
-  },
+
   "hyprland/submap": {
     "format": "{}"
   },
+
   "clock": {
-    "format": "{:%H:%M}",
-    "tooltip-format": "{:%A, %d %B %Y}"
+    "format": "{:%a %d %b    %H:%M}",
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": {
+      "mode": "month",
+      "on-scroll": 1
+    }
   },
-  "cpu": { "format": "CPU {usage}%" },
-  "memory": { "format": "RAM {percentage}%" },
-  "network": {
-    "format-ethernet": "eth",
-    "format-wifi": "{essid} {signalStrength}%",
-    "format-disconnected": "offline"
+
+  "mpris": {
+    "format": "{player_icon} {title}",
+    "format-paused": "{status_icon} {title}",
+    "max-length": 40,
+    "player-icons": { "default": "󰐊" },
+    "status-icons": { "paused": "󰏤" }
   },
+
   "pulseaudio": {
-    "format": "vol {volume}%",
-    "format-muted": "muted"
+    "format": "{icon} {volume}%",
+    "format-muted": "󰝟",
+    "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
+    "on-click": "pavucontrol",
+    "scroll-step": 5
   },
-  "tray": { "spacing": 10 }
+
+  "tray": {
+    "spacing": 8
+  }
 }

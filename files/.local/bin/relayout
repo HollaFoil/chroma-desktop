@@ -1,0 +1,82 @@
+#!/bin/bash
+set -uo pipefail
+
+# ---- config -------------------------------------------------------
+MON="HDMI-A-1"
+WS=1
+BAR=46          # waybar footprint
+GAP=8
+LEFT=0.28
+MID=0.44
+RIGHT=0.28
+LAUNCH=1        # set 0 to only move existing windows
+# -------------------------------------------------------------------
+
+# monitor geometry
+read -r MX MY MW MH < <(
+  hyprctl monitors -j | jq -r --arg m "$MON" \
+    '.[] | select(.name==$m) | "\(.x) \(.y) \(.width) \(.height)"'
+)
+
+if [[ -z "${MW:-}" ]]; then
+    echo "monitor $MON not found" >&2
+    exit 1
+fi
+
+# usable area
+AY=$((MY + BAR))
+AH=$((MH - BAR - GAP))
+HALF=$(( (AH - GAP) / 2 ))
+
+# column x positions and widths
+CW() { printf '%.0f' "$(echo "$MW * $1" | bc -l)"; }
+WL=$(( $(CW $LEFT)  - GAP ))
+WM=$(( $(CW $MID)   - GAP ))
+WR=$(( $(CW $RIGHT) - GAP ))
+
+XL=$(( MX + GAP ))
+XM=$(( MX + $(CW $LEFT) + GAP ))
+XR=$(( MX + $(CW $LEFT) + $(CW $MID) + GAP ))
+
+YT=$AY
+YB=$(( AY + HALF + GAP ))
+
+place() {
+    local class="$1" x="$2" y="$3" w="$4" h="$5"
+    local addr
+    addr=$(hyprctl clients -j | jq -r --arg c "$class" \
+        '.[] | select(.class==$c) | .address' | head -1)
+
+    if [[ -z "$addr" || "$addr" == "null" ]]; then
+        echo "  not running: $class"
+        return
+    fi
+
+    hyprctl dispatch "hl.dsp.focus({ window = \"address:$addr\" })" >/dev/null
+    hyprctl dispatch "hl.dsp.window.move({ workspace = $WS })" >/dev/null
+    hyprctl dispatch "hl.dsp.window.float({ action = \"enable\" })" >/dev/null
+    hyprctl dispatch "hl.dsp.window.move({ x = $x, y = $y })" >/dev/null
+    hyprctl dispatch "hl.dsp.window.resize({ x = $w, y = $h })" >/dev/null
+    echo "  placed $class"
+}
+
+running() {
+    hyprctl clients -j | jq -e --arg c "$1" \
+        '[.[] | select(.class==$c)] | length > 0' >/dev/null
+}
+
+if [[ "$LAUNCH" == "1" ]]; then
+    running Spotify        || { spotify-launcher & }
+    running slack          || { slack & }
+    running discord        || { discord & }
+    running layout-sysmon  || { kitty --class layout-sysmon -e btop & }
+    running layout-term    || { kitty --class layout-term & }
+    sleep 4
+fi
+
+echo "placing on $MON (${MW}x${MH} at $MX,$MY)"
+place Spotify       "$XL" "$YT" "$WL" "$AH"
+place slack         "$XM" "$YT" "$WM" "$HALF"
+place discord       "$XM" "$YB" "$WM" "$HALF"
+place layout-sysmon "$XR" "$YT" "$WR" "$HALF"
+place layout-term   "$XR" "$YB" "$WR" "$HALF"

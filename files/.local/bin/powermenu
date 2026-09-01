@@ -1,0 +1,16 @@
+#!/bin/bash
+set -uo pipefail
+
+choice=$(printf '%s\n' \
+    "Lock" \
+    "Logout" \
+    "Reboot" \
+    "Shutdown" \
+  | fuzzel --dmenu --lines 4 --prompt "power: ")
+
+case "$choice" in
+    Lock)     hyprlock ;;
+    Logout)   hyprctl dispatch 'hl.dsp.exit()' ;;
+    Reboot)   systemctl reboot ;;
+    Shutdown) systemctl poweroff ;;
+esac

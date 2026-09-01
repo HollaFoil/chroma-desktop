@@ -13,36 +13,57 @@ window#waybar {
     color: @on_surface;
 }
 
-/* the pills */
+/* pills */
 #workspaces,
 #submap,
-#window,
 #clock,
-#cpu,
-#memory,
-#network,
-#pulseaudio,
-#tray {
-background-color: alpha(@surface_container, 0.85);
-color: @on_surface;
-border-radius: 12px;
-padding: 2px 12px;
-margin: 4px 3px;
+#tray,
+.modules-left > widget > #stats,
+.modules-right > widget > #right {
+    background-color: alpha(@surface_container, 0.30);
+    color: @on_surface;
+    border-radius: 14px;
+    padding: 2px 14px;
+    margin: 4px 3px;
 }
 
-#workspaces { padding: 2px 4px; }
+/* inside grouped pills */
+#cpu,
+#memory,
+#custom-gpu,
+#temperature,
+#mpris,
+#pulseaudio,
+#custom-power {
+background: transparent;
+padding: 0 7px;
+}
+
+#custom-power {
+color: @error;
+font-size: 17px;
+padding: 0 9px 0 5px;
+}
+
+#temperature.critical { color: @error; }
+#mpris { color: @tertiary; }
+#custom-power { color: @error; padding-right: 2px; }
+
+/* workspaces */
+#workspaces {
+padding: 2px 5px;
+}
 
 #workspaces button {
-padding: 0 8px;
+padding: 0 9px;
 margin: 2px;
-border-radius: 8px;
+border-radius: 10px;
 background: transparent;
 color: @on_surface_variant;
 }
 
 #workspaces button:hover {
 background-color: alpha(@surface_container_high, 0.9);
-color: @on_surface;
 }
 
 #workspaces button.active {
@@ -55,17 +76,13 @@ background-color: @error;
 color: @on_error;
 }
 
-#window {
-font-style: italic;
-color: @on_surface_variant;
+/* center clock */
+#clock {
+font-weight: bold;
+padding: 2px 18px;
 }
-window#waybar.empty #window { background: transparent; }
 
-#clock      { color: @primary; }
-#pulseaudio { color: @secondary; }
-#network    { color: @tertiary; }
-
-#tray menu {
-background-color: @surface_container;
-color: @on_surface;
+/* right side */
+#mpris {
+color: @tertiary;
 }

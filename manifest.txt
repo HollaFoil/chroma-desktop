@@ -33,6 +33,8 @@
 # scripts
 .local/bin/setwall
 .local/bin/cheatsheet
+.local/bin/relayout
+.local/bin/powermenu
 
 # gtk
 .config/gtk-3.0/gtk.css
