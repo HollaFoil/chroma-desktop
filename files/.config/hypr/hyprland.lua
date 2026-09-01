@@ -223,6 +223,18 @@ hl.window_rule({
     border_size = 0,
 })
 
+hl.window_rule({
+    name  = "translucent-all",
+    match = { class = ".*" },
+    opacity = "0.95 override 0.85 override",
+})
+
+hl.window_rule({
+    name  = "opaque-media",
+    match = { class = "^(google-chrome|vlc|firefox)$" },
+               opacity = "1 override 0.92 override",
+})
+
 -- See https://wiki.hypr.land/Configuring/Layouts/Dwindle-Layout/ for more
 hl.config({
     dwindle = {
