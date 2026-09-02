@@ -108,7 +108,30 @@ hl.on("hyprland.start", function()
     -- reached as a dependency - hence hyprland-session.target, which BindsTo it.
     -- Starting ours pulls graphical-session.target up and waybar with it, and
     -- brings both down when the session ends. Nothing else is enabled there.
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart hyprpolkitagent xdg-desktop-portal && systemctl --user start hyprland-session.target")
+    --
+    -- `restart`, not `start`, and this is load-bearing. Nothing tears the
+    -- target down when Hyprland goes away: the compositor dies (or is killed,
+    -- or crashes - there is no exit hook that survives all three) and the
+    -- target is simply left active. On the next login `start` then sees an
+    -- already-active target, does nothing, and never re-runs its dependencies,
+    -- so a waybar left in failed/start-limit-hit by the previous teardown stays
+    -- down for the whole session with no bar and no error. `restart` stops the
+    -- target first, which pulls graphical-session.target down through BindsTo
+    -- and every PartOf unit with it, then brings the lot back against the
+    -- WAYLAND_DISPLAY just imported. reset-failed clears the previous session's
+    -- wreckage so the fresh start is not refused by a still-live rate limit.
+    -- Reconciling on the way in rather than hooking the way out is deliberate:
+    -- a crash skips shutdown hooks, but login always happens.
+    --
+    -- reset-failed comes before either restart because a unit that tripped its
+    -- start limit on the way out refuses to start on the way back in: systemd
+    -- answers "Start request repeated too quickly" and the restart below is a
+    -- no-op. hyprpolkitagent is in the list for exactly that reason - it aborts
+    -- in Qt's DBus thread when the compositor disappears, burns its five
+    -- restarts in under a second, and was still inside its rate-limit window
+    -- when the next session asked for it, leaving the session with no polkit
+    -- agent and so no authentication prompts at all.
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && (systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal waybar.service hyprland-session.target 2>/dev/null || true) && systemctl --user restart hyprpolkitagent xdg-desktop-portal && systemctl --user restart hyprland-session.target")
     hl.exec_cmd("swaync")
     -- waybar runs as a systemd user unit rather than a bare exec_cmd: it
     -- segfaults in its mpris module when a player (Chrome) goes away, and

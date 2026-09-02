@@ -1,0 +1,11 @@
+[Unit]
+# OnFailure= target for session units. Instantiated with the failing unit's
+# name (%n), which the script takes as its argument.
+Description=Desktop notification for the failure of %i
+# Without this, a failure in the notifier itself would recurse into another
+# notifier instance.
+OnFailureJobMode=replace
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/notify-unit-failure %i

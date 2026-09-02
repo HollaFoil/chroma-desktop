@@ -54,6 +54,10 @@
 
 # systemd user session
 .config/systemd/user/hyprland-session.target
+.config/systemd/user/notify-unit-failure@.service
+.config/systemd/user/waybar.service.d/override.conf
+.config/systemd/user/hyprpolkitagent.service.d/override.conf
+.local/bin/notify-unit-failure
 
 # btop
 .config/matugen/templates/btop.theme

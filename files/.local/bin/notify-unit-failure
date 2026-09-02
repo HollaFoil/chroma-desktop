@@ -1,0 +1,36 @@
+#!/bin/bash
+# OnFailure= handler for user units in the Hyprland session.
+#
+# Exists because a unit that exhausts its start limit goes quiet: systemd marks
+# it failed and stops trying, and the only trace is journalctl. For waybar that
+# means the bar is simply absent with nothing on screen saying why.
+#
+# Takes the unit name as $1 (systemd expands %n into the template instance).
+set -uo pipefail
+
+UNIT="${1:-unknown.service}"
+
+# Only shout while a compositor is actually up. Every session teardown kills
+# the Wayland socket out from under these units, so they fail on the way down
+# as a matter of course - notifying there would train the popup to be ignored,
+# and the notification daemon is going away at the same moment anyway. A unit
+# that dies while Hyprland is still running is the real event.
+if ! hyprctl version >/dev/null 2>&1; then
+    exit 0
+fi
+
+# Last few journal lines give the actual reason rather than just the name.
+REASON="$(journalctl --user -u "$UNIT" -n 5 --no-pager -o cat 2>/dev/null \
+          | grep -v '^\s*$' | tail -3)"
+STATE="$(systemctl --user show -P Result "$UNIT" 2>/dev/null)"
+
+notify-send \
+    --app-name=systemd \
+    --urgency=critical \
+    --icon=dialog-error \
+    "$UNIT failed" \
+    "result: ${STATE:-unknown}
+
+${REASON:-no journal output}
+
+restart: systemctl --user reset-failed $UNIT && systemctl --user start $UNIT"

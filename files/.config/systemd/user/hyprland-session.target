@@ -4,9 +4,17 @@ Documentation=man:systemd.special(7)
 
 # graphical-session.target sets RefuseManualStart, so it can only be reached as
 # somebody else's dependency - that is this target's whole job. BindsTo pulls it
-# up with us and, more importantly, tears it (and every unit hanging off it)
-# down when this target stops.
+# up with us, and ties our fate to it: if it goes down, we go down.
 BindsTo=graphical-session.target
 Before=graphical-session.target
 Wants=graphical-session-pre.target
 After=graphical-session-pre.target
+
+# BindsTo only propagates downward - graphical-session.target stopping stops us,
+# not the other way round - so without this, stopping or restarting this target
+# left graphical-session.target active and every unit hanging off it untouched.
+# That is what made the login `systemctl restart hyprland-session.target` a
+# no-op for waybar: the target cycled, the session below it did not. RefuseManualStart
+# blocks a manual start of graphical-session.target but not a propagated stop,
+# so this direction is allowed.
+PropagatesStopTo=graphical-session.target
