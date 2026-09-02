@@ -38,3 +38,15 @@ jq \
   ' "$SRC" > "$OUT"
 
 echo "wrote $OUT"
+
+# oh-my-posh parses the config once per shell session and caches the result in
+# ~/.cache/oh-my-posh/<shell>.<session-id>.omp.cache, keyed by POSH_SESSION_ID
+# and never revalidated against the config's mtime. That cache is why a running
+# shell keeps the old palette until it is relaunched - a new shell gets a new
+# session id, hence a fresh read. Dropping the session caches makes every live
+# shell re-read this file on its next prompt; the shared omp.cache (upgrade
+# state, accent colour) is deliberately left alone.
+find "${XDG_CACHE_HOME:-$HOME/.cache}/oh-my-posh" -maxdepth 1 \
+    -name '*.*.omp.cache' -delete 2>/dev/null || true
+
+echo "invalidated oh-my-posh session caches"

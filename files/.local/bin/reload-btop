@@ -1,0 +1,15 @@
+#!/bin/bash
+# Make every running btop pick up a regenerated theme, in place.
+#
+# btop 1.4.7 re-reads btop.conf and its .theme file on SIGUSR2 and repaints -
+# the process survives, the window is never touched, and nothing is lost. This
+# is the same signal waybar uses for the same job.
+#
+# Every btop is signalled, not just the dashboard's: a theme reload is exactly
+# what you want in any terminal that happens to have one open. Note the default
+# disposition of SIGUSR2 is to terminate, so a btop older than the version that
+# added the handler would die instead of reloading.
+pkill -x --signal USR2 btop 2>/dev/null
+
+# pkill exits 1 when no btop is running, which is not a failure here.
+exit 0

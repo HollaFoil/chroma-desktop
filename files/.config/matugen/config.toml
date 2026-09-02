@@ -2,7 +2,7 @@
 [templates.waybar]
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/waybar/colors.css'
-post_hook = 'pkill -SIGUSR2 waybar'
+post_hook = 'systemctl --user reload waybar 2>/dev/null || pkill -SIGUSR2 waybar || true'  # unit if supervised, bare process if hand-started, never fails
 
 [templates.swaync]
 input_path = '~/.config/matugen/templates/colors.css'
@@ -26,6 +26,13 @@ output_path = '~/.config/hypr/hyprlock-colors.conf'
 [templates.fuzzel]
 input_path = '~/.config/matugen/templates/fuzzel-colors.ini'
 output_path = '~/.config/fuzzel/colors.ini'
+
+[templates.homelab-dash]
+# Same palette the waybar template emits (86 @define-color rules, which is
+# valid GTK CSS). No post_hook: homelab-dash watches this file itself, so it
+# restyles live and does not need to be running when matugen fires.
+input_path = '~/.config/matugen/templates/colors.css'
+output_path = '~/.config/homelab-dash/colors.css'
 
 [templates.colorsh]
 input_path = '~/.config/matugen/templates/colors.sh'
@@ -59,3 +66,24 @@ output_path = '~/.cache/matugen/vscode-colors'
 [templates.vscode-json]
 input_path = '~/.config/matugen/templates/vscode-colors.json'
 output_path = '~/.cache/matugen/vscode-colors.json'
+
+[templates.btop]
+input_path = '~/.config/matugen/templates/btop.theme'
+output_path = '~/.config/btop/themes/matugen.theme'
+# btop re-reads its config and theme on SIGUSR2 and repaints in place; see
+# reload-btop. No restart, so a running btop keeps its window and its state.
+post_hook = '~/.local/bin/reload-btop'
+
+[templates.discord]
+input_path = '~/.config/matugen/templates/discord.css'
+output_path = '~/.config/vesktop/settings/quickCss.css'
+# No post_hook: Vencord watches quickCss.css and re-applies it on write, so
+# vesktop restyles live. Requires "useQuickCss": true in vesktop's settings.json.
+
+[templates.spicetify]
+input_path = '~/.config/matugen/templates/spicetify-color.ini'
+output_path = '~/.config/spicetify/Themes/Sleek/color.ini'
+# `refresh` re-reads the theme's colours in the running client; `apply` would
+# re-patch Spotify and restart it. Guarded because it exits non-zero when
+# Spotify is not running.
+post_hook = 'spicetify refresh >/dev/null 2>&1 || true'

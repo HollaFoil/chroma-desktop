@@ -44,3 +44,24 @@
 # kde / qt
 .config/kdeglobals
 .config/matugen/templates/Matugen.colors
+
+# homelab-dash
+.config/homelab-dash/config.toml
+.local/bin/homelab-dash
+
+# chrome
+.config/chrome-flags.conf
+
+# systemd user session
+.config/systemd/user/hyprland-session.target
+
+# btop
+.config/matugen/templates/btop.theme
+.local/bin/reload-btop
+
+# discord (vesktop)
+.config/matugen/templates/discord.css
+
+# spotify (spicetify)
+.config/matugen/templates/spicetify-color.ini
+.config/spicetify/Themes/Sleek/user.css

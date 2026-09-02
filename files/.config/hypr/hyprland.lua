@@ -88,13 +88,44 @@ local menu = "fuzzel"
 -- end)
 
 hl.on("hyprland.start", function()
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP && systemctl --user restart hyprpolkitagent")
+    -- Chained with && inside ONE exec_cmd on purpose: exec_cmd is async, so as
+    -- separate lines the environment import races the services that need it.
+    --
+    -- xdg-desktop-portal picks its backends from XDG_CURRENT_DESKTOP when it
+    -- starts and caches that choice for its lifetime. Started before the import
+    -- (anything requesting a portal will D-Bus activate it), it comes up with
+    -- only the gtk backend, which provides no ScreenCast on Hyprland — so
+    -- screen sharing silently has no interface to call. Restarting it here
+    -- makes it pick up xdg-desktop-portal-hyprland.
+    -- HYPRLAND_INSTANCE_SIGNATURE is imported for waybar: its hyprland/*
+    -- modules find the compositor's IPC socket at
+    -- $XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock. Launched
+    -- by Hyprland it inherited that; started by systemd it does not, and the
+    -- workspace and submap modules come up empty without it.
+    --
+    -- waybar.service hangs off graphical-session.target (Requisite= and
+    -- WantedBy=), but that target sets RefuseManualStart and can only be
+    -- reached as a dependency - hence hyprland-session.target, which BindsTo it.
+    -- Starting ours pulls graphical-session.target up and waybar with it, and
+    -- brings both down when the session ends. Nothing else is enabled there.
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && systemctl --user restart hyprpolkitagent xdg-desktop-portal && systemctl --user start hyprland-session.target")
     hl.exec_cmd("swaync")
-    hl.exec_cmd("waybar")
+    -- waybar runs as a systemd user unit rather than a bare exec_cmd: it
+    -- segfaults in its mpris module when a player (Chrome) goes away, and
+    -- Restart=on-failure brings it straight back instead of leaving no bar.
+    -- Started above via graphical-session.target; `journalctl --user -u waybar`
+    -- now has its output, which a fire-and-forget exec_cmd threw away.
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("hypridle")
+    -- Spotify's colours come from a matugen-generated color.ini in the Sleek
+    -- theme folder. Rewriting that file is not enough on its own: `spicetify
+    -- refresh` updates the client's files but leaves a running Spotify painted
+    -- with the old scheme, and `spicetify apply` would restart it and stop
+    -- playback. `watch -s` sees the color.ini change and reloads the running
+    -- client in place, which is the only path that repaints without a restart.
+    hl.exec_cmd("spicetify watch -s")
     -- relayout --boot launches every dashboard app that is not already
     -- running and waits for it to map. Launching them here as well raced
     -- with that check and produced duplicate kitty windows.

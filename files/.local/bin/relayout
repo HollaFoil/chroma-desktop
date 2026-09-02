@@ -29,9 +29,9 @@ MAIN_WORK_WS=2
 MAIN_LAYOUT=(
     "Spotify         0   0  32 100"
     "slack          32   0  26  50"
-    "discord        32  50  40  50"
+    "vesktop        32  50  40  50"
     "layout-sysmon  58   0  42  50"
-    "layout-term    72  50  28  50"
+    "homelab-dash   72  50  28  50"
 )
 
 ALT_MON="DP-2"
@@ -39,9 +39,9 @@ ALT_DASH_WS=6
 ALT_WORK_WS=7
 ALT_LAYOUT=(
     "slack           0   0  55  44"
-    "discord         0  44  55  56"
+    "vesktop         0  44  55  56"
     "layout-sysmon  55   0  45  58"
-    "layout-term    55  58  45  42"
+    "homelab-dash   55  58  45  42"
 )
 
 # ---- general config ------------------------------------------------
@@ -51,7 +51,7 @@ SETTLE=0.06                 # pause after the float toggle
 STASH_WS="special:magic"    # where dashboard apps this profile doesn't use go
 STATE="$HOME/.cache/relayout-target"
 LUA_STATE="$HOME/.cache/relayout-state.lua"
-ALL_APPS=(Spotify slack discord layout-sysmon layout-term)
+ALL_APPS=(Spotify slack vesktop layout-sysmon homelab-dash)
 
 # Which monitor each workspace belongs to. This is the source of truth:
 # relayout writes it into the Lua state file and hyprland.lua turns it into
@@ -62,7 +62,7 @@ WS_HOME=(
     "6 DP-2"     "7 DP-2"     "8 DP-2"
     "9 HDMI-A-2" "10 HDMI-A-2"
 )
-CLASS_RE='^(Spotify|slack|discord|layout-sysmon|layout-term)$'
+CLASS_RE='^(Spotify|slack|vesktop|layout-sysmon|homelab-dash)$'
 # Windows allowed to open on the dashboard workspace anyway: deliberate
 # overlays that are meant to appear on top of whatever you are looking at.
 GUARD_EXEMPT=(cheatsheet hyprland-run)
@@ -251,9 +251,39 @@ rehome_workspaces() {
 CLIENTS=""
 refresh_clients() { CLIENTS=$(hyprctl clients -j); }
 
+# Some apps map several toplevels under one class: Slack's huddle and
+# screen-share windows are all class "slack", and Discord does the same for
+# calls. Taking .[0] meant relayout could place a transient call popup into the
+# main window's slot, and which one it got was down to Hyprland's list order.
+#
+# Prefer the LARGEST window of the class: a main window is always far bigger
+# than these popups. Tie-break on address so repeated runs are deterministic
+# rather than flipping between equally-sized windows.
+#
+# If area is ever not enough, add a title regex below and it is applied first;
+# it falls back to the unfiltered set if it matches nothing, so a wrong regex
+# degrades to the old behaviour instead of losing the window entirely.
+declare -A MAIN_TITLE_RE=(
+    # [slack]="Slack$"
+)
+
+# The single place that decides which window of a class relayout acts on.
+main_of() {  # class -> that window's JSON object, or nothing
+    local re="${MAIN_TITLE_RE[$1]:-}"
+    printf '%s' "$CLIENTS" | jq -c --arg c "$1" --arg re "$re" '
+        [ .[] | select(.class == $c) ] as $all
+        | ( if $re == "" then $all
+            else ( $all | map(select((.title // "") | test($re))) ) end ) as $named
+        | ( if ($named | length) > 0 then $named else $all end )
+        | if length == 0 then empty
+          else ( sort_by([ -(.size[0] * .size[1]), .address ]) | .[0] )
+          end'
+}
+
 field_of() {  # class, jq-field
-    printf '%s' "$CLIENTS" | jq -r --arg c "$1" --arg f "$2" \
-        '[.[] | select(.class==$c)] | if length==0 then "" else .[0][$f]|tostring end'
+    local w; w=$(main_of "$1")
+    [[ -z "$w" ]] && { printf ''; return; }
+    printf '%s' "$w" | jq -r --arg f "$2" '.[$f] // "" | tostring'
 }
 addr_of()    { field_of "$1" address; }
 running()    { [[ -n "$(addr_of "$1")" ]]; }
@@ -341,9 +371,9 @@ launch() {
     case "$1" in
         Spotify)       setsid spotify-launcher >/dev/null 2>&1 9>&- & ;;
         slack)         setsid slack            >/dev/null 2>&1 9>&- & ;;
-        discord)       setsid discord          >/dev/null 2>&1 9>&- & ;;
+        vesktop)       setsid vesktop          >/dev/null 2>&1 9>&- & ;;
         layout-sysmon) setsid kitty --class layout-sysmon -o font_size=9 -e btop >/dev/null 2>&1 9>&- & ;;
-        layout-term)   setsid kitty --class layout-term   >/dev/null 2>&1 9>&- & ;;
+        homelab-dash)  setsid "$HOME/.local/bin/homelab-dash" >/dev/null 2>&1 9>&- & ;;
     esac
 }
 
@@ -406,9 +436,12 @@ for attempt in 1 2; do
         addr=$(addr_of "$cl"); [[ -z "$addr" || "$addr" == "null" ]] && continue
         want_x=$(( UX + UW * xp / 100 + HG )); want_y=$(( UY + UH * yp / 100 + HG ))
         want_w=$(( UW * wp / 100 - GAP ));     want_h=$(( UH * hp / 100 - GAP ))
-        got_ws=$(printf '%s' "$CLIENTS" | jq -r --arg c "$cl" '[.[]|select(.class==$c)][0].workspace.id')
-        read -r got_x got_y got_w got_h < <(printf '%s' "$CLIENTS" | jq -r --arg c "$cl" \
-            '[.[]|select(.class==$c)][0] | "\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"')
+        # Same selection as place() used, so the check cannot land on a
+        # different window of the same class.
+        win=$(main_of "$cl"); [[ -z "$win" ]] && continue
+        got_ws=$(printf '%s' "$win" | jq -r '.workspace.id')
+        read -r got_x got_y got_w got_h < <(printf '%s' "$win" | jq -r \
+            '"\(.at[0]) \(.at[1]) \(.size[0]) \(.size[1])"')
         if [[ "$got_ws" != "$DASH_WS" ]] \
            || (( got_x != want_x || got_y != want_y || got_w != want_w || got_h != want_h )); then
             bad_rows+=("$row")

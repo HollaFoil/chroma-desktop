@@ -1,0 +1,243 @@
+# homelab-dash configuration
+#
+# Tiers control how prominent a service is, nothing else. Each tier is one
+# merged panel, and its members are columns inside it divided by a hairline:
+#   hero  a column with its own live number, three across
+#   tile  second tier: same shape for every one of them, four across
+#   dot   a logo with a status badge in the bottom infra strip
+#
+# ("wide" and "chip" from the old layout both mean "tile" now.)
+#
+# Every column is clickable and opens `url`. Hovering anywhere in a panel
+# opens the detail drawer for the whole row at once -- container uptime and
+# image, queue contents, who is streaming what -- and the drawer only shows as
+# many rows as fit in the height going spare, most useful first, so the panel
+# never has to scroll. Adding a service is a new [[service]] block; if its
+# `probe` is unknown the column still works and falls back to the container's
+# Docker health.
+#
+# `icon` is a slug from https://selfh.st/icons/, fetched once into
+# ~/.cache/homelab-dash/icons and cached there. It defaults to `id`. The
+# `-light` twin is preferred automatically and whatever arrives is flattened
+# to a silhouette and tinted from the colour scheme, so brand colours never
+# reach the panel. To use your own artwork instead, drop <slug>.svg into that
+# cache directory -- only its alpha channel is used.
+#
+# `spark = true` keeps the last ~90 polls of the probe's headline number and
+# draws them as an area chart inside the hover panel; `spark_unit` is passed to
+# the byte formatter for the "peak ..." caption under it. Only worth it for a
+# number that actually moves -- a stream count is 0 or 1 and drew a solid block.
+
+[general]
+title = "homelab"
+# Fallback poll interval, in seconds, for services that do not set their own.
+poll_interval = 10.0
+# Clicking a tile opens this. Empty = xdg-open (your default, google-chrome).
+browser = ""
+# Rows of streams/downloads before the feed collapses the rest to "+N more".
+activity_rows = 6
+# How many library additions the feed keeps under the activity rows. The feed
+# is the panel that soaks up whatever height is left over and scrolls when a
+# drawer borrows it back, so this is only an upper bound -- set it high enough
+# to fill the tall slot.
+recent_rows = 24
+
+[paths]
+# The compose stack. Sonarr/Radarr/Prowlarr/Bazarr API keys are read straight
+# out of their own configs under here, so they never get duplicated into this
+# file and never go stale when you regenerate one.
+stack = "/mnt/media/Docker/MediaServer"
+# Free space shown in the header.
+media_mount = "/mnt/media"
+
+[docker]
+socket = "/var/run/docker.sock"
+# Only containers belonging to this compose project are considered.
+project = "mediaserver"
+interval = 5.0
+
+[theme]
+# Written by matugen on every `setwall`. Watched for changes and reapplied
+# live -- no restart, no signal.
+colors = "~/.config/homelab-dash/colors.css"
+
+[credentials]
+# qBittorrent's API key is read from its own qBittorrent.conf automatically.
+#
+# Jellyfin is the one thing with no discoverable key:
+#   Jellyfin > Dashboard > API Keys > +
+#
+# This file is a symlink into ~/dotfiles and so is git-tracked -- do NOT put the
+# token here. Put it in ~/.config/homelab-dash/secrets.toml instead, which is a
+# plain local file, untracked, 0600. Anything under [credentials] there is
+# merged over this section.
+#
+#   [credentials]
+#   jellyfin_api_key = "..."
+jellyfin_api_key = ""
+
+[llm]
+# llama-swap on the host, behind the Open-WebUI tile.
+url = "http://127.0.0.1:9292"
+interval = 10.0
+
+
+# ---- heroes -------------------------------------------------------------
+
+[[service]]
+id = "jellyfin"
+label = "Jellyfin"
+url = "https://watch.hollafoil.com"
+container = "jellyfin"
+probe = "jellyfin"
+tier = "hero"
+icon = "jellyfin"
+interval = 5.0
+
+[[service]]
+id = "qbittorrent"
+label = "qBittorrent"
+url = "https://download.hollafoil.com"
+container = "qbittorrent"
+probe = "qbittorrent"
+tier = "hero"
+icon = "qbittorrent"
+spark = true
+spark_unit = "B/s"
+# The liveliest number on the panel, so it gets the fastest poll.
+interval = 2.0
+
+[[service]]
+id = "open-webui"
+label = "Open-WebUI"
+url = "https://llm.hollafoil.com"
+container = "open-webui"
+probe = "llm"
+tier = "hero"
+icon = "open-webui"
+interval = 10.0
+
+
+# ---- second tier --------------------------------------------------------
+# The request front-end and the three things that act on a request. Seerr used
+# to be a full-width bar above three little pills, which made it look more
+# important than Sonarr for no reason that survived being asked about.
+
+[[service]]
+id = "seerr"
+label = "Seerr"
+url = "https://request.hollafoil.com"
+container = "seerr"
+probe = "seerr"
+tier = "tile"
+icon = "jellyseerr"
+interval = 30.0
+
+
+[[service]]
+id = "sonarr"
+label = "Sonarr"
+url = "https://sonarr.hollafoil.com"
+container = "sonarr"
+probe = "arr"
+tier = "tile"
+icon = "sonarr"
+port = 8989
+interval = 15.0
+
+[[service]]
+id = "radarr"
+label = "Radarr"
+url = "https://radarr.hollafoil.com"
+container = "radarr"
+probe = "arr"
+tier = "tile"
+icon = "radarr"
+port = 7878
+interval = 15.0
+
+[[service]]
+id = "bazarr"
+label = "Bazarr"
+url = "https://bazarr.hollafoil.com"
+container = "bazarr"
+probe = "bazarr"
+tier = "tile"
+icon = "bazarr"
+port = 6767
+interval = 30.0
+
+
+# ---- infra strip ---------------------------------------------------------
+# Health that matters only when it breaks. Prowlarr is here rather than a tile
+# because there is no number on it worth one; blog is here because a static
+# nginx site being up is not information. Hovering any of these opens the
+# shared panel above the strip.
+
+[[service]]
+id = "prowlarr"
+label = "Prowlarr"
+url = "https://prowlarr.hollafoil.com"
+container = "prowlarr"
+tier = "dot"
+icon = "prowlarr"
+
+[[service]]
+id = "blog"
+label = "Blog"
+url = "https://blog.hollafoil.com"
+container = "blog"
+tier = "dot"
+icon = "nginx"
+
+[[service]]
+id = "authentik"
+label = "Authentik"
+url = "https://auth.hollafoil.com"
+container = "authentik-server"
+tier = "dot"
+icon = "authentik"
+
+[[service]]
+id = "authentik-worker"
+label = "Authentik worker"
+container = "authentik-worker"
+tier = "dot"
+icon = "authentik"
+
+[[service]]
+id = "postgres"
+label = "Postgres"
+container = "authentik-postgres"
+tier = "dot"
+icon = "postgresql"
+
+[[service]]
+id = "redis"
+label = "Redis"
+container = "authentik-redis"
+tier = "dot"
+icon = "redis"
+
+[[service]]
+id = "caddy"
+label = "Caddy"
+container = "caddy"
+tier = "dot"
+icon = "caddy"
+
+[[service]]
+id = "cloudflared"
+label = "Cloudflare tunnel"
+container = "cloudflared"
+tier = "dot"
+icon = "cloudflare"
+
+[[service]]
+id = "tailscale"
+label = "Tailscale"
+container = "tailscale"
+probe = "tailscale"
+tier = "dot"
+icon = "tailscale"
+interval = 30.0

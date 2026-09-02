@@ -1,0 +1,12 @@
+[Unit]
+Description=Hyprland session
+Documentation=man:systemd.special(7)
+
+# graphical-session.target sets RefuseManualStart, so it can only be reached as
+# somebody else's dependency - that is this target's whole job. BindsTo pulls it
+# up with us and, more importantly, tears it (and every unit hanging off it)
+# down when this target stops.
+BindsTo=graphical-session.target
+Before=graphical-session.target
+Wants=graphical-session-pre.target
+After=graphical-session-pre.target
