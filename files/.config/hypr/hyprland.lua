@@ -119,7 +119,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
     hl.exec_cmd("hypridle")
-    -- Spotify's colours come from a matugen-generated color.ini in the Sleek
+    -- Spotify's colours come from a matugen-generated color.ini in the Text
     -- theme folder. Rewriting that file is not enough on its own: `spicetify
     -- refresh` updates the client's files but leaves a running Spotify painted
     -- with the old scheme, and `spicetify apply` would restart it and stop

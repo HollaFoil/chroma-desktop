@@ -64,4 +64,4 @@
 
 # spotify (spicetify)
 .config/matugen/templates/spicetify-color.ini
-.config/spicetify/Themes/Sleek/user.css
+.config/spicetify/Themes/Text/user.css
