@@ -1,1 +1,8 @@
+# ./link moves displaced originals here
 backup-*/
+
+# tool caches and editor droppings
+.ruff_cache/
+__pycache__/
+*.bak
+*.log
