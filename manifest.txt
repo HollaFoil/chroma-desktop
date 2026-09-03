@@ -58,6 +58,7 @@
 .config/gtk-3.0/gtk.css
 .config/gtk-4.0/gtk.css
 .config/matugen/templates/gtk-colors.css
+.config/matugen/templates/steam-colors.css
 
 # kde / qt
 .config/kdeglobals
@@ -80,6 +81,7 @@
 # btop
 .config/matugen/templates/btop.theme
 .local/bin/reload-btop
+.local/bin/reload-steam-css
 
 # discord (vesktop)
 .config/matugen/templates/discord.css

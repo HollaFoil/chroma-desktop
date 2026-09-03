@@ -98,3 +98,18 @@ output_path = '~/.config/spicetify/Themes/Text/color.ini'
 # re-patch Spotify and restart it. Guarded because it exits non-zero when
 # Spotify is not running.
 post_hook = 'spicetify refresh >/dev/null 2>&1 || true'
+
+[templates.steam]
+input_path = '~/.config/matugen/templates/steam-colors.css'
+output_path = '~/.config/matugen/generated/steam-colors.css'
+# Adwaita-for-Steam (git clone in ~/.local/src) patches Steam's steamui/css to
+# @import its bundle and copies this file in as adwaita/custom.css, loaded after
+# the base colour theme. Re-running the installer on every render also repairs
+# the patch when a Steam client update wipes it. The cd is load-bearing:
+# install.py resolves its own adwaita/ sources relative to cwd and removes the
+# old install before copying, so run from elsewhere it wipes the skin and
+# then fails. Steam has no CSS hot-reload, so reload-steam-css then pushes the
+# rendered file into every open client window over Steam's DevTools port
+# (enabled by ~/.steam/steam/.cef-enable-remote-debugging); it is a no-op when
+# Steam is closed. Both guarded so nothing here fails the matugen run.
+post_hook = 'cd ~/.local/src/Adwaita-for-Steam && python install.py -t default -c adwaita -a theme -s {{mode}} --custom-css ~/.config/matugen/generated/steam-colors.css >/dev/null 2>&1; ~/.local/bin/reload-steam-css >/dev/null 2>&1 || true'

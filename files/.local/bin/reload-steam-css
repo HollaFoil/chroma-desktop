@@ -1,0 +1,89 @@
+#!/usr/bin/env python
+"""Push the matugen Steam palette into the running Steam client.
+
+Steam has no CSS hot-reload, but its embedded Chromium exposes the DevTools
+protocol on localhost:8080 once ~/.steam/steam/.cef-enable-remote-debugging
+exists (this is how Millennium and CSSLoader inject live). Every client window
+- library, friends, chats, settings - is a separate page target served from
+steamloopback.host, and Adwaita-for-Steam's colour theme is nothing but :root
+custom properties, so appending the generated custom.css as a <style> element
+retints each page in place. Everything in that file is !important, so it wins
+over the installed skin without a reload; the next real launch reads the file
+Adwaita-for-Steam installed and needs nothing from us.
+
+Store, community and profile tabs are Steam's actual websites and are skipped:
+no client skin styles them.
+
+Exits 0 whenever Steam is simply not running or not debuggable, so a matugen
+post_hook can call this unguarded.
+"""
+
+import json
+import sys
+import urllib.request
+from pathlib import Path
+from urllib.error import URLError
+
+from websockets.sync.client import connect
+
+CSS_PATH = Path.home() / ".config/matugen/generated/steam-colors.css"
+DEVTOOLS = "http://127.0.0.1:8080"
+STYLE_ID = "matugen-steam-colors"
+
+# Only Steam's own client pages carry the Adwaita variables. Every client window
+# - main, menus, friends, chats - is an about:blank?createflags=... document
+# that SharedJSContext (the invisible steamloopback.host context owning client
+# state) populates through React portals and feeds the steamui stylesheets.
+# Store/community tabs have real https:// URLs and are skipped.
+def is_client_page(target):
+    url = target.get("url", "")
+    return (
+        target.get("type") == "page"
+        and (url.startswith("about:blank") or url.startswith("https://steamloopback.host/"))
+        and target.get("title") != "SharedJSContext"
+    )
+
+
+def main():
+    try:
+        css = CSS_PATH.read_text()
+    except OSError as e:
+        print(f"reload-steam-css: {e}", file=sys.stderr)
+        return 1
+
+    try:
+        with urllib.request.urlopen(f"{DEVTOOLS}/json", timeout=2) as r:
+            targets = json.load(r)
+    except (URLError, OSError, ValueError):
+        return 0  # Steam not running, or debugging flag file absent
+
+    js = f"""
+        (() => {{
+            let s = document.getElementById({json.dumps(STYLE_ID)});
+            if (!s) {{
+                s = document.createElement("style");
+                s.id = {json.dumps(STYLE_ID)};
+                document.head.appendChild(s);
+            }}
+            s.textContent = {json.dumps(css)};
+            return document.title;
+        }})()
+    """
+
+    done = 0
+    for t in filter(is_client_page, targets):
+        try:
+            with connect(t["webSocketDebuggerUrl"], open_timeout=2, close_timeout=1) as ws:
+                ws.send(json.dumps({"id": 1, "method": "Runtime.evaluate",
+                                    "params": {"expression": js, "returnByValue": True}}))
+                json.loads(ws.recv(timeout=3))
+                done += 1
+        except Exception as e:  # one dead window must not stop the rest
+            print(f"reload-steam-css: {t.get('title')!r}: {e}", file=sys.stderr)
+
+    print(f"reload-steam-css: restyled {done} window(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
