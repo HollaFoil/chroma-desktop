@@ -7,7 +7,7 @@ SUPER + R | App launcher
 SUPER + C | Close window
 SUPER + V | Toggle floating
 SUPER + P | Pseudo-tile
-SUPER + F | Fake fullscreen (app thinks it is fullscreen, window keeps its size)
+SUPER + F | Fake fullscreen (window keeps its size)
 SUPER + SHIFT + F | Real fullscreen
 SUPER + J | Toggle split direction
 SUPER + arrows | Move focus
@@ -21,7 +21,7 @@ SUPER + SHIFT + arrows | Move window
 SUPER + 1-0 | Switch to workspace
 SUPER + SHIFT + 1-0 | Move window to workspace
 SUPER + scroll | Cycle workspaces
-SUPER + S | Toggle scratchpad (Spotify parks here in alt layout)
+SUPER + S | Toggle scratchpad (Spotify parks here)
 SUPER + ALT + S | Send window to scratchpad
 
 # Utilities

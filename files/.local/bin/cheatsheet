@@ -1,38 +1,117 @@
-#!/bin/bash
-set -uo pipefail
+#!/usr/bin/env python3
+"""Keybind cheatsheet for SUPER+slash: renders ~/.config/hypr/keybinds.txt in
+two balanced columns inside a floating kitty (class "cheatsheet", see the
+window rule in hyprland.lua). Sections stay whole; the split point is chosen
+so both columns are as close in height as possible. Any key closes it.
 
-DATA="$HOME/.config/hypr/keybinds.txt"
-COLORS="$HOME/.config/matugen/colors.sh"
+keybinds.txt: "# Section" starts a section, "KEYS | description" is a row,
+blank lines are ignored. Colours come from matugen via colors.sh.
+"""
+import os
+import re
+import shutil
+import sys
+import termios
+import tty
+from pathlib import Path
 
-# fallbacks if matugen hasn't run
-PRIMARY=8ad0ee
-ON_SURFACE=dde4e1
-OUTLINE=899390
-[[ -f "$COLORS" ]] && source "$COLORS"
+DATA = Path.home() / ".config/hypr/keybinds.txt"
+COLORS = Path.home() / ".config/matugen/colors.sh"
+KEY_W = 24          # width of the key column inside each column
+GUTTER = 6          # space between the two columns
+MARGIN = 3
 
-fg() {
-    local h="${1#\#}"
-    printf '\033[38;2;%d;%d;%dm' \
-        "$((16#${h:0:2}))" "$((16#${h:2:2}))" "$((16#${h:4:2}))"
-}
-RESET=$'\033[0m'
-BOLD=$'\033[1m'
+palette = {"PRIMARY": "8ad0ee", "ON_SURFACE": "dde4e1", "OUTLINE": "899390"}
+if COLORS.exists():
+    for line in COLORS.read_text().splitlines():
+        m = re.match(r"^(\w+)=#?([0-9a-fA-F]{6})$", line.strip())
+        if m:
+            palette[m.group(1)] = m.group(2)
 
-clear
-printf '\n'
 
-while IFS= read -r line || [[ -n "$line" ]]; do
-    if [[ -z "$line" ]]; then
-        printf '\n'
-    elif [[ "$line" == \#* ]]; then
-        printf '  %s%s%s%s\n\n' "$BOLD" "$(fg "$PRIMARY")" "${line#\# }" "$RESET"
-    else
-        IFS='|' read -r key desc <<< "$line"
-        printf '    %s%-24s%s%s%s%s\n' \
-            "$(fg "$ON_SURFACE")" "$(echo $key)" "$RESET" \
-            "$(fg "$OUTLINE")" "$(echo $desc)" "$RESET"
-    fi
-done < "$DATA"
+def fg(name: str) -> str:
+    h = palette[name]
+    return f"\033[38;2;{int(h[0:2], 16)};{int(h[2:4], 16)};{int(h[4:6], 16)}m"
 
-printf '\n  %sPress any key to close%s\n' "$(fg "$OUTLINE")" "$RESET"
-read -rsn1
+
+RESET, BOLD = "\033[0m", "\033[1m"
+
+
+def sections():
+    out, cur = [], None
+    for raw in DATA.read_text().splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if line.startswith("#"):
+            cur = (line.lstrip("# ").strip(), [])
+            out.append(cur)
+        elif cur is not None and "|" in line:
+            key, desc = (p.strip() for p in line.split("|", 1))
+            cur[1].append((key, desc))
+    return out
+
+
+def render_section(title, rows, width):
+    """Return (visible-text, coloured-text) line pairs for one section."""
+    lines = [(title, f"{BOLD}{fg('PRIMARY')}{title}{RESET}")]
+    desc_w = width - KEY_W - 2
+    for key, desc in rows:
+        if len(desc) > desc_w:
+            desc = desc[: max(0, desc_w - 1)] + "…"
+        plain = f"  {key:<{KEY_W}}{desc}"
+        col = f"  {fg('ON_SURFACE')}{key:<{KEY_W}}{RESET}{fg('OUTLINE')}{desc}{RESET}"
+        lines.append((plain, col))
+    lines.append(("", ""))
+    return lines
+
+
+def split_balanced(blocks):
+    """Split a list of section blocks into two columns with the closest heights."""
+    heights = [len(b) for b in blocks]
+    total = sum(heights)
+    best, best_diff = 1, None
+    running = 0
+    for i, h in enumerate(heights[:-1], start=1):
+        running += h
+        diff = abs(running - (total - running))
+        if best_diff is None or diff < best_diff:
+            best, best_diff = i, diff
+    return blocks[:best], blocks[best:]
+
+
+def main():
+    cols, rows_avail = shutil.get_terminal_size((160, 40))
+    col_w = (cols - 2 * MARGIN - GUTTER) // 2
+    blocks = [render_section(t, r, col_w) for t, r in sections()]
+    left, right = split_balanced(blocks)
+    left = [l for b in left for l in b]
+    right = [l for b in right for l in b]
+    while left and left[-1][0] == "":
+        left.pop()
+    while right and right[-1][0] == "":
+        right.pop()
+
+    out = ["\033[?25l\033[2J\033[H", ""]           # hide cursor, clear, home
+    for i in range(max(len(left), len(right))):
+        lp, lc = left[i] if i < len(left) else ("", "")
+        rc = right[i][1] if i < len(right) else ""
+        pad = " " * (col_w - len(lp) + GUTTER)
+        out.append(" " * MARGIN + lc + pad + rc)
+    sys.stdout.write("\n".join(out) + "\n")
+    sys.stdout.flush()
+
+    # wait for any key, then restore the cursor for whoever inherits the tty
+    fd = sys.stdin.fileno()
+    old = termios.tcgetattr(fd)
+    try:
+        tty.setraw(fd)
+        os.read(fd, 1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        sys.stdout.write("\033[?25h")
+        sys.stdout.flush()
+
+
+if __name__ == "__main__":
+    main()

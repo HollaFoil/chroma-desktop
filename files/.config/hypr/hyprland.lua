@@ -292,7 +292,7 @@ hl.window_rule({
     match = { class = "^cheatsheet$" },
 
     float       = true,
-    size        = "700 750",
+    size        = "1560 500",   -- two columns of keybinds at kitty's 11.5pt
     center      = true,
     border_size = 0,
 })
