@@ -331,16 +331,14 @@ if LP.parked_re then
     })
 end
 
+-- Every window is translucent; no per-app exceptions. When one needs to be
+-- solid for a while (a video, a colour-sensitive image), SUPER+T toggles the
+-- focused window's opaque flag, which wins over this rule until toggled back
+-- or the window closes.
 hl.window_rule({
     name  = "translucent-all",
     match = { class = ".*" },
     opacity = "0.95 override 0.85 override 1.0 override",
-})
-
-hl.window_rule({
-    name  = "opaque-media",
-    match = { class = "^(google-chrome|vlc|firefox)$" },
-               opacity = "1 override 0.92 override 1.0 override",
 })
 
 -- Bind every workspace to a monitor.
@@ -446,6 +444,7 @@ hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("kitty --class cheatsheet -e ~/.local/bin/cheatsheet"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/rofi-cliphist"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + T", hl.dsp.window.set_prop({ prop = "opaque", value = "toggle" }))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallstrip"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/holla/.local/bin/relayout"))
 hl.bind(mainMod .. " + ALT + R",   hl.dsp.exec_cmd("/home/holla/.local/bin/relayout toggle"))
