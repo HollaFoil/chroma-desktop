@@ -69,3 +69,9 @@
 # spotify (spicetify)
 .config/matugen/templates/spicetify-color.ini
 .config/spicetify/Themes/Text/user.css
+
+# firefox (matugenfox)
+.config/matugen/templates/firefox-colors.css
+.mozilla/native-messaging-hosts/matugenfox.json
+.local/bin/matugenfox-host
+.config/dusky_sites

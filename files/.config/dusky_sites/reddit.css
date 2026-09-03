@@ -1,0 +1,38 @@
+@-moz-document domain("reddit.com") {
+    * {
+	--color-neutral-background: var(--surface) !important;
+	--color-neutral-content: var(--on_surface) !important;
+	--color-neutral-background-selected: var(--surface_bright) !important;
+	--color-neutral-background-hover: var(--surface_container) !important;
+	--color-neutral-background-weak: var(--surface_container) !important;
+	--color-neutral-background-strong: var(--surface_container_low) !important;
+	--color-primary-background: var(--surface) !important;
+	--color-primary-background-hover: var(--primary_container) !important;
+	--color-secondary-background-hover: var(--surface_bright) !important;
+	--color-secondary-background-selected: var(--surface_bright) !important;
+	--color-neutral-content-weak: var(--on_surface_variant) !important;
+	--color-primary: var(--primary) !important;
+	--color-secondary-background: var(--surface) !important;
+	--color-neutral-background-container-strong: var(--surface_container_high) !important;
+	--color-neutral-background-container-strong-hover: var(--surface_container_highest) !important;
+	--color-secondary-weak: var(--primary) !important;
+	--color-coolgray-900: var(--primary) !important;
+	--color-coolgray-850: var(--secondary_fixed) !important;
+	--color-coolgray-50: var(--surface_container_high) !important;
+	--color-secondary-plain-weak: var(--on_surface_variant) !important;
+	--color-secondary: var(--on_surface_variant) !important;
+     }
+
+     .WkGKgAfDZXg_Q1Un {
+	border: var(--border-width-small)solid var(--primary) !important;
+	background: var(--surface) !important;
+     }
+
+     ._PmJypc84I8Fqjrr:hover {
+	color: var(--surface) !important;
+     }
+
+     .C3wyHryfIsKm5Scc .z9s8b0zHNQwRLdGH .Ed68NogwJ8USjhUc {
+  	color: var(--surface) !important;
+     }
+}

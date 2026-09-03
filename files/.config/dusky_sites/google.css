@@ -1,0 +1,49 @@
+@-moz-document domain("google.com") {
+    :root, .jKhXsc, .YzCcne {
+      --xhUGwc: var(--surface) !important;
+      --YLNNHc: var(--primary_fixed) !important;
+      --aYn2S: var(--surface_container_highest) !important;
+      --KIZPne: var(--on_surface_variant) !important;
+      --XKMDxc: var(--surface_container_low) !important;
+      --xPpiM: var(--surface) !important;
+      --XKMDxc: var(--surface) !important;
+      --Lm570b: var(--surface_bright) !important;
+      --JKqx2: var(--primary) !important;
+      --gS5jXb: var(--outline_variant) !important;
+      --m3c6: var(--surface_bright) !important;
+      --cIehld: var(--surface) !important;
+    }
+    
+    .RNNXgb, .aajZCb, .kzKS5c {
+      background: var(--surface_container_high) !important;
+    }
+    
+    .sbhl, .NrdQVe, .NzSfif {
+      background: var(--surface_container) !important;
+    }
+    
+    .ho072b, .qEn1od, .Vt1EGb, .f6F9Be, .c93Gbe {
+      background: var(--surface) !important;
+    }
+    
+    .T14B5e input[type="submit"] {
+      background-color: var(--surface_container) !important;
+      border: 1px solid var(--outline_variant) !important;
+    }
+    .T14B5e input[type="submit"]:hover {
+      background-color: var(--surface_container) !important;
+      border: 1px solid var(--outline) !important;
+    }
+    
+    .RDmXvc {
+      background-image: linear-gradient(transparent 0px,var(--surface) 52px,var(--xhUGwc) 80px) !important;
+    }
+    
+    .vIifob {
+      background: var(--surface_bright) !important;
+    }
+    
+    .DV7the {
+      color: var(--primary) !important;
+    }
+}

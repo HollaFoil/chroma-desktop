@@ -80,6 +80,13 @@ output_path = '~/.config/vesktop/settings/quickCss.css'
 # No post_hook: Vencord watches quickCss.css and re-applies it on write, so
 # vesktop restyles live. Requires "useQuickCss": true in vesktop's settings.json.
 
+[templates.firefox]
+input_path = '~/.config/matugen/templates/firefox-colors.css'
+# The MatugenFox extension's default colorsPath. No post_hook: its native
+# host (matugenfox-host, spawned by Firefox) polls this file's mtime every
+# 2s and pushes the new palette to the running browser.
+output_path = '~/.config/matugen/generated/firefox_websites.css'
+
 [templates.spicetify]
 input_path = '~/.config/matugen/templates/spicetify-color.ini'
 output_path = '~/.config/spicetify/Themes/Text/color.ini'

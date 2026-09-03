@@ -1,0 +1,10 @@
+/* Read by the MatugenFox native host (matugenfox-host), which parses every
+   `--name: value;` pair and pushes them to the Firefox extension. The
+   extension's browser theme maps --background, --surface,
+   --surface_container, --primary, --secondary, --on_background and
+   --on_surface; the per-site templates use the rest, plus *_rgb for
+   rgba(var(--x_rgb), a). Emit the whole palette so either works. */
+:root {<* for name, value in colors *>
+  --{{name}}: {{value.default.hex}};
+  --{{name}}_rgb: {{value.default.red}}, {{value.default.green}}, {{value.default.blue}};<* endfor *>
+}

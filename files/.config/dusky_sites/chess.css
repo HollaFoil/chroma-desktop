@@ -1,0 +1,16 @@
+@-moz-document domain("chess.com") {
+  :root {
+      --theme-background-color: var(--theme-background-override-color, var(--surface)) !important;
+      --color-gray-400: var(--surface_bright) !important;
+      --color-gray-500: var(--surface_container_highest) !important;
+      --color-gray-600: var(--surface_container_high) !important;
+      --color-gray-700: var(--surface_container) !important;
+      --color-gray-800: var(--surface) !important;
+      --color-gray-900: var(--surface_container_lowest) !important;
+      --color-green-200: var(--primary_fixed) !important;
+      --color-green-300: var(--primary) !important;
+      --color-green-400: var(--primary_container) !important;
+      --color-green-500: var(--primary_container) !important;
+      --color-neutrals-white: var(--on_surface) !important;
+  }
+}
