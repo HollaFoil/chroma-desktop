@@ -68,7 +68,7 @@ hl.monitor({
 
 -- Set programs that you use
 local terminal    = "kitty"
-local fileManager = "dolphin"
+local fileManager = "nemo"
 local menu = os.getenv("HOME") .. "/.local/bin/rofi-launcher"
 
 

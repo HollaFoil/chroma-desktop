@@ -158,6 +158,20 @@ else
     warn "steam not installed: skipping Steam skin"
 fi
 
+# Nemo: default directory handler, kitty as its terminal, no desktop drawing.
+# These are dconf/xdg state rather than files, so they cannot be symlinked.
+if command -v nemo >/dev/null 2>&1; then
+    if [[ $CHECK == 1 ]]; then
+        [[ "$(xdg-mime query default inode/directory)" == nemo.desktop ]] && ok "nemo is the default file manager" || miss "nemo is not the default for inode/directory"
+    else
+        xdg-mime default nemo.desktop inode/directory
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty 2>/dev/null
+        gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg '' 2>/dev/null
+        gsettings set org.nemo.desktop show-desktop-icons false 2>/dev/null
+        ok "nemo: default file manager, opens kitty, draws no desktop"
+    fi
+fi
+
 # Spotify: spicetify is not packaged
 if command -v spotify-launcher >/dev/null 2>&1; then
     if command -v spicetify >/dev/null 2>&1 || [[ -x "$HOME/.spicetify/spicetify" ]]; then

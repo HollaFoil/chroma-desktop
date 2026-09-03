@@ -48,8 +48,13 @@ adw-gtk-theme                # GTK theme matugen's gtk3 hook selects (adw-gtk3-d
 glib2                        # gsettings, used by that hook
 breeze-icons                 # icon theme named in rofi and kdeglobals
 breeze                       # Qt widget style named in kdeglobals
-plasma-integration           # QT_QPA_PLATFORMTHEME=kde, so Qt apps pick up kdeglobals
-dolphin                      # file manager on SUPER+E (swap in hyprland.lua if you prefer another)
+plasma-integration           # QT_QPA_PLATFORMTHEME=kde, so Qt apps (if any) pick up kdeglobals
+nemo                         # file manager on SUPER+E; GTK3, so it recolours live with the wallpaper
+nemo-fileroller              # compress/extract in Nemo's context menu
+nemo-terminal                # embedded terminal pane in Nemo (F4)
+file-roller                  # archive manager nemo-fileroller drives
+gvfs-mtp                     # phones in Nemo's sidebar
+gvfs-smb                     # network shares in Nemo's sidebar
 
 [fonts]
 otf-geist-mono-nerd          # primary UI font: waybar, swaync, rofi, the overlays

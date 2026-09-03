@@ -1,6 +1,6 @@
 # Apps
 SUPER + Q | Terminal (kitty)
-SUPER + E | File manager (dolphin)
+SUPER + E | File manager (nemo)
 SUPER + R | App launcher
 
 # Windows

@@ -57,7 +57,7 @@ them first.
 | Bar workspaces per monitor | `files/.config/waybar/config.jsonc` → `persistent-workspaces` | Keyed by monitor name. |
 | CPU temperature | `files/.config/waybar/config.jsonc` → `temperature.hwmon-path-abs` | Points at an AMD `k10temp` PCI path. Use `thermal-zone` or your own hwmon path. |
 | Dashboard apps and layout | `~/.config/relayout/config.sh` | Apps whose command is not installed are dropped from the layout automatically. |
-| Keyboard layout, terminal, file manager | `files/.config/hypr/hyprland.lua` (`kb_layout`, top of file) | |
+| Keyboard layout, terminal, file manager | `files/.config/hypr/hyprland.lua` (`kb_layout`, `fileManager` near the top) | Nemo is GTK3, so it follows the palette live; a Qt file manager would not. |
 | Wallpapers folder | `~/Pictures/Wallpapers` | `SUPER+W` browses it; `WALLSTRIP_DIR` overrides. |
 | Personal site styles | `files/.config/dusky_sites/*.hollafoil.com.css` | Firefox CSS for one person's self-hosted services; delete or replace. |
 
@@ -88,7 +88,7 @@ Keybinds: `files/.config/hypr/keybinds.txt` (that file *is* the cheatsheet on
 `packages.txt` is the authoritative list with a purpose per line;
 `./bootstrap --check` diffs it against your system. Summary:
 
-- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, breeze + breeze-icons, plasma-integration, dolphin.
+- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, breeze + breeze-icons, plasma-integration, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
 - **Fonts**: `otf-geist-mono-nerd` (UI), `ttf-meslo-nerd` (fallback), `ttf-jetbrains-mono-nerd` (kitty), `noto-fonts`.
 - **Themed apps (optional)**: btop, vesktop, spotify-launcher (+ spicetify), steam, firefox, capitaine-cursors.
 - **AUR**: slack-desktop, google-chrome, oh-my-posh-bin, waybar-git (the reference machine runs `waybar-git` for an mpris crash fix; `extra/waybar` 0.15 works).
