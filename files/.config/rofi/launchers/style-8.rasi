@@ -1,0 +1,139 @@
+/* Matuprland launcher style-8 (borderless): everything sits on the blurred
+ * wallpaper - search bar on top, round mode buttons down the left, list in a
+ * translucent panel. Thumbnails come from ~/.cache/rofi (rofi-wallthumbs). */
+
+configuration {
+    modi:                        "drun,filebrowser,window,run";
+    show-icons:                  true;
+    display-drun:            "󰀻";
+    display-run:             "󰆍";
+    display-filebrowser:     "󰉋";
+    display-window:          "󰖯";
+    drun-display-format:         "{name}";
+    window-format:               "{w}{t}";
+}
+
+@import "~/.config/rofi/shared.rasi"
+
+// Main //
+window {
+    height:                      30em;
+    width:                       37em;
+    transparency:                "real";
+    fullscreen:                  false;
+    enabled:                     true;
+    cursor:                      "default";
+    spacing:                     0em;
+    padding:                     0em;
+    border-radius:               1em;
+    background-color:            @background;
+}
+mainbox {
+    enabled:                     true;
+    spacing:                     0em;
+    padding:                     1em 1em 0.5em 1em;
+    orientation:                 vertical;
+    children:                    [ "inputbar" , "dummybox" ];
+    background-color:            transparent;
+    background-image:            url("~/.cache/rofi/wall-blur.thumb", height);
+}
+inputbar {
+    margin:                      0em 0em 0em 7.3em;
+    background-color:            @background-alpha;
+}
+dummybox {
+    padding:                     0.5em 0em;
+    spacing:                     0em;
+    orientation:                 horizontal;
+    children:                    [ "mode-switcher" , "listbox" ];
+    background-color:            transparent;
+}
+
+// Lists //
+listbox {
+    padding:                     0em;
+    spacing:                     0em;
+    children:                    [ "listview" ];
+    background-color:            transparent;
+}
+listview {
+    padding:                     1em;
+    spacing:                     0em;
+    enabled:                     true;
+    columns:                     1;
+    lines:                       6;
+    cycle:                       true;
+    dynamic:                     true;
+    scrollbar:                   false;
+    layout:                      vertical;
+    reverse:                     false;
+    expand:                      false;
+    fixed-height:                true;
+    fixed-columns:               true;
+    cursor:                      "default";
+    background-color:            @background-alpha;
+    text-color:                  @foreground;
+    border-radius:               1.5em;
+}
+
+// Modes //
+mode-switcher {
+    orientation:                 vertical;
+    width:                       6.8em;
+    enabled:                     true;
+    padding:                     2.4em 1em 2.4em 0em;
+    spacing:                     1em;
+    background-color:            transparent;
+}
+button {
+    cursor:                      pointer;
+    border-radius:               3em;
+    background-color:            @background-alpha;
+    text-color:                  @foreground;
+}
+button selected {
+    background-color:            @selected;
+    text-color:                  @selected-text;
+}
+
+// Elements //
+element {
+    enabled:                     true;
+    spacing:                     1em;
+    padding:                     0.4em;
+    cursor:                      pointer;
+    border-radius:               1em;
+    background-color:            transparent;
+    text-color:                  @foreground;
+}
+element selected.normal {
+    background-color:            @selected;
+    text-color:                  @selected-text;
+}
+element-icon {
+    size:                        3em;
+    cursor:                      inherit;
+    background-color:            transparent;
+    text-color:                  inherit;
+}
+element-text {
+    vertical-align:              0.5;
+    horizontal-align:            0.0;
+    cursor:                      inherit;
+    background-color:            transparent;
+    text-color:                  inherit;
+}
+
+// Error message //
+error-message {
+    text-color:                  @foreground;
+    background-color:            @background;
+    text-transform:              capitalize;
+    children:                    [ "textbox" ];
+}
+textbox {
+    text-color:                  inherit;
+    background-color:            inherit;
+    vertical-align:              0.5;
+    horizontal-align:            0.5;
+}

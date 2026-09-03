@@ -1,0 +1,502 @@
+#!/usr/bin/env python3
+"""volpop - a one-glance audio popup for the waybar volume module.
+
+Opens as a layer-shell surface, not a window: a transparent overlay covering the
+focused output with the card tucked under the bar's right edge. Clicking
+anywhere outside the card, pressing Escape, or running volpop again closes it.
+
+    [speaker] ─────●──── 75%    ▾ HyperX Cloud III
+    [mic]     ───●────── 60%    ▾ HyperX Cloud III
+    Apps ▸   (per-stream rows: icon, name, slider, mute)
+
+Reads and writes PulseAudio/PipeWire through pactl's JSON output, and follows
+`pactl subscribe` so a volume key or a new stream updates the sliders live.
+
+Theming is matugen: ~/.config/waybar/colors.css (86 @define-color rules,
+valid GTK CSS) is concatenated with STYLE below, so the popup matches the bar
+and retints on the next setwall. Stdlib + PyGObject only.
+"""
+from __future__ import annotations
+
+import json
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("GtkLayerShell", "0.1")
+from gi.repository import Gdk, GLib, Gtk, GtkLayerShell, Pango  # noqa: E402
+
+COLORS = Path.home() / ".config/waybar/colors.css"
+PIDFILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "volpop.pid"
+
+BAR_HEIGHT = 37       # matches "height" in waybar's config.jsonc
+MARGIN_TOP = 6
+MARGIN_RIGHT = 10
+
+STYLE = """
+* {
+  font-family: "GeistMono Nerd Font Propo", "MesloLGS Nerd Font Propo", monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: @on_surface;
+}
+window { background: transparent; }
+.popup {
+  background: alpha(@surface, 0.62); /* Hyprland blurs behind it (frosted-volpop layer rule) */
+  border: none;
+  border-radius: 24px 10px 24px 10px;
+  padding: 14px 16px;
+}
+.row { min-height: 30px; }
+.icon-btn {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 18px;
+  color: @primary;
+  min-width: 30px;
+}
+.icon-btn:hover { background: alpha(@primary, 0.15); }
+button:focus { outline: none; box-shadow: none; }
+.icon-btn.muted { color: @on_surface_variant; }
+.pct { min-width: 44px; color: @on_surface_variant; font-size: 12px; }
+scale { padding: 0; min-width: 190px; }
+scale trough {
+  background: @surface_container_highest;
+  border-radius: 999px;
+  min-height: 6px;
+  border: none;
+}
+scale highlight { background: @primary; border-radius: 999px; }
+scale slider {
+  background: @primary;
+  border-radius: 999px;
+  min-width: 14px; min-height: 14px;
+  margin: -5px;
+  border: none;
+  box-shadow: none;
+}
+scale slider:hover { background: @primary_fixed; }
+.muted scale highlight, .muted scale slider { background: @on_surface_variant; }
+combobox button, .device-btn {
+  background: @surface_container_high;
+  border: none;
+  border-radius: 10px;
+  padding: 3px 10px;
+  color: @on_surface;
+  font-size: 12px;
+}
+combobox button:hover, .device-btn:hover { background: @surface_container_highest; }
+combobox arrow { color: @tertiary; -gtk-icon-source: -gtk-icontheme("pan-down-symbolic"); min-width: 14px; }
+menu, .popup-menu {
+  background: @surface;
+  border: none;
+  border-radius: 12px;
+  padding: 4px;
+}
+menuitem { padding: 6px 12px; border-radius: 8px; }
+menuitem:hover { background: @primary; color: @scrim; }
+.divider { background: alpha(@outline_variant, 0.6); min-height: 1px; margin: 8px 0; }
+.apps-toggle {
+  background: transparent; border: none; padding: 2px 6px; border-radius: 8px;
+  color: @on_surface_variant; font-size: 12px;
+}
+.apps-toggle:hover { background: alpha(@primary, 0.15); color: @on_surface; }
+.app-name { color: @on_surface; font-size: 12px; }
+.app-icon { color: @tertiary; margin-right: 4px; }
+.empty { color: @on_surface_variant; font-size: 12px; font-style: italic; padding: 4px 6px; }
+"""
+
+# Modded clients report their own names; show the real product instead.
+# Keys are matched case-insensitively against application.name, the process
+# binary and node.name; values are (icon-theme name, label).
+APP_OVERRIDES = {
+    "spotify": ("spotify-launcher", "Spotify"),   # spicetify'd client, icon from spotify-launcher
+    "vesktop": ("discord", "Discord"),
+    "webcord": ("discord", "Discord"),
+    "armcord": ("discord", "Discord"),
+}
+
+SPEAKER_ICONS = ["󰕿", "󰖀", "󰕾"]
+SPEAKER_MUTED = "󰝟"
+MIC_ICON = "󰍬"
+MIC_MUTED = "󰍭"
+
+
+# ── pactl ────────────────────────────────────────────────────────────────────
+
+def pactl(*args: str) -> str:
+    return subprocess.run(["pactl", *args], capture_output=True, text=True).stdout
+
+
+def pactl_json(kind: str) -> list[dict]:
+    try:
+        return json.loads(pactl("-f", "json", "list", kind) or "[]")
+    except json.JSONDecodeError:
+        return []
+
+
+def volume_pct(obj: dict) -> int:
+    chans = obj.get("volume", {}).values()
+    vals = [int(c["value_percent"].rstrip("%")) for c in chans if "value_percent" in c]
+    return max(vals) if vals else 0
+
+
+def speaker_icon(pct: int, muted: bool) -> str:
+    if muted or pct == 0:
+        return SPEAKER_MUTED
+    return SPEAKER_ICONS[min(2, pct * 3 // 101)]
+
+
+def short_name(desc: str) -> str:
+    """'GP102 HDMI Audio Controller Digital Stereo (HDMI) [LG QHD]' -> 'LG QHD'."""
+    if "[" in desc and desc.endswith("]"):
+        return desc[desc.rindex("[") + 1:-1]
+    for suffix in (" Analog Stereo", " Digital Stereo", " Stereo", " Mono"):
+        desc = desc.replace(suffix, "")
+    return desc.strip()
+
+
+# ── widgets ──────────────────────────────────────────────────────────────────
+
+class VolumeRow(Gtk.Box):
+    """icon-button · slider · percent  (+ optional trailing widget)."""
+
+    def __init__(self, on_toggle_mute, on_volume, icon_for):
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        self.get_style_context().add_class("row")
+        self.on_toggle_mute = on_toggle_mute
+        self.on_volume = on_volume
+        self.icon_for = icon_for
+        self._updating = False
+        self._pending: int | None = None
+
+        self.mute_btn = Gtk.Button(label="")
+        self.mute_btn.get_style_context().add_class("icon-btn")
+        self.mute_btn.connect("clicked", lambda *_: self.on_toggle_mute())
+
+        self.scale = Gtk.Scale.new_with_range(Gtk.Orientation.HORIZONTAL, 0, 100, 1)
+        self.scale.set_draw_value(False)
+        self.scale.set_hexpand(True)
+        self.scale.connect("value-changed", self._changed)
+        self.scale.connect("scroll-event", self._scroll)
+
+        self.pct = Gtk.Label(label="")
+        self.pct.get_style_context().add_class("pct")
+        self.pct.set_xalign(1.0)
+
+        self.pack_start(self.mute_btn, False, False, 0)
+        self.pack_start(self.scale, True, True, 0)
+        self.pack_start(self.pct, False, False, 0)
+
+    def set_state(self, pct: int, muted: bool):
+        self._updating = True
+        self.scale.set_value(pct)
+        self._updating = False
+        self.pct.set_text(f"{pct}%")
+        self.mute_btn.set_label(self.icon_for(pct, muted))
+        for ctx in (self.get_style_context(), self.mute_btn.get_style_context()):
+            (ctx.add_class if muted else ctx.remove_class)("muted")
+
+    def _scroll(self, _w, event):
+        step = 5
+        if event.direction == Gdk.ScrollDirection.UP:
+            self.scale.set_value(self.scale.get_value() + step)
+        elif event.direction == Gdk.ScrollDirection.DOWN:
+            self.scale.set_value(self.scale.get_value() - step)
+        elif event.direction == Gdk.ScrollDirection.SMOOTH:
+            self.scale.set_value(self.scale.get_value() - event.delta_y * step)
+        return True
+
+    def _changed(self, scale):
+        v = int(round(scale.get_value()))
+        self.pct.set_text(f"{v}%")
+        if self._updating:
+            return
+        # coalesce drags into one pactl call per frame-ish
+        self._pending = v
+        if not getattr(self, "_flush_id", None):
+            self._flush_id = GLib.timeout_add(40, self._flush)
+
+    def _flush(self):
+        self._flush_id = None
+        if self._pending is not None:
+            self.on_volume(self._pending)
+            self._pending = None
+        return False
+
+
+class Popup(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="volpop")
+        self.set_decorated(False)
+        self.set_resizable(False)
+
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_namespace(self, "volpop")
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+        for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.RIGHT,
+                     GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT):
+            GtkLayerShell.set_anchor(self, edge, True)
+        GtkLayerShell.set_exclusive_zone(self, -1)
+
+        self.connect("key-press-event", self._key)
+
+        # transparent backdrop: any click that reaches it closes the popup
+        backdrop = Gtk.EventBox()
+        backdrop.set_visible_window(False)
+        backdrop.connect("button-press-event", lambda *_: self.quit() or True)
+        self.add(backdrop)
+
+        card = Gtk.EventBox()  # swallows clicks so the backdrop never sees them
+        card.set_visible_window(False)
+        card.connect("button-press-event", lambda *_: True)
+        card.set_halign(Gtk.Align.END)
+        card.set_valign(Gtk.Align.START)
+        card.set_margin_top(BAR_HEIGHT + MARGIN_TOP)
+        card.set_margin_end(MARGIN_RIGHT)
+        backdrop.add(card)
+
+        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        outer.get_style_context().add_class("popup")
+        card.add(outer)
+
+        # sinks
+        self.sink_combo = self._combo(self._sink_changed)
+        self.sink_row = VolumeRow(self._toggle_sink_mute, self._set_sink_volume, speaker_icon)
+        self.sink_row.pack_end(self.sink_combo, False, False, 0)
+        outer.pack_start(self.sink_row, False, False, 0)
+
+        # sources
+        self.source_combo = self._combo(self._source_changed)
+        self.source_row = VolumeRow(self._toggle_source_mute, self._set_source_volume,
+                                    lambda _p, m: MIC_MUTED if m else MIC_ICON)
+        self.source_row.pack_end(self.source_combo, False, False, 0)
+        outer.pack_start(self.source_row, False, False, 0)
+
+        # per-app streams, collapsed by default
+        div = Gtk.Box()
+        div.get_style_context().add_class("divider")
+        outer.pack_start(div, False, False, 0)
+
+        self.apps_toggle = Gtk.Button(label="󰅂  Apps")
+        self.apps_toggle.get_style_context().add_class("apps-toggle")
+        self.apps_toggle.set_halign(Gtk.Align.START)
+        self.apps_toggle.connect("clicked", self._toggle_apps)
+        outer.pack_start(self.apps_toggle, False, False, 0)
+
+        self.apps_revealer = Gtk.Revealer(transition_type=Gtk.RevealerTransitionType.SLIDE_DOWN,
+                                          transition_duration=180)
+        self.apps_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4)
+        self.apps_revealer.add(self.apps_box)
+        outer.pack_start(self.apps_revealer, False, False, 0)
+
+        self.app_rows: dict[int, VolumeRow] = {}
+        self._combo_updating = False
+        self.refresh()
+        self._subscribe()
+
+    # ── building blocks ──
+    def _combo(self, handler) -> Gtk.ComboBoxText:
+        combo = Gtk.ComboBoxText()
+        combo.connect("changed", handler)
+        return combo
+
+    def _fill_combo(self, combo: Gtk.ComboBoxText, devices: list[dict], default: str):
+        self._combo_updating = True
+        combo.remove_all()
+        for i, d in enumerate(devices):
+            combo.append(d["name"], short_name(d.get("description", d["name"])))
+            if d["name"] == default:
+                combo.set_active(i)
+        self._combo_updating = False
+
+    # ── state ──
+    def refresh(self):
+        sinks = pactl_json("sinks")
+        sources = [s for s in pactl_json("sources") if not s["name"].endswith(".monitor")]
+        default_sink = pactl("get-default-sink").strip()
+        default_source = pactl("get-default-source").strip()
+
+        sink = next((s for s in sinks if s["name"] == default_sink), sinks[0] if sinks else None)
+        if sink:
+            self.sink_row.set_state(volume_pct(sink), sink.get("mute", False))
+        self._fill_combo(self.sink_combo, sinks, default_sink)
+
+        source = next((s for s in sources if s["name"] == default_source), sources[0] if sources else None)
+        if source:
+            self.source_row.set_state(volume_pct(source), source.get("mute", False))
+        self._fill_combo(self.source_combo, sources, default_source)
+
+        self._refresh_apps()
+
+    def _refresh_apps(self):
+        inputs = pactl_json("sink-inputs")
+        seen = set()
+        for si in inputs:
+            idx = si["index"]
+            seen.add(idx)
+            props = si.get("properties", {})
+            row = self.app_rows.get(idx)
+            if row is None:
+                icon, name = self._identify(props)
+                row = self._app_row(idx, name or f"stream {idx}", icon)
+                self.app_rows[idx] = row
+                self.apps_box.pack_start(row, False, False, 0)
+                row.show_all()
+            row.set_state(volume_pct(si), si.get("mute", False))
+        for idx in list(self.app_rows):
+            if idx not in seen:
+                self.apps_box.remove(self.app_rows.pop(idx))
+        n = len(self.app_rows)
+        self.apps_toggle.set_label(("󰅀" if self.apps_revealer.get_reveal_child() else "󰅂")
+                                   + f"  Apps ({n})")
+
+    @staticmethod
+    def _identify(props: dict) -> tuple[str | None, str | None]:
+        """(icon name, label) for a stream, honouring APP_OVERRIDES."""
+        keys = (props.get("application.name"), props.get("application.process.binary"),
+                props.get("node.name"))
+        for k in keys:
+            if k and k.lower() in APP_OVERRIDES:
+                return APP_OVERRIDES[k.lower()]
+        return (props.get("application.icon_name") or props.get("application.process.binary"),
+                props.get("application.name") or props.get("media.name"))
+
+    def _app_row(self, idx: int, name: str, icon_name: str | None) -> VolumeRow:
+        row = VolumeRow(lambda: self._toggle_input_mute(idx),
+                        lambda v: pactl("set-sink-input-volume", str(idx), f"{v}%"),
+                        speaker_icon)
+        label = Gtk.Label(label=name)
+        label.get_style_context().add_class("app-name")
+        label.set_xalign(0.0)
+        label.set_ellipsize(Pango.EllipsizeMode.END)
+        label.set_max_width_chars(14)
+        label.set_width_chars(12)
+        theme = Gtk.IconTheme.get_default()
+        if not (icon_name and theme.has_icon(icon_name)):
+            icon_name = "audio-x-generic-symbolic"
+        img = Gtk.Image.new_from_icon_name(icon_name, Gtk.IconSize.MENU)
+        img.set_pixel_size(16)
+        img.get_style_context().add_class("app-icon")
+        row.pack_start(img, False, False, 0)
+        row.reorder_child(img, 1)
+        row.pack_start(label, False, False, 0)
+        row.reorder_child(label, 2)
+        return row
+
+    # ── actions ──
+    def _sink_changed(self, combo):
+        if not self._combo_updating and combo.get_active_id():
+            pactl("set-default-sink", combo.get_active_id())
+            # move live streams over so the change is audible immediately
+            for idx in self.app_rows:
+                pactl("move-sink-input", str(idx), combo.get_active_id())
+            self.refresh()
+
+    def _source_changed(self, combo):
+        if not self._combo_updating and combo.get_active_id():
+            pactl("set-default-source", combo.get_active_id())
+            self.refresh()
+
+    def _toggle_sink_mute(self):
+        pactl("set-sink-mute", "@DEFAULT_SINK@", "toggle")
+        self.refresh()
+
+    def _toggle_source_mute(self):
+        pactl("set-source-mute", "@DEFAULT_SOURCE@", "toggle")
+        self.refresh()
+
+    def _toggle_input_mute(self, idx: int):
+        pactl("set-sink-input-mute", str(idx), "toggle")
+        self.refresh()
+
+    def _set_sink_volume(self, v: int):
+        pactl("set-sink-volume", "@DEFAULT_SINK@", f"{v}%")
+
+    def _set_source_volume(self, v: int):
+        pactl("set-source-volume", "@DEFAULT_SOURCE@", f"{v}%")
+
+    def _toggle_apps(self, *_):
+        show = not self.apps_revealer.get_reveal_child()
+        self.apps_revealer.set_reveal_child(show)
+        self._refresh_apps()
+
+    # ── live updates ──
+    def _subscribe(self):
+        self.sub = subprocess.Popen(["pactl", "subscribe"], stdout=subprocess.PIPE, text=True)
+        self._refresh_id = None
+        GLib.io_add_watch(self.sub.stdout, GLib.IO_IN | GLib.IO_HUP, self._on_event)
+
+    def _on_event(self, stream, cond):
+        if cond & GLib.IO_HUP:
+            return False
+        stream.readline()
+        if self._refresh_id is None:  # debounce bursts
+            self._refresh_id = GLib.timeout_add(80, self._debounced_refresh)
+        return True
+
+    def _debounced_refresh(self):
+        self._refresh_id = None
+        self.refresh()
+        return False
+
+    # ── lifecycle ──
+    def _key(self, _w, event):
+        if event.keyval == Gdk.KEY_Escape:
+            self.quit()
+        return False
+
+    def quit(self):
+        try:
+            self.sub.terminate()
+        except Exception:
+            pass
+        Gtk.main_quit()
+
+
+def load_css():
+    css = (COLORS.read_text() if COLORS.exists() else "") + STYLE
+    provider = Gtk.CssProvider()
+    provider.load_from_data(css.encode())
+    Gtk.StyleContext.add_provider_for_screen(
+        Gdk.Screen.get_default(), provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+
+def toggle_instance() -> bool:
+    """Kill a running popup (toggle behaviour). Returns True if one was killed."""
+    try:
+        pid = int(PIDFILE.read_text())
+        os.kill(pid, signal.SIGTERM)
+        PIDFILE.unlink(missing_ok=True)
+        return True
+    except (FileNotFoundError, ValueError, ProcessLookupError):
+        PIDFILE.unlink(missing_ok=True)
+        return False
+
+
+def main():
+    if toggle_instance():
+        return
+    PIDFILE.write_text(str(os.getpid()))
+    try:
+        load_css()
+        win = Popup()
+        win.show_all()
+        win.present()
+        signal.signal(signal.SIGTERM, lambda *_: win.quit())
+        Gtk.main()
+    finally:
+        PIDFILE.unlink(missing_ok=True)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

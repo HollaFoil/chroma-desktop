@@ -1,90 +1,214 @@
+// Layout and styling follow the "slanted-bubbles" theme from
+// github.com/Abhra00/Matuprland, adapted to this machine: the launcher pops a
+// GTK menu instead of rofi, media is pinned to Spotify, stats sit on the right,
+// workspaces are per-monitor. Colours all come from matugen via style.css.
 {
   "layer": "top",
   "position": "top",
-  "height": 34,
-  "margin-top": 6,
-  "margin-left": 10,
-  "margin-right": 10,
+  "height": 37,
   "spacing": 0,
+  "margin-top": 0,
+  "margin-right": 0,
+  "margin-bottom": 0,
+  "margin-left": 0,
+  "reload_style_on_change": true,
 
-  "modules-left": ["group/stats", "hyprland/workspaces", "hyprland/submap"],
-  "modules-center": ["clock"],
-  "modules-right": ["tray", "group/right"],
+  "modules-left": [
+    "custom/launcher",
+    "custom/playerctl#backward",
+    "custom/playerctl#play",
+    "custom/playerctl#foward",
+    "custom/playerlabel"
+  ],
+  "modules-center": [
+    "hyprland/workspaces",
+    "custom/swaync"
+  ],
+  "modules-right": [
+    "tray",
+    "group/stats",
+    "pulseaudio",
+    "network",
+    "clock"
+  ],
 
-  "group/right": {
-    "orientation": "horizontal",
-    "modules": ["mpris", "pulseaudio", "custom/power"]
-  },
-
-  "custom/power": {
-    "format": "󰐥",
-    "on-click": "~/.local/bin/powermenu",
-    "tooltip": false
-  },
-
-  "group/stats": {
-    "orientation": "horizontal",
-    "modules": ["cpu", "memory", "custom/gpu", "temperature"]
-  },
-
-  "cpu": {
-    "format": "CPU {usage}%",
-    "interval": 3
-  },
-
-  "memory": {
-    "format": "RAM {percentage}%",
-    "interval": 5
-  },
-
-  "custom/gpu": {
-    "exec": "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
-    "format": "GPU {}%",
-    "interval": 3,
-    "tooltip": false
-  },
-
-  "temperature": {
-    "hwmon-path": "/sys/class/hwmon/hwmon2/temp1_input",
-    "format": "TMP {temperatureC}°C",
-    "interval": 5,
-    "critical-threshold": 80
-  },
-
-  "hyprland/workspaces": {
-    "format": "{name}"
-  },
-
-  "hyprland/submap": {
-    "format": "{}"
-  },
-
-  "clock": {
-    "format": "{:%a %d %b    %H:%M}",
-    "tooltip-format": "<tt>{calendar}</tt>",
-    "calendar": {
-      "mode": "month",
-      "on-scroll": 1
+  // ── launcher ────────────────────────────────────────────────────────────
+  // Arch glyph, coloured in style.css. Left click pops the GTK menu described
+  // in menu.xml (a popup on the bar's layer, not a window); each id there maps
+  // to a command here.
+  "custom/launcher": {
+    "format": "󰣇",
+    "tooltip": false,
+    "menu": "on-click",
+    "menu-file": "~/.config/waybar/menu.xml",
+    "menu-actions": {
+      "launcher":      "~/.local/bin/rofi-launcher",
+      "clipboard":     "~/.local/bin/rofi-cliphist",
+      "screenshot":    "grim -g \"$(slurp)\" - | wl-copy",
+      "notifications": "swaync-client -t -sw",
+      "audio":         "~/.local/bin/volpop",
+      "lock":          "hyprlock",
+      "suspend":       "systemctl suspend",
+      "logout":        "hyprctl dispatch 'hl.dsp.exit()'",
+      "reboot":        "systemctl reboot",
+      "shutdown":      "systemctl poweroff"
     }
   },
 
-  "mpris": {
-    "format": "{player_icon} {title}",
-    "format-paused": "{status_icon} {title}",
+  // ── media (Spotify) ─────────────────────────────────────────────────────
+  // waybar-widget streams one JSON line per playerctl -F event, so no interval;
+  // exec-on-event is off so a click does not start a second stream.
+  "custom/playerctl#backward": {
+    "format": "󰙣 ",
+    "on-click": "playerctl -p spotify previous",
+    "on-scroll-up": "playerctl -p spotify volume 0.05+",
+    "on-scroll-down": "playerctl -p spotify volume 0.05-",
+    "tooltip": false
+  },
+  "custom/playerctl#play": {
+    "exec": "~/.local/bin/waybar-widget media-status",
+    "return-type": "json",
+    "exec-on-event": false,
+    "format": "{icon}",
+    "format-icons": {
+      "playing": "<span>󰏤 </span>",
+      "paused":  "<span>󰐊 </span>",
+      "stopped": "<span>󰐊 </span>"
+    },
+    "on-click": "playerctl -p spotify play-pause",
+    "on-scroll-up": "playerctl -p spotify volume 0.05+",
+    "on-scroll-down": "playerctl -p spotify volume 0.05-",
+    "tooltip": false
+  },
+  "custom/playerctl#foward": {
+    "format": "󰙡 ",
+    "on-click": "playerctl -p spotify next",
+    "on-scroll-up": "playerctl -p spotify volume 0.05+",
+    "on-scroll-down": "playerctl -p spotify volume 0.05-",
+    "tooltip": false
+  },
+  "custom/playerlabel": {
+    "exec": "~/.local/bin/waybar-widget media-title",
+    "return-type": "json",
+    "exec-on-event": false,
+    "format": "<span>󰎈 {text} 󰎈</span>",
     "max-length": 40,
-    "player-icons": { "default": "󰐊" },
-    "status-icons": { "paused": "󰏤" }
+    "escape": true,
+    "on-click": "playerctl -p spotify play-pause"
+  },
+
+  // ── workspaces ──────────────────────────────────────────────────────────
+  // Each monitor's bar shows its own workspaces; the ones bound to it in
+  // hyprland.lua are always drawn so they work as buttons while empty.
+  "hyprland/workspaces": {
+    "format": "{name}",
+    "on-click": "activate",
+    // explicit cursor: waybar's automatic hand resets when the pointer enters a
+    // child button, so the buttons themselves would show an arrow
+    "cursor": "pointer",
+    // Hyprland >= 0.55 with a Lua config takes Lua on the IPC socket
+    "on-scroll-down": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"m+1\" })'",
+    "on-scroll-up": "hyprctl dispatch 'hl.dsp.focus({ workspace = \"m-1\" })'",
+    "sort-by-number": true,
+    "persistent-workspaces": {
+      "HDMI-A-1": [1, 2, 3, 4, 5],
+      "DP-2":     [6, 7, 8],
+      "HDMI-A-2": [9, 10]
+    }
+  },
+
+  "custom/swaync": {
+    "tooltip": true,
+    "tooltip-format": "Left click: notification center\nRight click: do not disturb",
+    "format": "{text} {icon} ",
+    "format-icons": {
+      "notification":                 "<span foreground='red'><sup>󰧞</sup></span>󰂚",
+      "none":                         "󰂚",
+      "dnd-notification":             "<span foreground='red'><sup>󰧞</sup></span>󰂛",
+      "dnd-none":                     "󰂛",
+      "inhibited-notification":       "<span foreground='red'><sup>󰧞</sup></span>󰂚",
+      "inhibited-none":               "󰂚",
+      "dnd-inhibited-notification":   "<span foreground='red'><sup>󰧞</sup></span>󰂛",
+      "dnd-inhibited-none":           "󰂛"
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "swaync-client -swb",
+    "exec-on-event": false,
+    "on-click": "sleep 0.1 && swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
+  },
+
+  // ── right ───────────────────────────────────────────────────────────────
+  "tray": {
+    "icon-size": 18,
+    "spacing": 8,
+    "cursor": "pointer"  // same reason as hyprland/workspaces
+  },
+
+  "group/stats": {
+    "orientation": "inherit",
+    "modules": ["cpu", "custom/gpu", "temperature"]
+  },
+  "cpu": {
+    "format": "󰍛 {usage}%",
+    "interval": 3,
+    "tooltip": false
+  },
+  "custom/gpu": {
+    "exec": "~/.local/bin/waybar-widget gpu",
+    "return-type": "json",
+    "format": "󰢮 {text}",
+    "interval": 3
+  },
+  // k10temp, addressed by PCI path so it survives hwmon renumbering
+  "temperature": {
+    "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+    "input-filename": "temp1_input",
+    "format": "󰔏 {temperatureC}°C",
+    "interval": 5,
+    "critical-threshold": 85,
+    "tooltip": false
   },
 
   "pulseaudio": {
     "format": "{icon} {volume}%",
-    "format-muted": "󰝟",
     "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
-    "on-click": "pavucontrol",
-    "scroll-step": 5
+    "format-muted": "󰝟",
+    "on-click": "~/.local/bin/volpop",
+    "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
+    "scroll-step": 5,
+    "tooltip": false
   },
 
-  "tray": {
-    "spacing": 8
+  "network": {
+    "format": "󰖩",
+    "format-disconnected": "󰖪",
+    "tooltip-format": "{ifname}  {ipaddr}/{cidr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%)  {ipaddr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
+    "tooltip-format-disconnected": "Disconnected",
+    "interval": 3,
+    "on-click": "kitty --title nmtui sh -c 'sleep 0.1; nmtui'"
+  },
+
+  "clock": {
+    "format": "󰥔 {:%H:%M:%S} ",
+    "format-alt": "󰃭 {:%a %d %b %Y} ",
+    "interval": 1,
+    "tooltip-format": "<tt>{calendar}</tt>",
+    "calendar": {
+      "mode": "month",
+      "on-scroll": 1,
+      "format": {
+        "today": "<b><u>{}</u></b>"
+      }
+    },
+    // left click toggles format/format-alt (waybar default); these add to it
+    "actions": {
+      "on-click-right": "shift_reset",
+      "on-scroll-up": "shift_up",
+      "on-scroll-down": "shift_down"
+    }
   }
 }

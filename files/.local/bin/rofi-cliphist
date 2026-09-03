@@ -1,0 +1,25 @@
+#!/bin/bash
+# Clipboard history via cliphist + rofi (see ~/.config/rofi/cliphist.rasi).
+#   Enter      copy the entry back to the clipboard
+#   Ctrl+Del   delete the entry
+#   Alt+Del    wipe the whole history
+set -uo pipefail
+
+pkill -x rofi && exit 0
+
+while true; do
+    result=$(cliphist list | rofi -dmenu -i \
+        -theme ~/.config/rofi/cliphist.rasi \
+        -display-columns 2 -display-column-separator $'\t' \
+        -mesg "Ctrl+Del  delete    Alt+Del  wipe" \
+        -kb-custom-1 "Control-Delete" \
+        -kb-custom-2 "Alt-Delete")
+    case "$?" in
+        0)  [[ -z "$result" ]] && continue
+            cliphist decode <<<"$result" | wl-copy
+            exit 0 ;;
+        10) cliphist delete <<<"$result" ;;
+        11) cliphist wipe ;;
+        *)  exit 0 ;;
+    esac
+done

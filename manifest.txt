@@ -8,9 +8,27 @@
 # Waybar
 .config/waybar/config.jsonc
 .config/waybar/style.css
+.config/waybar/menu.xml
+.local/bin/waybar-widget
 
 # swaync
 .config/swaync/style.css
+.config/swaync/config.json
+
+# rofi
+.config/rofi/config.rasi
+.config/rofi/shared.rasi
+.config/rofi/launchers/style-4.rasi
+.config/rofi/launchers/style-5.rasi
+.config/rofi/launchers/style-7.rasi
+.config/rofi/launchers/style-8.rasi
+.config/rofi/cliphist.rasi
+.config/matugen/templates/rofi-colors.rasi
+.local/bin/rofi-launcher
+.local/bin/rofi-cliphist
+.local/bin/rofi-wallthumbs
+.local/bin/volpop
+.local/bin/wallstrip
 
 # fuzzel
 .config/fuzzel/fuzzel.ini

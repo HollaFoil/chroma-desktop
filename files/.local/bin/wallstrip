@@ -1,0 +1,351 @@
+#!/usr/bin/env python3
+"""wallstrip - pick a wallpaper from a looping strip of previews.
+
+A layer-shell overlay with nothing on it but a horizontal row of thumbnails:
+the centre one large and full-bright, neighbours shrinking and dimming outwards, the list wrapping around
+so scrolling never hits an end. No buttons, no chrome; the filename sits under
+the centre image.
+
+    ←/→  h/l  scroll   move        Enter / Space / click centre   apply (setwall)
+    click a side image             jump to it                      Esc / click away   close
+
+Wallpapers are every image under WALL_DIR (recursively). Previews are scaled
+once with GdkPixbuf and cached under ~/.cache/wallstrip, so reopening is
+instant. The strip starts on the wallpaper currently shown (awww query).
+
+Blur comes from Hyprland (frosted-wallstrip layer rule); the backdrop is drawn
+at a low alpha so the whole screen behind frosts over. Stdlib + PyGObject.
+"""
+from __future__ import annotations
+
+import hashlib
+import math
+import os
+import signal
+import subprocess
+import sys
+from pathlib import Path
+
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("GdkPixbuf", "2.0")
+gi.require_version("GtkLayerShell", "0.1")
+gi.require_version("PangoCairo", "1.0")
+from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, GtkLayerShell, Pango, PangoCairo  # noqa: E402
+
+WALL_DIR = Path(os.environ.get("WALLSTRIP_DIR", Path.home() / "Pictures/Wallpapers"))
+CACHE = Path.home() / ".cache/wallstrip"
+COLORS = Path.home() / ".config/waybar/colors.css"
+PIDFILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "wallstrip.pid"
+SETWALL = Path.home() / ".local/bin/setwall"
+
+THUMB_W, THUMB_H = 640, 360        # cached preview size (16:9 letterboxed)
+CENTER_W = 560                     # on-screen width of the centre preview
+SIDE_SCALE = 0.55                  # each step away from centre shrinks by this
+SIDE_COUNT = 3                     # previews shown on each side
+GAP = 28
+RADIUS = 18
+BACKDROP_ALPHA = 0.35
+SIDE_ALPHA = 0.75
+# Scrolling: the drawn position eases toward the target index each frame with
+# velocity proportional to the remaining distance (1/e in 1/ANIM_RATE s), so a
+# burst of presses stacks up the target and the strip simply moves faster.
+ANIM_RATE = 11.0
+FONT = "GeistMono Nerd Font Propo Bold 12"
+
+
+# ── colours from matugen ─────────────────────────────────────────────────────
+
+def matugen_colors() -> dict[str, tuple[float, float, float]]:
+    out = {}
+    if COLORS.exists():
+        for line in COLORS.read_text().splitlines():
+            if line.strip().startswith("@define-color"):
+                _, name, hexval = line.strip().rstrip(";").split()
+                h = hexval.lstrip("#")
+                out[name] = tuple(int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    out.setdefault("primary", (0.6, 0.8, 1.0))
+    out.setdefault("on_surface", (0.9, 0.9, 0.9))
+    out.setdefault("surface", (0.06, 0.08, 0.09))
+    return out
+
+
+# ── wallpapers & thumbnails ──────────────────────────────────────────────────
+
+def list_wallpapers() -> list[Path]:
+    files = [p for p in sorted(WALL_DIR.rglob("*")) if p.is_file() and not p.name.startswith(".")]
+    return files
+
+
+def thumb_for(path: Path) -> GdkPixbuf.Pixbuf | None:
+    CACHE.mkdir(parents=True, exist_ok=True)
+    key = hashlib.sha1(f"{path}:{path.stat().st_mtime_ns}".encode()).hexdigest()
+    cached = CACHE / f"{key}.png"
+    if cached.exists():
+        try:
+            return GdkPixbuf.Pixbuf.new_from_file(str(cached))
+        except GLib.Error:
+            cached.unlink(missing_ok=True)
+    try:
+        src = GdkPixbuf.Pixbuf.new_from_file(str(path))
+    except GLib.Error:
+        return None  # not an image
+    # scale to cover THUMB_W x THUMB_H, then centre-crop
+    scale = max(THUMB_W / src.get_width(), THUMB_H / src.get_height())
+    w, h = max(THUMB_W, round(src.get_width() * scale)), max(THUMB_H, round(src.get_height() * scale))
+    scaled = src.scale_simple(w, h, GdkPixbuf.InterpType.BILINEAR)
+    thumb = scaled.new_subpixbuf((w - THUMB_W) // 2, (h - THUMB_H) // 2, THUMB_W, THUMB_H).copy()
+    thumb.savev(str(cached), "png", [], [])
+    return thumb
+
+
+def current_wallpaper() -> Path | None:
+    try:
+        out = subprocess.run(["awww", "query"], capture_output=True, text=True, timeout=2).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    for line in out.splitlines():
+        if "image: " in line:
+            return Path(line.split("image: ", 1)[1].strip())
+    return None
+
+
+# ── the strip ────────────────────────────────────────────────────────────────
+
+class Strip(Gtk.DrawingArea):
+    def __init__(self, walls: list[Path], thumbs: list[GdkPixbuf.Pixbuf], start: int, on_pick, on_close):
+        super().__init__()
+        self.walls, self.thumbs = walls, thumbs
+        # target is an unbounded integer, pos the animated float that follows it;
+        # both are taken modulo len(walls) only when a thumbnail is looked up,
+        # which is what makes the wrap-around seamless
+        self.target = start
+        self.pos = float(start)
+        self._tick_id = None
+        self.on_pick, self.on_close = on_pick, on_close
+        self.colors = matugen_colors()
+        self.hit_boxes: list[tuple[float, float, float, float, int]] = []
+        self.set_can_focus(True)
+        self.add_events(Gdk.EventMask.BUTTON_PRESS_MASK | Gdk.EventMask.SCROLL_MASK
+                        | Gdk.EventMask.SMOOTH_SCROLL_MASK | Gdk.EventMask.KEY_PRESS_MASK)
+        self.connect("draw", self.draw)
+        self.connect("button-press-event", self.clicked)
+        self.connect("scroll-event", self.scrolled)
+        self.connect("key-press-event", self.key)
+        self._scroll_accum = 0.0
+
+    # geometry: offset 0 is the centre; each step out scales by SIDE_SCALE.
+    # Integer offsets give the resting layout, fractional ones interpolate
+    # between the two neighbouring resting slots so motion is continuous.
+    def slot_int(self, offset: int, width: int, height: int):
+        w = CENTER_W * SIDE_SCALE ** abs(offset)
+        h = w * 9 / 16
+        x = width / 2
+        step = 1 if offset > 0 else -1
+        for k in range(1, abs(offset) + 1):
+            prev = CENTER_W * SIDE_SCALE ** (k - 1)
+            cur = CENTER_W * SIDE_SCALE ** k
+            x += step * (prev / 2 + GAP + cur / 2)
+        return x, height / 2, w, h
+
+    def slot(self, offset: float, width: int, height: int):
+        lo = math.floor(offset)
+        t = offset - lo
+        cx0, cy, w0, h0 = self.slot_int(lo, width, height)
+        cx1, _, w1, h1 = self.slot_int(lo + 1, width, height)
+        cx, w, h = cx0 + (cx1 - cx0) * t, w0 + (w1 - w0) * t, h0 + (h1 - h0) * t
+        return cx - w / 2, cy - h / 2, w, h
+
+    @property
+    def index(self) -> int:
+        return self.target % len(self.walls)
+
+    def draw(self, _w, cr):
+        width, height = self.get_allocated_width(), self.get_allocated_height()
+        cr.set_source_rgba(0, 0, 0, BACKDROP_ALPHA)
+        cr.paint()
+        self.hit_boxes = []
+        n = len(self.walls)
+        first = math.floor(self.pos) - SIDE_COUNT - 1
+        last = math.ceil(self.pos) + SIDE_COUNT + 1
+        # draw outer ones first so the centre sits on top
+        for j in sorted(range(first, last + 1), key=lambda j: -abs(j - self.pos)):
+            f = j - self.pos                       # fractional offset from centre
+            edge = min(1.0, max(0.0, SIDE_COUNT + 1 - abs(f)))  # fade in/out at the ends
+            if edge <= 0:
+                continue
+            x, y, w, h = self.slot(f, width, height)
+            centred = max(0.0, 1 - abs(f))         # 1 at rest in the middle, 0 a slot away
+            alpha = (SIDE_ALPHA + (1 - SIDE_ALPHA) * centred) * edge
+            self.rounded(cr, x, y, w, h, RADIUS * (w / CENTER_W) ** 0.5)
+            cr.save()
+            cr.clip()
+            pb = self.thumbs[j % n]
+            cr.save()
+            cr.translate(x, y)
+            cr.scale(w / pb.get_width(), h / pb.get_height())
+            Gdk.cairo_set_source_pixbuf(cr, pb, 0, 0)
+            cr.paint_with_alpha(alpha)
+            cr.restore()
+            cr.restore()
+            self.hit_boxes.append((x, y, w, h, j - self.target))
+
+        # filename under the centre slot, cross-fading as the strip moves
+        x, y, w, h = self.slot_int(0, width, height)
+        x -= w / 2
+        layout = PangoCairo.create_layout(cr)
+        layout.set_font_description(Pango.FontDescription(FONT))
+        nearest = round(self.pos)
+        layout.set_text(self.walls[nearest % n].name, -1)
+        tw, th = layout.get_pixel_size()
+        r, g, b = self.colors["on_surface"]
+        cr.set_source_rgba(r, g, b, 0.95 * max(0.0, 1 - 2 * abs(self.pos - nearest)))
+        cr.move_to(width / 2 - tw / 2, y + h + 18)
+        PangoCairo.show_layout(cr, layout)
+        return True
+
+    @staticmethod
+    def rounded(cr, x, y, w, h, r):
+        cr.new_sub_path()
+        cr.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+        cr.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+        cr.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+        cr.arc(x + r, y + r, r, math.pi, 3 * math.pi / 2)
+        cr.close_path()
+
+    def move(self, delta: int):
+        self.target += delta
+        if self._tick_id is None:
+            self._last_frame = None
+            self._tick_id = self.add_tick_callback(self._tick)
+
+    def _tick(self, _w, clock):
+        now = clock.get_frame_time()  # microseconds
+        dt = 0.0 if self._last_frame is None else (now - self._last_frame) / 1e6
+        self._last_frame = now
+        remaining = self.target - self.pos
+        if abs(remaining) < 0.002:
+            self.pos = float(self.target)
+            self.queue_draw()
+            self._tick_id = None
+            return False
+        self.pos += remaining * (1 - math.exp(-ANIM_RATE * min(dt, 0.05)))
+        self.queue_draw()
+        return True
+
+    def clicked(self, _w, ev):
+        # centre is appended last, so it wins when boxes overlap
+        for x, y, w, h, offset in reversed(self.hit_boxes):
+            if x <= ev.x <= x + w and y <= ev.y <= y + h:
+                if offset == 0:
+                    self.on_pick(self.walls[self.index])
+                else:
+                    self.move(offset)
+                return True
+        self.on_close()
+        return True
+
+    def scrolled(self, _w, ev):
+        if ev.direction == Gdk.ScrollDirection.SMOOTH:
+            self._scroll_accum += ev.delta_y + ev.delta_x
+            if abs(self._scroll_accum) >= 1:
+                self.move(1 if self._scroll_accum > 0 else -1)
+                self._scroll_accum = 0.0
+        elif ev.direction in (Gdk.ScrollDirection.DOWN, Gdk.ScrollDirection.RIGHT):
+            self.move(1)
+        elif ev.direction in (Gdk.ScrollDirection.UP, Gdk.ScrollDirection.LEFT):
+            self.move(-1)
+        return True
+
+    def key(self, _w, ev):
+        k = ev.keyval
+        if k in (Gdk.KEY_Escape, Gdk.KEY_q):
+            self.on_close()
+        elif k in (Gdk.KEY_Right, Gdk.KEY_l, Gdk.KEY_j, Gdk.KEY_Tab):
+            self.move(1)
+        elif k in (Gdk.KEY_Left, Gdk.KEY_h, Gdk.KEY_k, Gdk.KEY_ISO_Left_Tab):
+            self.move(-1)
+        elif k in (Gdk.KEY_Return, Gdk.KEY_KP_Enter, Gdk.KEY_space):
+            self.on_pick(self.walls[self.index])
+        return True
+
+
+class Overlay(Gtk.Window):
+    def __init__(self, walls, thumbs, start):
+        super().__init__(title="wallstrip")
+        self.set_decorated(False)
+        self.set_app_paintable(True)
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual()
+        if visual:
+            self.set_visual(visual)
+
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_namespace(self, "wallstrip")
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+        for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.RIGHT,
+                     GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT):
+            GtkLayerShell.set_anchor(self, edge, True)
+        GtkLayerShell.set_exclusive_zone(self, -1)
+
+        self.strip = Strip(walls, thumbs, start, self.pick, self.quit)
+        self.add(self.strip)
+        self.connect("key-press-event", lambda w, e: self.strip.key(w, e))
+
+    def pick(self, path: Path):
+        subprocess.Popen([str(SETWALL), str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+        self.quit()
+
+    def quit(self):
+        Gtk.main_quit()
+
+
+def toggle_instance() -> bool:
+    try:
+        os.kill(int(PIDFILE.read_text()), signal.SIGTERM)
+        PIDFILE.unlink(missing_ok=True)
+        return True
+    except (FileNotFoundError, ValueError, ProcessLookupError):
+        PIDFILE.unlink(missing_ok=True)
+        return False
+
+
+def main():
+    if toggle_instance():
+        return 0
+    walls = list_wallpapers()
+    thumbs = []
+    kept = []
+    for p in walls:
+        t = thumb_for(p)
+        if t is not None:
+            kept.append(p)
+            thumbs.append(t)
+    if not kept:
+        print(f"wallstrip: no images in {WALL_DIR}", file=sys.stderr)
+        return 1
+    cur = current_wallpaper()
+    start = kept.index(cur) if cur in kept else 0
+
+    PIDFILE.write_text(str(os.getpid()))
+    try:
+        css = Gtk.CssProvider()
+        css.load_from_data(b"window { background: transparent; }")
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css,
+                                                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        win = Overlay(kept, thumbs, start)
+        win.show_all()
+        win.strip.grab_focus()
+        signal.signal(signal.SIGTERM, lambda *_: win.quit())
+        Gtk.main()
+    finally:
+        PIDFILE.unlink(missing_ok=True)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

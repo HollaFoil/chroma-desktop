@@ -69,7 +69,7 @@ hl.monitor({
 -- Set programs that you use
 local terminal    = "kitty"
 local fileManager = "dolphin"
-local menu = "fuzzel"
+local menu = os.getenv("HOME") .. "/.local/bin/rofi-launcher"
 
 
 -------------------
@@ -444,8 +444,9 @@ hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy'))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("kitty --class cheatsheet -e ~/.local/bin/cheatsheet"))
-hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("cliphist list | fuzzel --dmenu | cliphist decode | wl-copy"))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/rofi-cliphist"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallstrip"))
 hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/holla/.local/bin/relayout"))
 hl.bind(mainMod .. " + ALT + R",   hl.dsp.exec_cmd("/home/holla/.local/bin/relayout toggle"))
 
@@ -567,6 +568,27 @@ hl.window_rule({
 --     no_anim = true,
 -- })
 -- overlayLayerRule:set_enabled(false)
+
+-- Frosted popups: blur the wallpaper behind the bar, its launcher menu, the
+-- swaync panels and volpop. Their stylesheets paint translucent @surface so
+-- the blur shows through; ignore_alpha keeps the fully transparent parts of
+-- the surfaces (swaync's screen-wide window, volpop's click-away backdrop)
+-- from being blurred as well.
+for _, r in ipairs({
+    { name = "frosted-waybar",  ns = "^waybar$",                      popups = true },
+    { name = "frosted-swaync",  ns = "^swaync-control-center$" },
+    { name = "frosted-notifs",  ns = "^swaync-notification-window$" },
+    { name = "frosted-volpop",  ns = "^volpop$" },
+    { name = "frosted-wallstrip", ns = "^wallstrip$" },
+}) do
+    hl.layer_rule({
+        name         = r.name,
+        match        = { namespace = r.ns },
+        blur         = true,
+        blur_popups  = r.popups or false,
+        ignore_alpha = 0.2,
+    })
+end
 
 -- Hyprland-run windowrule
 hl.window_rule({

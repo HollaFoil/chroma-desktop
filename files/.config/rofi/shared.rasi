@@ -1,0 +1,47 @@
+/* Shared by every launcher style: maps matugen colours onto the theme's
+ * variable names (same mapping as Matuprland's shared/colors.rasi), sets the
+ * font, and styles the search bar that was added to the borderless styles. */
+@import "~/.config/rofi/colors.rasi"
+
+* {
+    background:         @surface;
+    background-alt:     @surface-container-highest;
+    background-alpha:   @surface-alpha;
+    foreground:         @on-surface;
+    border-color:       @tertiary;
+    selected:           @primary-fixed;
+    selected-alpha:     @primary-fixed-alpha;
+    selected-text:      @surface;
+    active:             @tertiary;
+    urgent:             @error;
+
+    font:               "GeistMono Nerd Font Propo 11";
+}
+
+/* Search bar (the originals hide the entry and filter blind) */
+inputbar {
+    enabled:                     true;
+    children:                    [ "textbox-prompt-colon", "entry" ];
+    spacing:                     0.8em;
+    padding:                     0.8em 1.2em;
+    border-radius:               1em;
+    background-color:            @background-alt;
+    text-color:                  @foreground;
+}
+textbox-prompt-colon {
+    enabled:                     true;
+    expand:                      false;
+    str:                         "󰍉";
+    text-color:                  @primary;
+    vertical-align:              0.5;
+    background-color:            transparent;
+}
+entry {
+    enabled:                     true;
+    placeholder:                 "Search";
+    placeholder-color:           @on-surface-variant;
+    cursor:                      text;
+    vertical-align:              0.5;
+    background-color:            transparent;
+    text-color:                  @foreground;
+}

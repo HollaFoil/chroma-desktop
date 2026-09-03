@@ -1,0 +1,97 @@
+/* Clipboard history (dmenu mode, fed by cliphist via rofi-cliphist).
+ * Single roomy column; ids are hidden by -display-columns in the script. */
+@import "~/.config/rofi/colors.rasi"
+
+configuration {
+    show-icons:             false;
+    hover-select:           true;
+    me-select-entry:        "";
+    me-accept-entry:        "MousePrimary";
+}
+
+* {
+    background-color:       transparent;
+    text-color:             @on-surface;
+    font:                   "GeistMono Nerd Font Propo 12";
+}
+
+window {
+    transparency:           "real";
+    location:               center;
+    anchor:                 center;
+    width:                  680px;
+    border-radius:          24px 10px 24px 10px;
+    background-color:       @surface;
+    padding:                20px;
+    cursor:                 "default";
+}
+
+mainbox {
+    spacing:                14px;
+    children:               [ "inputbar", "listview", "message" ];
+}
+
+inputbar {
+    children:               [ "textbox-prompt-colon", "entry" ];
+    spacing:                12px;
+    padding:                14px 20px;
+    border-radius:          16px;
+    background-color:       @surface-container-high;
+}
+textbox-prompt-colon {
+    expand:                 false;
+    str:                    "󰅌";
+    text-color:             @primary;
+    font:                   "GeistMono Nerd Font Propo 15";
+    vertical-align:         0.5;
+}
+entry {
+    placeholder:            "Search clipboard";
+    placeholder-color:      @on-surface-variant;
+    cursor:                 text;
+    vertical-align:         0.5;
+}
+
+listview {
+    columns:                1;
+    lines:                  9;
+    fixed-height:           true;
+    dynamic:                false;
+    cycle:                  true;
+    scrollbar:              true;
+    spacing:                6px;
+}
+scrollbar {
+    handle-width:           6px;
+    handle-color:           @primary;
+    background-color:       @surface-container-high;
+    border-radius:          4px;
+    margin:                 0 0 0 8px;
+}
+
+element {
+    padding:                12px 16px;
+    border-radius:          14px;
+    cursor:                 pointer;
+}
+element normal.normal,
+element alternate.normal {
+    background-color:       transparent;
+}
+element selected.normal {
+    background-color:       @primary-container;
+    text-color:             @on-primary-container;
+}
+element-text {
+    horizontal-align:       0.0;
+    vertical-align:         0.5;
+    cursor:                 inherit;
+}
+
+message {
+    padding:                0 6px;
+}
+textbox {
+    text-color:             @on-surface-variant;
+    font:                   "GeistMono Nerd Font Propo 10";
+}

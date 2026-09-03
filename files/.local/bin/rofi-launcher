@@ -1,0 +1,8 @@
+#!/bin/bash
+# Application launcher. Styles live in ~/.config/rofi/launchers; the borderless
+# ones ported from Matuprland are 4, 5, 7 and 8 - change STYLE to switch.
+# Running it while a rofi is open closes that one, so the bind toggles.
+STYLE="${ROFI_STYLE:-style-7}"
+
+pkill -x rofi && exit 0
+exec rofi -show drun -theme "$HOME/.config/rofi/launchers/$STYLE.rasi"
