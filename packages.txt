@@ -68,6 +68,7 @@ vesktop                      # Discord client; quickCss.css is generated (needs 
 spotify-launcher             # Spotify; theme applied through spicetify (see README)
 steam                        # skin via Adwaita-for-Steam (bootstrap clones it) + live push
 firefox                      # site colours via the MatugenFox extension (see README)
+vscodium                     # editor theme via the haikalllp.matugen-theme extension (watches ~/.cache/matugen)
 capitaine-cursors            # cursor theme named in gtk settings.ini
 
 [optional]

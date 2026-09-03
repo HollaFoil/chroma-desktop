@@ -47,6 +47,8 @@
 .config/matugen/templates/kitty-colors.conf
 .config/matugen/templates/fuzzel-colors.ini
 .config/matugen/templates/hyprlock-colors.conf
+.config/matugen/templates/vscode-colors
+.config/matugen/templates/vscode-colors.json
 
 # scripts
 .local/bin/setwall

@@ -90,7 +90,7 @@ Keybinds: `files/.config/hypr/keybinds.txt` (that file *is* the cheatsheet on
 
 - **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, breeze + breeze-icons, plasma-integration, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
 - **Fonts**: `otf-geist-mono-nerd` (UI), `ttf-meslo-nerd` (fallback), `ttf-jetbrains-mono-nerd` (kitty), `noto-fonts`.
-- **Themed apps (optional)**: btop, vesktop, spotify-launcher (+ spicetify), steam, firefox, capitaine-cursors.
+- **Themed apps (optional)**: btop, vesktop, spotify-launcher (+ spicetify), steam, firefox, vscodium, capitaine-cursors.
 - **AUR**: slack-desktop, google-chrome, oh-my-posh-bin, waybar-git (the reference machine runs `waybar-git` for an mpris crash fix; `extra/waybar` 0.15 works).
 
 Not packaged, installed by hand where wanted: [spicetify](https://spicetify.app),
@@ -106,6 +106,7 @@ only once configured. `bootstrap` prints which of these still need a step.
 - **Spotify** — spicetify with the vendored `Text` theme; `spicetify watch -s` (started by hyprland.lua) reloads it in place. Set `current_theme = Text` and `color_scheme = matugen` in `~/.config/spicetify/config-xpui.ini`.
 - **Discord (Vesktop)** — generated `quickCss.css`; turn on *Enable Custom CSS* in Vencord settings.
 - **Firefox** — MatugenFox extension + `matugenfox-host` (a native-messaging host; bootstrap renders its manifest with your home path). Per-site CSS lives in `dusky_sites/`.
+- **VSCodium / VS Code** — install the *Matugen Theme* extension (`haikalllp.matugen-theme`); it watches `~/.cache/matugen/vscode-colors{,.json}` and reloads the editor theme live.
 - **btop** — set `color_theme = "matugen"`; `reload-btop` repaints running instances (btop ≥ 1.4.7).
 - **GTK / Qt** — `adw-gtk3-dark` with generated `colors.css`; Qt via `plasma-integration` and `kdeglobals`. A `Matugen.colors` KDE scheme is generated but nothing applies it automatically.
 - **oh-my-posh** — `gen-ohmyposh-template` recolours the `agnoster` theme; needs `~/.config/oh-my-posh/themes/agnoster.omp.json` (bootstrap offers to fetch it). fish skips the prompt if either is missing.
