@@ -1,0 +1,2188 @@
+@-moz-document domain("crunchyroll.com") {
+
+    /* ---- Hand-written base ---- */
+    html, body {
+        background-color: var(--background) !important;
+        color: var(--on_surface) !important;
+        scrollbar-color: var(--surface_container_highest) var(--surface_container_low);
+    }
+    ::selection { background: rgba(var(--primary_rgb), 0.35) !important; color: var(--on_surface) !important; }
+    input, textarea, select { caret-color: var(--primary) !important; }
+    input::placeholder, textarea::placeholder { color: var(--outline) !important; }
+    a:focus-visible, button:focus-visible { outline-color: var(--primary) !important; }
+
+    /* Player shell around the (cross-origin) vilos iframe stays site-black on purpose:
+       the video itself is inside the iframe and letterboxing should stay true black. */
+
+/* ---- Generated from Crunchyroll's own stylesheets (hardcoded colors -> matugen tokens).
+   Hashed CSS-module classes (.name--Ab1Cd) are matched hash-agnostically via [class*="name--"].
+   Regenerate with the __crGen2 snippet + emit.py if the site restyles. ---- */
+
+[class*="hero-carousel--"] { --active-page-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="hero-carousel--"]:focus-within, [class*="hero-carousel--is-paused--"] { --active-page-color: var(--primary) !important; }
+.erc-profile-item { --avatar-outline-color: var(--on_surface_variant) !important; }
+.erc-profile-item--is-premium-locked { --avatar-outline-color: var(--primary) !important; }
+.erc-profile-item--is-selected { --avatar-outline-color: var(--tertiary) !important; }
+[class*="toggle-switch--is-type-two--"] { --background-color: var(--primary) !important; }
+[class*="toggle-switch--is-type-one--"] { --background-color: var(--tertiary) !important; }
+[class*="alphabetical-slider--"] { --base-bg: var(--alphabetical-slider-bg,var(--background)) !important; }
+[class*="alphabetical-slider-shell--"] { --bg: var(--background) !important; }
+[class*="alphabetical-slider-shell--"][class*="alphabetical-slider-shell--is-sticky--"] { --bg: var(--surface_container) !important; }
+.erc-theatrical-banner { --button-accent-color-active: var(--error_container) !important; }
+.erc-feed .hero-content-card-state-accent-color,
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --button-accent-color-active: var(--secondary_fixed_dim) !important;
+}
+.erc-theatrical-banner { --button-accent-color-default: var(--error) !important; }
+.erc-feed .hero-content-card-state-accent-color,
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --button-accent-color-default: var(--secondary) !important;
+}
+.erc-theatrical-banner { --button-accent-color-hover: var(--error_container) !important; }
+.erc-feed .hero-content-card-state-accent-color,
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --button-accent-color-hover: var(--secondary_fixed) !important;
+}
+.erc-feed .hero-content-card-state-accent-color,
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --button-accent-color-outline: var(--surface_container_highest) !important;
+}
+.erc-theatrical-banner { --button-accent-text-color-default: var(--on_surface) !important; }
+.erc-theatrical-banner { --button-accent-text-color-hover: var(--on_surface) !important; }
+.erc-series.state-accent-color { --card-watchlist-label-icon-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --carousel-pagination-accent-color: var(--secondary) !important; }
+[class*="ecom-card__poster--"] { --content-image-fill: var(--on_surface) !important; }
+.erc-series.state-accent-color { --custom-lists-modal-icon-color-active: var(--secondary_fixed_dim) !important; }
+.erc-series.state-accent-color { --custom-lists-modal-icon-color-hover: var(--secondary_fixed) !important; }
+.erc-series.state-accent-color { --custom-lists-modal-icon-color: var(--secondary) !important; }
+:is([class^="dropdown-trigger--is-open--"],[class*=" dropdown-trigger--is-open--"]) { --dropdown-trigger-background-color: var(--surface_container_high) !important; }
+:is([class^="dropdown-trigger--is-open--"],[class*=" dropdown-trigger--is-open--"]),
+.erc-series-hero-more-button.state-position-top .hero-more-trigger {
+    --dropdown-trigger-color: var(--on_surface) !important;
+}
+:is([class^="dropdown-trigger--"],[class*=" dropdown-trigger--"]) { --dropdown-trigger-color: var(--outline) !important; }
+[class*="dropdown-trigger--is-active--"] { --dropdown-trigger-color: var(--secondary) !important; }
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --expandable-section-accent-color-default: var(--secondary) !important;
+}
+.erc-watch-episode.state-accent-color,
+.erc-series.state-accent-color {
+    --expandable-section-accent-color-hover: var(--on_surface) !important;
+}
+.erc-subgenres-header .breadcrumbs-with-filters,
+.erc-subgenres-header-shell .breadcrumbs-with-filters {
+    --fade-color: var(--background) !important;
+}
+.erc-subgenres-header .subgenres-header-sticky.state-sticky .breadcrumbs-with-filters,
+.erc-subgenres-header-shell .subgenres-header-sticky.state-sticky .breadcrumbs-with-filters {
+    --fade-color: var(--surface_container) !important;
+}
+[class*="hero-background--"] { --fade-gradients: linear-gradient(var(--deg),rgba(var(--background_rgb), 0.6) 0%,#0000 20%),linear-gradient(to bottom,#0000 40%,rgba(var(--background_rgb), 0.75) 65%,var(--background) 90%) !important; }
+[class*="button--is-type-one--"],
+[class*="button--is-primary-brand--"],
+[class*="button--is-destructive--"] {
+    --focus-shadow-color: var( --button-accent-color-outline,var(--on_surface) ) !important;
+}
+:is([class^="button--"],[class*=" button--"]) { --focus-shadow-color: var(--on_surface) !important; }
+[class*="button--is-type-two--"],
+[class*="button--is-disabled--"] {
+    --focus-shadow-color: var(--outline_variant) !important;
+}
+[class*="button--is-type-eight--"] { --focus-shadow-color: var(--primary) !important; }
+[class*="button--is-type-seven--"],
+[class*="button--is-type-seven-weak--"],
+[class*="button--is-disabled--"][class*="button--is-secondary--"] {
+    --focus-shadow-color: var(--surface_container_highest) !important;
+}
+[class*="notification-card--"]:focus-within,
+[class*="release-episode-card-base--"]:focus-within {
+    --hover-color: var(--surface_container) !important;
+}
+.erc-avatars-carousel .avatar-option,
+.erc-profile-wallpaper-collection .wallpaper-thumbnail {
+    --hover-colors: var(--on_surface) !important;
+}
+.erc-custom-lists-modal-item { --icon-color: var(--primary) !important; }
+.erc-custom-lists-modal-item:active { --icon-color: var(--primary_fixed_dim) !important; }
+[class*="crunchyroll-logo--is-white--"] { --logo-hover-fill-color: var(--primary) !important; }
+:is([class^="crunchyroll-logo--"],[class*=" crunchyroll-logo--"]) { --logo-hover-fill-color: var(--tertiary_fixed) !important; }
+[class*="meta-tags--white-color--"] { --meta-color: var(--on_surface) !important; }
+[class*="meta-tags--light-color--"] { --meta-color: var(--on_surface_variant) !important; }
+:is([class^="meta-tags--"],[class*=" meta-tags--"]) { --meta-color: var(--outline) !important; }
+[class*="hero-carousel__page--"] { --pill-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="hero-carousel__page--is-placeholder--"] { --pill-color: rgba(var(--surface_container_high_rgb), 0.6) !important; }
+.erc-series.state-accent-color { --playable-card-hover-accent-color-hover: var(--secondary_fixed) !important; }
+.erc-series.state-accent-color { --playable-card-hover-accent-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --progress-bar-accent-color: var(--secondary) !important; }
+[class*="onigiri-filter__options--"] { --radio-button-checked-color: var(--primary) !important; }
+[class*="onigiri-filter__options--"] { --radio-button-label-color: var(--on_surface) !important; }
+.erc-series.state-accent-color { --rating-data-toggletip-scale-accent-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --rating-data-toggletip-scale-bar-accent-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --series-hero-action-tooltip-color-active: var(--secondary_fixed_dim) !important; }
+.erc-series.state-accent-color { --series-hero-action-tooltip-color-hover: var(--secondary_fixed) !important; }
+.erc-series.state-accent-color { --series-hero-action-tooltip-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --series-hero-more-trigger-color-active: var(--secondary_fixed_dim) !important; }
+.erc-series.state-accent-color { --series-hero-more-trigger-color-hover: var(--secondary_fixed) !important; }
+.erc-series.state-accent-color { --series-hero-more-trigger-color: var(--secondary) !important; }
+.erc-watch-episode.state-accent-color { --series-title-accent-color-default: var(--secondary) !important; }
+.erc-watch-episode.state-accent-color { --series-title-accent-color-hover: var(--secondary_fixed) !important; }
+.erc-series.state-accent-color { --star-rating-controls-accent-color-active: var(--secondary_fixed_dim) !important; }
+.erc-series.state-accent-color { --star-rating-controls-accent-color: var(--secondary) !important; }
+.erc-series.state-accent-color { --star-rating-short-static-accent-color: var(--secondary) !important; }
+[class*="alphabetical-slider--"] { --sticky-bg: var( --alphabetical-slider-sticky-bg,var(--surface_container) ) !important; }
+[class*="live-indicator--"] { --text-color: var(--on_surface) !important; }
+[class*="live-indicator--is-post-live--"] { --text-color: var(--outline) !important; }
+.erc-series.state-accent-color { --tooltip-icon-accent-color-active: var(--secondary_fixed_dim) !important; }
+.erc-series.state-accent-color { --tooltip-icon-accent-color-default: var(--secondary) !important; }
+.erc-series.state-accent-color { --tooltip-icon-accent-color-hover: var(--secondary_fixed) !important; }
+#lanyard_root *, #lanyard_root ::before, #lanyard_root ::after,
+#lanyard_root ::backdrop {
+    --tw-ring-offset-color: var(--on_surface) !important;
+}
+#lanyard_root * .ketch-shadow-md { --tw-shadow: 0 4px 6px -1px rgba(var(--background_rgb), 0.1), 0 2px 4px -2px rgba(var(--background_rgb), 0.1) !important; }
+.erc-watch-episode.state-accent-color { --watchlist-toggle-accent-color-active: var(--secondary_fixed_dim) !important; }
+.erc-watch-episode.state-accent-color { --watchlist-toggle-accent-color-default: var(--secondary) !important; }
+.erc-watch-episode.state-accent-color { --watchlist-toggle-accent-color-hover: var(--secondary_fixed) !important; }
+
+[class*="play-media-icon--"] { background-color: rgba(var(--background_rgb), 0.4) !important; }
+[class*="availability-overlay--is-dark--"],
+:is([class^="progress-bar--"],[class*=" progress-bar--"]),
+[class*="playable-thumbnail-icon__watched-overlay--"],
+:is([class^="playable-thumbnail--"],[class*=" playable-thumbnail--"]) [class*="playable-thumbnail__duration--"],
+[class*="rating-data-toggletip-scale-bar--"],
+[class*="single-playable-card__parent-cta--"],
+[class*="single-promo-show-card__poster-text--"],
+[class*="single-show-card__image-link--"],
+.erc-profile-add-button .profile-add-button-header {
+    background-color: rgba(var(--background_rgb), 0.6) !important;
+}
+[class*="content-image--is-background-type-two--"]::before,
+[class*="content-image__figure-sizer--is-background-type-two--"]::before {
+    background-color: rgba(var(--on_surface_rgb), 0.04) !important;
+}
+[class*="release-episode-card-hover__thumbnail--"]::after,
+[class*="release-episode-card-stack-hover__thumbnail-image--"]::after,
+[class*="release-episode-card-static__thumbnail--"]::after,
+[class*="release-episode-card-stack-static__thumbnail-image--"]::after {
+    background-color: rgba(var(--on_surface_rgb), 0.08) !important;
+}
+#lanyard_root * .ketch-bg-ketch-white-24 { background-color: rgba(var(--on_surface_rgb), 0.24) !important; }
+[class*="carousel-tabs__tab--is-active--"] [class*="carousel-tabs__tab-indicator--"] { background-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+:is([class^="dialog--"],[class*=" dialog--"])::backdrop { background-color: rgba(var(--surface_container_high_rgb), 0.5) !important; }
+[class*="hero-background-placeholder--"]::after { background-color: rgba(var(--surface_container_high_rgb), 0.7) !important; }
+[class*="app-layout__overlay--"] { background-color: rgba(var(--surface_container_high_rgb), 0.8) !important; }
+[class*="modal__adaptive-header--"],
+.erc-episode-list-modal .modal-heading,
+.erc-music-list-modal .modal-heading {
+    background-color: rgba(var(--surface_container_highest_rgb), 0.2) !important;
+}
+[class*="accordion__content--"],
+[class*="submenu-dropdown-list--is-open--"] {
+    background-color: rgba(var(--surface_container_highest_rgb), 0.5) !important;
+}
+.erc-avatars-carousel .carousel-arrow-button { background-color: rgba(var(--surface_container_highest_rgb), 0.8) !important; }
+:is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]),
+.erc-profile-wallpaper-collection .carousel-arrow-button {
+    background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important;
+}
+.erc-profile-form .avatar-edit-label-wrapper,
+.erc-profile-form-wallpaper .edit-label-wrapper {
+    background-color: rgba(var(--surface_container_rgb), 0.5) !important;
+}
+.erc-profile-form .avatar-edit-label,
+.erc-profile-form-wallpaper .wallpaper-edit-label {
+    background-color: rgba(var(--surface_container_rgb), 0.7) !important;
+}
+[class*="button--is-type-seven--"],
+[class*="button--is-type-eight--"],
+[class*="upsell-popup-background--"],
+[class*="user-menu-nav-item--"]:active,
+[class*="user-menu-nav-item--is-active--"]:active,
+[class*="user-menu-account-item--is-interactive--"]:active,
+[class*="browse-menu-item__link--"]:active,
+[class*="browse-submenu-item__link--"]:active,
+:is([class^="menu-item__link--"],[class*=" menu-item__link--"]):active,
+[class*="submenu-item__title--"]:active,
+[class*="nav-horizontal-layout__content--"],
+[class*="nav-vertical-layout--"],
+[class*="promo-curated-feed__background-overlay-bottom--"],
+[class*="single-promo-playable-card__content-background--"]::before,
+[class*="single-promo-playable-card-placeholder__content-background--"]::before,
+[class*="single-promo-show-card__content-background--"]::before,
+[class*="single-promo-show-card-placeholder__content-background--"]::before,
+[class*="tabs-arrow--"],
+[class*="news-and-editorial__content-wrapper--"]::before,
+[class*="news-and-editorial-placeholder__content-wrapper--"]::before,
+[class*="hero-carousel--"],
+[class*="hero-background-placeholder--"],
+[class*="end-slate-carousel-background--"],
+[class*="settings-page--"],
+body,
+.erc-menu-item-title:active,
+.erc-sticky-header,
+.erc-sticky-header.state-static,
+.erc-end-slate-recommendations-carousel,
+.erc-blocked-stream .stream-overlay-dark,
+.erc-watch-episode-layout .video-player,
+.erc-watch-movie-layout .video-player,
+.erc-watch-on-hold-restriction .on-hold-wrapper,
+.erc-series-hero-actions .sticky-actions-wrapper,
+.erc-membership-promotion-info,
+.price-update-card,
+[class*="price-update-card--"],
+.price-update-card .price-update-card-button,
+.erc-color-select .black,
+.erc-activate-device .minimal-footer-wrapper,
+.erc-profile-select-loading::after,
+.erc-multiple-profiles-layout-background::after,
+.erc-watch-music-layout .video-player,
+.erc-artist-hero .sticky-buttons-wrapper,
+.erc-region-restricted .minimal-footer-wrapper,
+.erc-restricted-explore,
+.erc-select-profile-to-transfer,
+.erc-scroll-block-overlay,
+.bitmovinplayer-container, .bitmovinplayer-ad-container,
+[data-fullscreen="true"], [data-legacy-fullscreen="true"] {
+    background-color: var(--background) !important;
+}
+#lanyard_root * :is(.ketch-peer:checked ~ .peer-checked\:ketch-bg-black) { background-color: var(--background)) !important; }
+[class*="button--is-type-one--"]:active { background-color: var(--button-accent-color-active,var(--primary_fixed_dim)) !important; }
+[class*="button--is-destructive--"],
+[class*="button--is-destructive--"]:focus {
+    background-color: var(--button-accent-color-default,var(--error)) !important;
+}
+[class*="button--is-primary--"] { background-color: var(--button-accent-color-default,var(--on_surface)) !important; }
+[class*="button--is-type-one--"],
+[class*="button--is-primary-brand--"],
+[class*="button--is-primary-brand--"]:focus {
+    background-color: var(--button-accent-color-default,var(--primary)) !important;
+}
+[class*="carousel-pagination__page--is-active--"]::after, :is([class^="carousel-pagination__page--"],[class*=" carousel-pagination__page--"]):active::after { background-color: var(--carousel-pagination-accent-color,var(--primary)) !important; }
+[class*="flash-message--is-error--"],
+:is([class^="notification-badge--"],[class*=" notification-badge--"]) {
+    background-color: var(--error) !important;
+}
+[class*="artist-card__poster-wrapper--"]::after,
+[class*="button--is-type-two--"],
+[class*="button--is-type-two--"]:focus,
+[class*="button--is-primary--"]:focus,
+[class*="browse-card-static__poster-wrapper--"]::after,
+:is([class^="carousel-pagination__page--"],[class*=" carousel-pagination__page--"])::after,
+[class*="carousel-tabs__tab-indicator--"],
+[class*="playable-card-hover__thumbnail-wrapper--"]::after,
+[class*="code-input-cell--"] [class*="input--is-filled--"],
+[class*="code-input-cell--"] [class*="input--is-error--"],
+[class*="custom-list-item__link--"]::before,
+[class*="ecom-card__poster-wrapper--"]::after,
+[class*="playable-card-static__thumbnail-wrapper--"]::after,
+[class*="fab__close--"],
+[class*="horizontal-card-hover__images-wrapper--"]::after,
+[class*="horizontal-card__images-wrapper--"]::after,
+[class*="horizontal-card-static__images-wrapper--"]::after,
+:is([class^="history-playable-card__thumbnail-wrapper--"],[class*=" history-playable-card__thumbnail-wrapper--"])::after,
+[class*="wide-news-card__image--"]::after,
+[class*="manga-card-static__poster-wrapper--"]::after,
+[class*="notification-card__img-wrapper--"]::after,
+[class*="search-show-card__poster-wrapper--"]::after,
+[class*="search-show-card-static__poster-wrapper--"]::after,
+[class*="playable-card-mini-hover__thumbnail-wrapper--"]::after,
+[class*="playable-card-mini-static__thumbnail-wrapper--"]::after,
+[class*="rating-data-toggletip-scale-bar__percentage--"],
+[class*="search-episode-card-hover__thumbnail-wrapper--"]::after,
+[class*="search-episode-card-static__thumbnail-wrapper--"]::after,
+[class*="single-playable-card__content-thumbnail--"]::after,
+[class*="single-promo-playable-card__content-thumbnail--"]::after,
+[class*="square-news-card__thumbnail-wrapper--"]::after,
+:is([class^="music-card__thumbnail-wrapper--"],[class*=" music-card__thumbnail-wrapper--"])::after,
+[class*="music-card-mini__thumbnail-wrapper--"]::after,
+[class*="search-music-card__thumbnail-wrapper--"]::after,
+.erc-color-select .white,
+.erc-pin-success-checkmark,
+.erc-profile-form .profile-avatar:focus-within .avatar-edit-icon-wrapper,
+.erc-profile-form-wallpaper:focus-within .edit-icon-wrapper,
+.erc-share-modal .share-modal-icon-wrapper::after,
+.erc-restricted-faq .faq-divider {
+    background-color: var(--on_surface) !important;
+}
+#lanyard_root * .ketch-bg-white,
+#lanyard_root * .before\:ketch-bg-white::before,
+#lanyard_root * .odd\:ketch-bg-white:nth-child(2n+1) {
+    background-color: var(--on_surface)) !important;
+}
+[class*="button--is-type-two--"]:active,
+[class*="button--is-primary--"]:active,
+:is([class^="avatar__corner-icon--"],[class*=" avatar__corner-icon--"]),
+:is([class^="avatar__corner-icon--neutral--"],[class*=" avatar__corner-icon--neutral--"]),
+[class*="teen-avatar__corner-icon--"],
+[class*="teen-avatar__corner-icon--neutral--"],
+[class*="theatrical-poster-close-button--"],
+.erc-password-strength-meter .status-tile-weak,
+.erc-profile-form-wallpaper .wallpaper-edit-icon-wrapper {
+    background-color: var(--on_surface_variant) !important;
+}
+[class*="clear-input__clear-action--"],
+.erc-product-perks .perks-line::before,
+.erc-challenge-required .link-separator {
+    background-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"][class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"],
+.erc-password-strength-meter .strength-meter-tile {
+    background-color: var(--outline_variant) !important;
+}
+:is([class^="avatar__corner-icon--orange--"],[class*=" avatar__corner-icon--orange--"]),
+[class*="teen-avatar__corner-icon--orange--"],
+[class*="carousel-tabs__tab-indicator--"]::before,
+[class*="tabs-item--is-active--"]::after,
+[class*="hero-carousel__page-loader--"],
+[class*="end-slate-carousel-pagination__page--"]::before,
+[class*="product-card__plan-label--downgrade--"],
+.erc-ani-may-banner .ani-may-cta,
+.erc-browse-filters-onboarding .onboarding-badge,
+.erc-resubscription-modal .content-wrapper .restart-button,
+.price-update-card [class*="price-update-card-button--"],
+.erc-avatars-carousel .avatar-option.state-active, .erc-avatars-carousel .avatar-option:active {
+    background-color: var(--primary) !important;
+}
+[class*="info-tag--is-one--"] { background-color: var(--primary_fixed) !important; }
+[class*="progress-bar__progress--"] { background-color: var(--progress-bar-accent-color,var(--primary)) !important; }
+[class*="rating-data-toggletip-scale-bar--is-rated--"] [class*="rating-data-toggletip-scale-bar__percentage--"] { background-color: var(--rating-data-toggletip-scale-bar-accent-color,var(--primary)) !important; }
+[class*="promo-curated-feed--is-odd--"] [class*="promo-curated-feed__background--"],
+[class*="hero-carousel-background__blue--"] {
+    background-color: var(--secondary) !important;
+}
+[class*="button--is-type-four--"],
+[class*="button--is-type-six--"],
+:is([class^="badge--"],[class*=" badge--"]),
+[class*="broadcast-message--"],
+[class*="broadcast-message-static--"],
+[class*="info-tag--is-four--"] {
+    background-color: var(--secondary_container) !important;
+}
+[class*="content-image--is-background-type-one--"], [class*="content-image--is-background-type-two--"],
+[class*="content-image__figure-sizer--is-background-type-one--"], [class*="content-image__figure-sizer--is-background-type-two--"],
+[class*="artist-card--"]:focus-within,
+[class*="dropdown-mobile-heading--"],
+[class*="broadcast-message-static--is-dark--"],
+[class*="info-tag--is-three--"],
+[class*="info-tag--is-six--"],
+[class*="info-tag--is-seven--"],
+[class*="info-tag-live--"],
+[class*="browse-card-hover__content--"],
+[class*="browse-card-static--"]:focus-within,
+:is([class^="playable-card--"],[class*=" playable-card--"]):has(:focus-visible),
+[class*="playable-card--is-now-playing--"],
+[class*="playable-card-hover--"],
+[class*="custom-list-item--"],
+[class*="custom-list-card-hover--"],
+[class*="custom-list-missing-card--is-dragging--"],
+[class*="ecom-card--"]:focus-within,
+[class*="playable-card-static--"]:focus-within,
+[class*="playable-card-static--is-now-playing--"],
+:is([class^="nav-item--is-active--"],[class*=" nav-item--is-active--"]),
+[class*="user-nav-item--is-active--"],
+[class*="user-menu--"],
+[class*="user-menu-section--is-sticky--"],
+[class*="vertical-menu-dropdown--"],
+[class*="horizontal-card-hover__content--"],
+[class*="horizontal-card-static--"]:focus-within,
+[class*="history-playable-card--"]:focus-within,
+[class*="wide-news-card--"]:focus-within,
+[class*="manga-card-static--"]:focus-within,
+[class*="manga-card-static__premium-badge--"],
+[class*="onigiri-filter__tablist--"],
+[class*="search-show-card-hover__content--"],
+[class*="search-show-card-static--"]:focus-within,
+[class*="platform-switcher-content--"]::before,
+[class*="platform-switcher-content__list--"],
+[class*="playable-card-mini--"]:focus-within,
+[class*="playable-card-mini--is-now-playing--"],
+[class*="playable-card-mini-hover--"],
+[class*="playable-card-mini-static--"]:focus-within,
+[class*="playable-card-mini-static--is-now-playing--"],
+[class*="release-episode-card-hover--"],
+[class*="release-episode-card-stack-hover--"],
+[class*="search-episode-card-hover--"],
+[class*="search-episode-card-static--"]:focus-within,
+[class*="square-news-card--"]:focus-within,
+[class*="watchlist-card--"]:focus-within,
+[class*="dialog__body-wrapper--"],
+:is([class^="music-card--"],[class*=" music-card--"]):focus-within,
+[class*="music-card--is-now-playing--"],
+[class*="music-card-mini--"]:focus-within,
+[class*="music-card-mini--is-now-playing--"],
+[class*="search-music-card--"]:focus-within,
+[class*="toggle-switch--"],
+.erc-feature-item, .erc-rollout-features-state .rollout-features-state-table,
+.erc-search-page .search-field-wrapper,
+.erc-header-tile.state-active,
+.erc-news-menu-dropdown,
+.erc-sticky-header.state-sticky,
+.erc-profile-email .profile-email-card,
+.erc-email-verification .page-card,
+.erc-profile-form .form-body,
+.erc-profile-item::before,
+.erc-profile-add-button::before,
+.erc-redeem-details .product-content,
+.erc-product-perks .perks-label {
+    background-color: var(--surface_container) !important;
+}
+:is([class^="dropdown-content--"],[class*=" dropdown-content--"]),
+[class*="custom-list-card--is-dragging--"],
+[class*="custom-list-card-hover--is-dragging--"],
+[class*="fab__errorContainer--"],
+[class*="onigiri-filter--"],
+[class*="rating-data-toggletip--"],
+[class*="hero-background--"]::before,
+[class*="dialog__body--"],
+[class*="unsupported-modal__wrapper-dark--"],
+[class*="unsupported-modal__browser-wrapper--"],
+[class*="product-card--"],
+[class*="settings-body-content--"],
+::selection,
+.erc-add-item-dropdown .search-series-card,
+.erc-large-header-shell .header-content,
+.erc-header .header-content,
+.erc-large-header .header-content,
+.erc-sticky-header-landing .header-content,
+.erc-watch-hero-placeholder .separator,
+.erc-season-navigation .divider,
+.erc-browse-filters-onboarding .onboarding-popover,
+.erc-account .account-content,
+.erc-watch-history-merge-modal .confirmation-content,
+.erc-watch-music-hero-placeholder .separator,
+.erc-app-shell .shell-header {
+    background-color: var(--surface_container_high) !important;
+}
+[class*="accordion__summary--"],
+[class*="button--is-disabled--"][class*="button--is-destructive--"], [class*="button--is-disabled--"][class*="button--is-primary--"], [class*="button--is-disabled--"][class*="button--is-primary-brand--"],
+[class*="tooltip-content--"],
+:is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):active,
+[class*="code-input-cell--"] [class*="input--is-normal--"],
+[class*="footer-copyright__delimiter--"],
+[class*="onigiri-filter__tab--is-active--"],
+[class*="release-episodes-section__group-heading-divider--"],
+[class*="select-label--"]::after,
+[class*="star-rating-average-data--"]:not(:only-child) [class*="star-rating-average-data__toggletip-trigger--"]::after,
+[class*="star-rating__stars-controls--"]::after,
+[class*="tabs__content-wrapper--"]::before,
+[class*="username-label--"],
+[class*="product-card__plan-label--"],
+.erc-profile-wallpaper-collection .carousel-arrow-button:active, .erc-profile-wallpaper-collection .carousel-arrow-button:focus {
+    background-color: var(--surface_container_highest) !important;
+}
+[class*="button--is-type-five--"],
+:is([class^="avatar__corner-icon--gold--"],[class*=" avatar__corner-icon--gold--"]),
+[class*="teen-avatar__corner-icon--gold--"],
+.erc-profile-add-button .profile-add-button-badge {
+    background-color: var(--tertiary) !important;
+}
+[class*="info-tag--is-eight--"],
+.erc-ani-may-banner .ani-may-background,
+.erc-anonymous-consent,
+.erc-player-anonymous-consent .player-anonymous-consent-content-wrapper {
+    background-color: var(--tertiary_fixed) !important;
+}
+.erc-episode-scrollable-list .scrollable-section-fade::after,
+.erc-music-scrollable-list .scrollable-section-fade::after {
+    background-image: linear-gradient(0deg, var(--background), rgba(0, 0, 0, 0)) !important;
+}
+.erc-premium-dub-modal .premium-dub-modal-body { background-image: linear-gradient(0deg, var(--primary), rgb(255, 201, 77)) !important; }
+[class*="dropdown-content__fade--"]::after,
+.erc-episode-list-modal .scrollable-section-fade::after,
+.erc-music-list-modal .scrollable-section-fade::after {
+    background-image: linear-gradient(0deg, var(--surface_container_high), rgba(39, 39, 39, 0)) !important;
+}
+[class*="loading-animation--"]::after { background-image: linear-gradient(130deg, rgba(0, 0, 0, 0) 33.333%, rgba(var(--surface_container_high_rgb), 0.05), rgba(73, 76, 86, 0.2) 47%, rgba(73, 76, 86, 0.2) 53%, rgba(var(--surface_container_high_rgb), 0.1), rgba(0, 0, 0, 0) 66.666%) !important; }
+.erc-premium-upsell-banner .upsell-background-container { background-image: linear-gradient(rgb(0, 131, 130), var(--background)) !important; }
+.price-update-card::before { background-image: linear-gradient(rgba(0, 0, 0, 0) -84.83%, rgba(var(--background_rgb), 0.97) 64.73%, var(--background) 99.65%) !important; }
+.erc-free .content,
+.erc-promotion {
+    background-image: linear-gradient(rgba(0, 0, 0, 0) 0px, var(--background) 11.375rem, var(--background)), url("/build/assets/img/account/emotive.png") !important;
+}
+[class*="hero-background--"]::after { background-image: linear-gradient(rgba(0, 0, 0, 0) 40%, rgba(var(--background_rgb), 0.75) 65%, var(--background) 90%) !important; }
+.erc-custom-lists-content .custom-lists-content-footer::before { background-image: linear-gradient(rgba(0, 0, 0, 0), var(--background) 38%) !important; }
+.erc-series-hero-actions.state-sticky-actions .sticky-actions-wrapper::before,
+.erc-artist-hero.state-sticky-cta .sticky-buttons-wrapper::before {
+    background-image: linear-gradient(rgba(0, 0, 0, 0), var(--background)) !important;
+}
+[class*="hero-background-placeholder--"]::after { background-image: linear-gradient(rgba(0, 0, 0, 0), var(--background)), none !important; }
+.erc-activate-device .minimal-footer-wrapper,
+.erc-region-restricted .minimal-footer-wrapper {
+    background-image: linear-gradient(rgba(0, 0, 0, 0), var(--secondary_container)) !important;
+}
+.erc-artist-key-art .blurred-wrapper::before { background-image: linear-gradient(rgba(21, 21, 21, 0), rgba(var(--surface_container_rgb), 0.8)) !important; }
+[class*="single-promo-playable-card__background-wrapper--"]::after,
+[class*="single-promo-playable-card-placeholder__background-wrapper--"]::after,
+[class*="single-promo-show-card__background-wrapper--"]::after,
+[class*="single-promo-show-card-placeholder__background-wrapper--"]::after {
+    background-image: linear-gradient(rgba(21, 21, 21, 0), var(--background)) !important;
+}
+[class*="user-menu-section--is-sticky--"]::before,
+.erc-authenticated-user-menu-old .user-menu-sticky::before {
+    background-image: linear-gradient(rgba(21, 21, 21, 0), var(--surface_container)) !important;
+}
+[class*="promo-ecom-feed__background-overlay--is-even--"] { background-image: linear-gradient(rgba(250, 184, 24, 0), var(--background) 90%) !important; }
+[class*="promo-curated-feed--is-even--"] [class*="promo-curated-feed__background-overlay-top--"] { background-image: linear-gradient(rgba(250, 184, 24, 0), var(--background)) !important; }
+[class*="modal__adaptive-body-faders--"]::after,
+.erc-add-to-existing-custom-list::after {
+    background-image: linear-gradient(rgba(39, 39, 39, 0), var(--surface_container_high)) !important;
+}
+[class*="promo-ecom-feed__background-overlay--is-odd--"] { background-image: linear-gradient(rgba(42, 189, 187, 0), var(--background) 90%) !important; }
+[class*="promo-curated-feed--is-odd--"] [class*="promo-curated-feed__background-overlay-top--"] { background-image: linear-gradient(rgba(42, 189, 187, 0), var(--background)) !important; }
+.erc-restricted-welcome-section { background-image: linear-gradient(rgba(var(--background_rgb), 0.3) 0px, var(--background)), linear-gradient(rgba(var(--background_rgb), 0.5), rgba(var(--background_rgb), 0.5)), url("/build/assets/img/region_restricted/restricted-background.png") !important; }
+.erc-not-available-dub-modal .modal-background-thumbnail::after { background-image: linear-gradient(rgba(var(--surface_container_high_rgb), 0.9) 7%, var(--surface_container_high) 94%) !important; }
+.erc-watch-up-next-dub-unavailable .dub-unavailable-cover::after { background-image: linear-gradient(rgba(var(--surface_container_rgb), 0.8), var(--surface_container) min(40%, 15rem)) !important; }
+[class*="tabs-item__text--"]::before { background-image: linear-gradient(to var(--cr-end-direction),#0000 calc(var(--text-max-width) - var(--text-fade-width)),var(--background)) !important; }
+.erc-add-item-dropdown .search-series-card .c-text__fade { background-image: linear-gradient(to var(--cr-end-direction),#27272700,var(--surface_container_high)) !important; }
+[class*="tabs-arrow--is-start--"]::after { background-image: linear-gradient(to var(--cr-end-direction),var(--background),#0000) !important; }
+[class*="hero-carousel-background__orange--"],
+[class*="hero-carousel-background__yellow--"] {
+    background-image: linear-gradient(to var(--cr-end-direction),var(--primary),var(--tertiary)) !important;
+}
+[class*="tabs-arrow--is-end--"]::after { background-image: linear-gradient(to var(--cr-start-direction),var(--background),#0000) !important; }
+[dir="rtl"] [class*="hero-carousel-background__orange--"],
+[dir="rtl"] [class*="hero-carousel-background__yellow--"] {
+    background-image: linear-gradient(to var(--cr-start-direction),var(--primary),var(--tertiary)) !important;
+}
+[class*="feed-divider--is-odd--"] { background-image: linear-gradient(to var(--cr-start-direction),var(--secondary_container),var(--secondary)) !important; }
+[class*="feed-divider--is-even--"] { background-image: linear-gradient(to var(--cr-start-direction),var(--tertiary),var(--error)) !important; }
+[class*="single-promo-background--is-even--"] { background-image: linear-gradient(to var(--cr-start-direction),var(--tertiary),var(--primary) 47%,var(--error)) !important; }
+.erc-episode-scrollable-list .scrollable-section-fade::before,
+.erc-preview-section::after,
+.erc-music-scrollable-list .scrollable-section-fade::before {
+    background-image: linear-gradient(var(--background), rgba(0, 0, 0, 0)) !important;
+}
+:is([class^="background--"],[class*=" background--"])::after { background-image: linear-gradient(var(--background), rgba(21, 21, 21, 0) 20%), linear-gradient(rgba(0, 0, 0, 0), var(--background)) !important; }
+.erc-watch-premium-upsell .upsell-wrapper,
+.erc-watch-premium-dub-upsell .premium-dub-upsell-wrapper {
+    background-image: linear-gradient(var(--error), var(--tertiary) 72%) !important;
+}
+[class*="hero-carousel-background--"] { background-image: linear-gradient(var(--primary), var(--tertiary), var(--primary)) !important; }
+[class*="single-promo-background--is-odd--"] { background-image: linear-gradient(var(--secondary) 22%, rgb(45, 149, 148)) !important; }
+[class*="news-and-editorial-background--is-odd--"] { background-image: linear-gradient(var(--secondary), rgb(45, 149, 148)) !important; }
+[class*="promo-ecom-feed-background--is-odd--"] { background-image: linear-gradient(var(--secondary), var(--secondary_container)) !important; }
+[class*="dropdown-content__fade--"]::before,
+[class*="modal__adaptive-body-faders--"]::before,
+.erc-add-to-existing-custom-list::before,
+.erc-episode-list-modal .scrollable-section-fade::before,
+.erc-music-list-modal .scrollable-section-fade::before {
+    background-image: linear-gradient(var(--surface_container_high), rgba(39, 39, 39, 0)) !important;
+}
+[class*="promo-curated-feed--is-even--"] [class*="promo-curated-feed__background--"],
+[class*="promo-ecom-feed-background--is-even--"],
+[class*="news-and-editorial-background--is-even--"] {
+    background-image: linear-gradient(var(--tertiary), var(--error)) !important;
+}
+[class*="promo-ecom-feed-card__background--"] { background-image: linear-gradient(var(--tertiary), var(--primary) 45%, rgb(167, 31, 6)) !important; }
+[class*="fab--is-animated--"]::before { background-image: radial-gradient(circle, rgba(255, 255, 255, 0) 48%, rgba(var(--on_surface_rgb), 0.3) 50%, rgba(var(--on_surface_rgb), 0.2) 58%, rgba(255, 255, 255, 0) 70%) !important; }
+.erc-premium-dub-modal .premium-dub-modal-body { background: linear-gradient(0deg, var(--primary), rgb(255, 201, 77)) !important; }
+[class*="loading-animation--"]::after { background: linear-gradient(130deg, rgba(0, 0, 0, 0) 33.333%, rgba(var(--surface_container_high_rgb), 0.05), rgba(73, 76, 86, 0.2) 47%, rgba(73, 76, 86, 0.2) 53%, rgba(var(--surface_container_high_rgb), 0.1), rgba(0, 0, 0, 0) 66.666%) !important; }
+[class*="hero-background--"]::after { background: linear-gradient(rgba(0, 0, 0, 0) 40%, rgba(var(--background_rgb), 0.75) 65%, var(--background) 90%) !important; }
+[class*="nav-horizontal-layout__content--"] { background: linear-gradient(rgba(0, 0, 0, 0), rgba(45, 48, 58, 0.2)), var(--background) !important; }
+.erc-series-hero-actions.state-sticky-actions .sticky-actions-wrapper::before,
+.erc-artist-hero.state-sticky-cta .sticky-buttons-wrapper::before {
+    background: linear-gradient(rgba(0, 0, 0, 0), var(--background)) !important;
+}
+[class*="hero-background-placeholder--"]::after { background: linear-gradient(rgba(0, 0, 0, 0), var(--background)), rgba(var(--surface_container_high_rgb), 0.7) !important; }
+.erc-activate-device .minimal-footer-wrapper,
+.erc-region-restricted .minimal-footer-wrapper {
+    background: linear-gradient(rgba(0, 0, 0, 0), var(--secondary_container)) var(--background) !important;
+}
+[class*="nav-vertical-layout--"] { background: linear-gradient(rgba(45, 48, 58, 0.2), rgba(0, 0, 0, 0)), var(--background) !important; }
+:is([class^="background--"],[class*=" background--"])::after { background: linear-gradient(var(--background), rgba(21, 21, 21, 0) 20%), linear-gradient(rgba(0, 0, 0, 0), var(--background)) !important; }
+[class*="wide-cards-carousel__arrow--"]::before { background: linear-gradient(var(--gradient-dir),#0000,rgba(var(--background_rgb), 0.5) calc(var(--arrow-width) / 2),rgba(var(--background_rgb), 0.7)) !important; }
+[class*="fab--is-animated--"]::before { background: radial-gradient(circle, rgba(255, 255, 255, 0) 48%, rgba(var(--on_surface_rgb), 0.3) 50%, rgba(var(--on_surface_rgb), 0.2) 58%, rgba(255, 255, 255, 0) 70%) !important; }
+[class*="single-playable-card__parent-cta--"],
+[class*="single-promo-show-card__poster-text--"] {
+    background: rgba(var(--background_rgb), 0.6) !important;
+}
+:is([class^="dialog--"],[class*=" dialog--"])::backdrop { background: rgba(var(--surface_container_high_rgb), 0.5) !important; }
+[class*="price-update-card--"] { background: url("/build/assets/img/price_update/hero-banner.webp") center -15.4449rem / 115% auto no-repeat var(--background) !important; }
+.price-update-card { background: url("/build/assets/img/price_update/hero-banner.webp") center -26.103rem / 108% auto no-repeat var(--background) !important; }
+[class*="upsell-popup-background--"] { background: var(--background) !important; }
+[class*="flash-message--is-error--"] { background: var(--error) !important; }
+[class*="custom-list-item__link--"]::before { background: var(--on_surface) !important; }
+.erc-password-strength-meter .strength-meter-tile { background: var(--outline_variant) !important; }
+.erc-ani-may-banner .ani-may-cta,
+.erc-resubscription-modal .content-wrapper .restart-button {
+    background: var(--primary) !important;
+}
+[class*="radio-button__checkmark--"]::after { background: var(--radio-button-checked-color,var(--secondary)) !important; }
+[class*="browse-card-hover__content--"],
+[class*="horizontal-card-hover__content--"],
+[class*="search-show-card-hover__content--"],
+[class*="dialog__body-wrapper--"],
+[class*="toggle-switch--"] {
+    background: var(--surface_container) !important;
+}
+:is([class^="dropdown-content--"],[class*=" dropdown-content--"]),
+[class*="dialog__body--"],
+::selection {
+    background: var(--surface_container_high) !important;
+}
+.erc-ani-may-banner .ani-may-background { background: var(--tertiary_fixed) !important; }
+
+[class*="code-input-cell--"] [class*="input--is-normal--"] { caret-color: var(--on_surface) !important; }
+[class*="pin-digit__input--"] { caret-color: var(--primary) !important; }
+[class*="loading--is-alternate-color--"] { color: rgba(var(--on_primary_rgb), 0.6) !important; }
+[class*="platform-switcher-trigger--is-open--"] [class*="platform-switcher-trigger__trigger--"] { color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="button--is-secondary--"]:active,
+[class*="button--is-tertiary--"]:active {
+    color: var(--button-accent-color-active,var(--outline)) !important;
+}
+[class*="button--is-type-one-weak--"]:active,
+[class*="button--is-type-stacked--"]:active {
+    color: var(--button-accent-color-active,var(--primary_fixed_dim)) !important;
+}
+[class*="button--is-action-item--"] { color: var(--button-accent-color-default,var(--on_surface_variant)) !important; }
+[class*="button--is-type-one-weak--"],
+[class*="button--is-type-stacked--"],
+[class*="button--is-secondary-brand--"],
+[class*="button--is-secondary-brand--"]:focus {
+    color: var(--button-accent-color-default,var(--primary)) !important;
+}
+[class*="button--is-type-one--"],
+[class*="button--is-primary-brand--"],
+[class*="button--is-primary-brand--"]:focus {
+    color: var(--button-accent-text-color-default,var(--on_primary)) !important;
+}
+[class*="button--is-destructive--"] { color: var(--button-accent-text-color-default,var(--on_surface)) !important; }
+[class*="label--is-error--"] :is([class^="label__text--"],[class*=" label__text--"]),
+[class*="character-counter--is-negative--"],
+[class*="code-input--"] [class*="error-message-text--"],
+[class*="promo-countdown__time-digits--is-urgent--"],
+[class*="promo-countdown__time-separator--is-urgent--"],
+.erc-authenticated-user-menu-old .on-hold-grace-status-label,
+.erc-password-strength-meter .status-label-error,
+.erc-profile-form .delete-profile {
+    color: var(--error) !important;
+}
+[class*="expandable-section__button--"] { color: var(--expandable-section-accent-color-default,var(--primary)) !important; }
+[class*="artist-card--"]:focus-within [class*="artist-card__watchlist-label--"],
+:is([class^="loading--"],[class*=" loading--"]),
+[class*="button--is-type-two--"],
+[class*="button--is-type-five--"],
+[class*="button--is-type-seven-weak--"],
+[class*="button--is-type-seven-weak--"]:active,
+[class*="button--is-primary--"],
+[class*="button--is-primary--"]:active,
+[class*="teen-avatar__text--"],
+[class*="card-watchlist-label--"],
+[class*="info-tag--is-one--"],
+[class*="info-tag--is-two--"],
+[class*="info-tag--is-five--"],
+[class*="info-tag--is-eight--"],
+[class*="browse-card-static--"]:focus-within [class*="browse-card-static__watchlist-label--"],
+[class*="ecom-card--"]:focus-within [class*="ecom-card__watchlist-label-background--"],
+[class*="feed-header__view-link--is-dark-variant--"],
+[class*="flash-message__text--"],
+[class*="flash-message__action-link--"],
+[class*="horizontal-card-hover__watchlist-label--"],
+[class*="horizontal-card-static--"]:focus-within [class*="horizontal-card-static__watchlist-label--"],
+[class*="search-show-card-hover__watchlist-label--"],
+[class*="search-show-card__poster-wrapper--"],
+[class*="search-show-card-static--"]:focus-within [class*="search-show-card-static__watchlist-label--"],
+[class*="search-show-card-static__poster-wrapper--"],
+[class*="promo-curated-feed__description--"],
+[class*="promo-curated-feed__header--"],
+[class*="promo-ecom-feed__header-icon--"], [class*="promo-ecom-feed__title--"],
+[class*="hero-carousel-card__body--"],
+[class*="hero-carousel__arrow--"],
+[class*="alphabetical-slider-shell__letter--"],
+[class*="product-card__plan-label--downgrade--"],
+[class*="toggle-switch__label--"] input:checked + [class*="toggle-switch__text--"],
+mark,
+.erc-watch-premium-upsell .upsell-content,
+.erc-watch-premium-upsell .compare-plans,
+.erc-watch-premium-dub-upsell .premium-dub-upsell-content,
+.erc-watch-premium-dub-upsell .premium-dub-upsell-link,
+.erc-premium-dub-modal .premium-dub-modal-body,
+.erc-premium-dub-modal .compare-plans,
+.erc-ani-may-banner .ani-may-main-text,
+.erc-ani-may-banner .ani-may-sub-text,
+.erc-ani-may-banner .ani-may-cta,
+.erc-payment-failed-link,
+.erc-resubscription-modal .content-wrapper .restart-button,
+.price-update-card [class*="price-update-card-button--"],
+.erc-fun-free-no-cr-modal .premium-wrapper,
+.erc-anonymous-consent,
+.erc-anonymous-consent .anonymous-consent-link,
+.erc-player-anonymous-consent .player-anonymous-consent-content-wrapper,
+.erc-player-anonymous-consent .player-anonymous-consent-link {
+    color: var(--on_primary) !important;
+}
+#lanyard_root * .ketch-text-black { color: var(--on_primary)) !important; }
+[class*="accordion__summary--"],
+[class*="accordion__content--"],
+[class*="alert-info--"],
+[class*="artist-card__title-link--"],
+[class*="radio-button__label--is-checked--"],
+[class*="checkbox--is-checked--"] [class*="checkbox__label--"],
+[class*="button--is-type-two-weak--"]:active, [class*="button--is-type-two-weak--"]:focus,
+[class*="button--is-type-four--"],
+[class*="button--is-type-six--"],
+[class*="button--is-type-seven--"],
+[class*="button--is-secondary--"],
+:is([class^="input--"],[class*=" input--"]),
+[class*="dropdown-trigger-autocomplete-input--is-cta--"],
+[class*="tooltip-content--"],
+[class*="info-tag--is-four--"],
+[class*="info-tag-live--"],
+[class*="browse-card__title-link--"],
+[class*="browse-card-hover__title-link--"],
+[class*="loader__icon--color-neutral--"],
+[class*="content-indicator-label--hero-trending--"],
+[class*="browse-card-static__title-link--"],
+:is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]),
+:is([class^="playable-thumbnail--"],[class*=" playable-thumbnail--"]) [class*="playable-thumbnail__duration--"],
+:is([class^="playable-card__title-link--"],[class*=" playable-card__title-link--"]),
+[class*="wide-cards-carousel__arrow--"],
+[class*="wide-cards-carousel__arrow--"]:active,
+[class*="ecom-card__title-link--"],
+[class*="playable-card-static__title-link--"],
+[class*="feed-header__view-link--"],
+:is([class^="nav-item--"],[class*=" nav-item--"]),
+[class*="nav-item__svg-wrapper--"],
+:is([class^="notification-badge--"],[class*=" notification-badge--"]),
+[class*="upsell-popup__content--"],
+[class*="browse-menu-item__link--"],
+:is([class^="menu-item__link--"],[class*=" menu-item__link--"]),
+[class*="submenu-expandable-item--"],
+[class*="horizontal-card-hover__title-link--"],
+[class*="horizontal-card__title-link--"],
+[class*="horizontal-card-static__title-link--"],
+[class*="history-playable-card__title-link--"],
+[class*="wide-news-card--"],
+[class*="wide-news-card__title-link--"],
+[class*="manga-card-static__title-link--"],
+[class*="manga-card-static__premium-badge-icon--"],
+[class*="onigiri-filter__tab--"],
+[class*="onigiri-filter__section-title--"],
+[class*="onigiri-filter__error--"],
+[class*="search-show-card-hover__title-link--"],
+[class*="search-show-card__title-link--"],
+[class*="search-show-card-static__title-link--"],
+[class*="platform-switcher-trigger__trigger--"],
+[class*="platform-switcher-content__link--"],
+[class*="platform-switcher-aside__link--"],
+[class*="playable-card-mini__title-link--"],
+[class*="playable-card-mini-static__title-link--"],
+[class*="promo-ecom-feed-card__title-link--"],
+[class*="promo-ecom-feed-card__price--"],
+[class*="rating-data-toggletip-scale--"],
+[class*="rating-data-toggletip--"],
+[class*="release-episode-card-title--"],
+[class*="release-episode-card-hover__title-link--"],
+[class*="release-episode-card__title-link--"],
+[class*="release-episode-card__more--"]:active,
+[class*="release-episode-card-stack__title-link--"],
+[class*="release-episode-card-static__title-link--"],
+[class*="release-episode-card-stack-static__title-link--"],
+[class*="search-episode-card__episode-link--"],
+[class*="search-episode-card-hover__episode-link--"],
+[class*="search-episode-card-static__episode-link--"],
+[class*="select-trigger--is-type-transparent--"],
+[class*="select-content__option--is-active--"],
+[class*="extended-option--is-active--"],
+[class*="stacked-option--is-active--"],
+[class*="single-playable-card__parent-cta--"],
+[class*="single-playable-card__content-title--"],
+[class*="single-promo-playable-card__content-title--"],
+[class*="single-promo-show-card__poster-text--"],
+[class*="single-promo-show-card__title--"],
+[class*="single-show-card__image-link--"],
+[class*="single-show-card__title-link--"],
+[class*="star-rating-average-data__label--"],
+[class*="tabs-item--"]:focus,
+[class*="tabs-item--is-active--"],
+[class*="toggle__label--"],
+[class*="square-news-card__title--"],
+[class*="square-news-card__title-link--"],
+[class*="username-label--"],
+[class*="username--"],
+[class*="watchlist-card-title--"],
+[class*="dialog__body--"],
+[class*="music-card__title-link--"],
+[class*="music-card-mini__title-link--"],
+:is([class^="search-input--"],[class*=" search-input--"]),
+[class*="search-music-card__music-link--"],
+:is([class^="card-title--"],[class*=" card-title--"]),
+[class*="end-slate-logo-fallback__link--"],
+[class*="end-slate-carousel-pagination__icon--is-active--"],
+[class*="pin-digit__input--"],
+[class*="product-card__bottomLink--"],
+[class*="product-card__top-section--"],
+[class*="benefit--"],
+[class*="theatrical-poster__header-text--"],
+[class*="theatrical-poster__subheader-text--"],
+[class*="theatrical-poster__details-text--"],
+[class*="faq__summary--"],
+[class*="faq__content--"],
+[class*="toggle-switch--"],
+[class*="perk--"],
+:is([class^="cta--"],[class*=" cta--"]),
+body, html,
+.erc-menu-item-title,
+.erc-header-tile.state-active,
+.erc-watch-upsell-banner .upsell-title,
+.erc-watch-on-hold-restriction .on-hold-content,
+.erc-seasons-mobile-view .item.state-active,
+.erc-prev-next-episode .title,
+.erc-prev-next-episode-placeholder .title,
+.erc-blocked-stream-age-verification .erc-blocked-stream-title,
+.erc-theatrical-banner .banner-title,
+.erc-series-details .details-item-name,
+.erc-browse-filters-onboarding .onboarding-icon,
+.erc-browse-filters-onboarding .onboarding-title,
+.erc-premium .price-wrapper,
+.payment-info-link,
+.erc-resubscription-modal .resubscription-modal-body .resubscription-modal-content .modal-heading,
+.erc-resubscription-modal .resubscription-modal-body .resubscription-modal-content .sub-text,
+.erc-resubscription-modal .content-wrapper .payment-method-selector .payment-method-name,
+.erc-resubscription-modal .legal-text,
+.price-update-card .price-update-card-content .price-update-card-title,
+.price-update-card .price-update-card-content .price-update-card-description,
+.erc-price-update-modal__step-label,
+.erc-account-nav-link.state-active,
+.erc-change-avatar-modal .modal-avatars-group-title,
+.erc-email-verification .page-action-text,
+.erc-profile-form .avatar-edit-label,
+.erc-profile-form-wallpaper .wallpaper-edit-label,
+.erc-share-button:active,
+.erc-share-modal .share-modal-option,
+.erc-prev-next-music .title,
+.erc-music-filters-mobile-view .item.state-active,
+.erc-redeem-details .common-perk-description,
+.erc-redeem-details .common-perk-description .perks-legal-link,
+.erc-product-perks,
+.erc-product-perk,
+.erc-redeem-success .description,
+.erc-restricted-faq .cos-link,
+.erc-select-profile-to-transfer .select-profile-to-transfer-description,
+.erc-profile-transfer-account-selection .profile-transfer-account-selection-description,
+.bitmovinplayer-container, .bitmovinplayer-ad-container {
+    color: var(--on_surface) !important;
+}
+#lanyard_root * .ketch-text-white { color: var(--on_surface)) !important; }
+[class*="button--is-type-two-weak--"],
+[class*="button--is-type-seven--"]:active,
+[class*="button--is-tertiary--"],
+[class*="button--is-tertiary--"]:focus,
+[class*="badge__text--"],
+[class*="info-tag--is-seven--"],
+[class*="star-rating-short-static--"],
+[class*="episode-rate-action__text--"],
+:where([class*="feed-header--is-music-variant--"]) [class*="feed-header__description--"],
+[class*="user-menu-nav-item--"],
+[class*="user-menu-account-item--"],
+[class*="browse-submenu-item__link--"],
+[class*="submenu-item__title--"],
+[class*="empty-info-box__text--"],
+[class*="empty-state__body--"], [class*="empty-state__text--"],
+[class*="no-filtered-results__reset-button--"],
+[class*="notification-card__copy--"],
+[class*="promo-ecom-feed-card__compare-price--"],
+[class*="star-rating-controls--"],
+[class*="star-rating-controls__star-button--"],
+[class*="star-rating-average-data__toggletip-trigger--"],
+[class*="star-rating__meta--"],
+[class*="star-rating-short--"],
+[class*="toggle__description--"],
+[class*="clear-button--"],
+[class*="reason--"],
+[class*="unsupported-modal__browser-info-link--"],
+[class*="pin__helper-text--"],
+[class*="product-card__plan-label--"],
+[class*="product-card__taxes--"],
+.erc-add-item-dropdown-empty,
+.erc-custom-lists-search-no-results,
+.erc-empty-list-info-box .description,
+.erc-empty-search-results .empty-search-title, .erc-search-results-error .empty-search-title,
+.erc-search-clear-button,
+.erc-anonymous-upsell-banner .anonymous-banner-description,
+.erc-header-tile,
+.erc-header-svg,
+.erc-watch-upsell-banner .upsell-description,
+.erc-watch-up-next-dub-unavailable .dub-unavailable-close-button,
+.erc-not-available-dub-modal .modal-description,
+.erc-blocked-stream-age-verification .age-verification-message,
+.erc-theatrical-banner .banner-subtitle,
+.erc-browse-filters-onboarding .onboarding-body,
+.erc-browse-filters-onboarding .onboarding-dismiss,
+.erc-free .description,
+.erc-free .subtext,
+.erc-free .disclaimer,
+.erc-premium .price-wrapper.has-old-amount,
+.erc-premium .renewal-date,
+.erc-resubscription-modal .strikethrough-price,
+.erc-promotion .description,
+.erc-promotion .subtext,
+.erc-promotion .disclaimer,
+.erc-account-change-email .change-email-instructions,
+.erc-profile-item,
+.erc-profile-add-button,
+.erc-profiles-select .logout-link,
+.erc-profile-pin-access .profile-wrapper,
+.erc-profile-pin-access .logout-link,
+.erc-profile-pin-access .back-link,
+.erc-share-button,
+.input-gift-card .hero-block .subtitle,
+.input-gift-card .footnote .info .footnote-subtitle,
+.erc-redeem-details .campaign-details,
+.erc-redeem-details .footnote-subtitle,
+.erc-product-perks .perks-label,
+.erc-age-verification .description {
+    color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__label--is-disabled--"],
+[class*="dropdown-text-option--is-dimmed--"],
+[class*="checkbox__label--"],
+[class*="button--is-disabled--"][class*="button--is-destructive--"], [class*="button--is-disabled--"][class*="button--is-primary--"], [class*="button--is-disabled--"][class*="button--is-primary-brand--"],
+:is([class^="input--"],[class*=" input--"]):focus::placeholder,
+[class*="label--is-dirty--"] :is([class^="label__text--"],[class*=" label__text--"]), [class*="label--is-focus--"] :is([class^="label__text--"],[class*=" label__text--"]),
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-dirty--"] :is([class^="label__text--"],[class*=" label__text--"]),
+[class*="username-input__button--"],
+[class*="password-input__button--"],
+[class*="breadcrumbs__divider--"],
+[class*="breadcrumbs__link--"],
+[class*="info-tag-live--is-post-live--"],
+[class*="browse-card__newly-added-label--"],
+[class*="browse-card-hover__meta--"],
+[class*="browse-card-static__newly-added-label--"],
+:is([class^="playable-card__show-title--"],[class*=" playable-card__show-title--"]),
+:is([class^="playable-card__footer--"],[class*=" playable-card__footer--"]),
+[class*="playable-card-hover__secondary-title-link--"],
+[class*="playable-card-hover__release--"],
+[class*="character-counter--"],
+[class*="custom-list-card__delete-icon--"],
+[class*="custom-list-card-delete-button--"],
+[class*="ecom-card__compare-price--"],
+[class*="playable-card-static__show-link--"],
+[class*="playable-card-static__footer--"],
+[class*="expandable-section__button--is-grey--"],
+[class*="feed-header__description--"],
+[class*="footer-nav-item__element--"],
+[class*="footer-copyright__copyright-text--"],
+[class*="footer-about-crunchyroll--"],
+[class*="footer-social-icon__link--"],
+[class*="footer-about-crunchyroll-anonymous--"],
+[class*="user-menu-nav-item__description-text--"],
+[class*="browse-menu-section__title--"],
+:is([class^="menu-section__title--"],[class*=" menu-section__title--"]),
+[class*="history-playable-card__show-link--"],
+[class*="history-playable-card__footer--"],
+[class*="history-playable-card__trash-button--"],
+[class*="list-info-box__description--"],
+[class*="wide-news-card__information--"],
+[class*="livestream-availability-note--is-post-live--"],
+[class*="no-filtered-results__subtitle--"],
+[class*="notification-card__cta--"],
+[class*="search-show-card-hover__meta--"],
+[class*="search-show-card__meta-info--"],
+[class*="search-show-card-static__subtitle--"],
+[class*="playable-card-mini__footer--"],
+[class*="playable-card-mini__more--"],
+[class*="playable-card-mini-static__footer--"],
+[class*="release-episode-card-media-type__label--"],
+[class*="release-episode-card__more--"],
+[class*="release-episode-card-stack__more--"],
+[class*="search-episode-card__title--"],
+[class*="search-episode-card__footer--"],
+[class*="search-episode-card__more--"],
+[class*="search-episode-card-hover__title-link--"],
+[class*="search-episode-card-hover__footer--"],
+[class*="search-episode-card-static__title-link--"],
+[class*="search-episode-card-static__footer--"],
+[class*="select-content__option--"],
+[class*="extended-option--"],
+[class*="select-label__label--"],
+[class*="stacked-option--"],
+[class*="single-playable-card__parent-title--"],
+[class*="single-promo-playable-card__parent-title-link--"],
+[class*="tabs-item--"],
+[class*="toggle__controls--"],
+[class*="square-news-card__posted-date--"],
+[class*="square-news-card__meta--"],
+[class*="news-and-editorial__view-all-link-content--"],
+[class*="news-and-editorial-placeholder__view-all-link-content--"],
+[class*="watchlist-card-subtitle--"],
+[class*="watchlist-card-actions__icon-button--"],
+[class*="generic-livestream-countdown__time-slot--"],
+[class*="modal__text--"],
+[class*="connected-apps-item__description--"],
+:is([class^="music-card__subtitle--"],[class*=" music-card__subtitle--"]),
+:is([class^="music-card__footer--"],[class*=" music-card__footer--"]),
+[class*="music-card-artist--"],
+[class*="music-card-mini__subtitle--"],
+[class*="music-card-mini__footer--"],
+:is([class^="search-input--"],[class*=" search-input--"])::-webkit-input-placeholder,
+:is([class^="search-input--"],[class*=" search-input--"])::placeholder,
+[class*="search-music-card__subtitle--"],
+[class*="search-music-card__footer--"],
+[class*="end-slate-carousel-pagination__page--"],
+[class*="alphabetical-slider__letter--"],
+[class*="unsupported-modal__modal-description--"],
+[class*="product-card__price-subtext--"],
+[class*="settings-nav-link--"],
+.erc-current-filters,
+.erc-single-custom-list-wrapper .single-custom-list-navigation .navigation-link,
+.erc-add-item-dropdown .see-all-results-link-content,
+.erc-add-to-existing-custom-list .content-header,
+.erc-add-to-existing-custom-list .lists-action,
+.erc-custom-lists-content .lists-count-wrapper,
+.erc-create-custom-list-form .modal-description,
+.erc-custom-lists-dropdown-item .list-item-count,
+.erc-custom-lists-modal-item .list-item-count,
+.erc-add-to-custom-list-button .add-to-list-button,
+.erc-history-content .clear-history-button,
+.erc-feature-toggle .feature-toggle-description,
+.erc-feature-item .feature-item-description,
+.erc-recent-searches .clear-button,
+.erc-recent-searches .recent-searches-view-all,
+.erc-see-more,
+.erc-search-results-back-button,
+.erc-watch-related-movies .toggle-button,
+.erc-current-media-info .ls-vod-coming-soon,
+.erc-seasons-mobile-view .item,
+.erc-season-navigation .cta-wrapper,
+.erc-season-empty-list .empty-season-text,
+.erc-series-details .details-item,
+.erc-genres-collection .view-all-link,
+.erc-membership-info .header-description,
+.erc-membership-info .order-history-description,
+.erc-free .subtitle,
+.erc-premium .amount-old,
+.erc-premium .taxes,
+.erc-premium .premium-cta,
+.erc-manage-payment-method .premium-cta,
+.erc-account-change-email .header-description,
+.erc-account-change-email .current-email-label,
+.erc-phone-form .header-description,
+.erc-phone-form .phone-form-input-description,
+.erc-phone-not-supported .header-description,
+.erc-change-password .password-description,
+.erc-create-password .password-description,
+.erc-password-strength-meter .strength-meter-label,
+.erc-email-notifications .email-notification-description,
+.erc-manga-maturity-faq,
+.erc-closed-captions-page .back-button,
+.erc-account-connected-apps .page-description,
+.erc-device-management .device-management-subtitle,
+.erc-device .device-activation-date, .erc-device .device-last-used-date, .erc-device .device-location,
+.erc-device-management-content .device-management-content-activated-count,
+.erc-profile-pin .profile-pin-description,
+.erc-account-nav-link,
+.erc-change-avatar-modal .modal-header-description,
+.erc-profile-email .profile-email-subtitle,
+.erc-profile-email-back-button,
+.erc-email-verification-requested .verify-description,
+.erc-email-verification .page-description,
+.erc-activate-device-old .activate-device-subtitle,
+.erc-activate-device-old .activate-device-disclaimer,
+.erc-activate-device .activation-section-subtitle,
+.erc-migration-faq,
+.erc-profile-form .input-description,
+.erc-profile-wallpaper-modal .header-description,
+.erc-current-music-info .copyright,
+.erc-music-filters-mobile-view .item,
+.input-gift-card .hero-block .need-help-wrapper .need-help-cta,
+.erc-redeem-details .buttons .check-another-code,
+.erc-redeem-details .footnote {
+    color: var(--outline) !important;
+}
+[class*="dropdown-text-option--is-disabled--"],
+[class*="checkbox--is-disabled--"] [class*="checkbox__label--"],
+[class*="button--is-disabled--"],
+[class*="button--is-disabled--"][class*="button--is-secondary--"],
+:is([class^="input--is-disabled--"],[class*=" input--is-disabled--"]),
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"]) :is([class^="label__text--"],[class*=" label__text--"]),
+[class*="footer-nav-item__element--"]:active,
+[class*="footer-social-icon__link--"]:active,
+[class*="onigiri-filter__apply--"][aria-disabled="true"],
+[class*="toggle--is-disabled--"],
+[class*="toggle--is-disabled--"] [class*="toggle__controls--"],
+[class*="toggle--is-disabled--"] [class*="toggle__label--"],
+[class*="toggle--is-disabled--"] [class*="toggle__description--"],
+[class*="pin-digit__input--"]::placeholder,
+[class*="pin-digit__input--is-disabled--"],
+.erc-single-custom-list-wrapper .single-custom-list-meta,
+.erc-season-navigation .state-disabled,
+.erc-ani-may-banner .ani-may-headline,
+.erc-ani-may-banner .ani-may-old-price,
+.erc-premium .premium-cta.state-disabled,
+.erc-otp-validation-modal .resend-button.state-disabled, .erc-otp-validation-modal .resend-button:active,
+.erc-phone-form .remove-phone-button:active,
+.erc-contact-customer-support .customer-support-link:active {
+    color: var(--outline_variant) !important;
+}
+[class*="playable-card-hover__play--"] { color: var(--playable-card-hover-accent-color,var(--primary)) !important; }
+[class*="button--is-type-three--"],
+[class*="button--is-type-eight--"],
+[class*="button--is-tertiary-brand--"],
+[class*="button--is-tertiary-brand--"]:focus,
+[class*="info-tag--is-six--"],
+[class*="loader__icon--"],
+[class*="carousel-tabs__tab--"]:active [class*="carousel-tabs__tab-indicator--"], [class*="carousel-tabs__tab--is-active--"] [class*="carousel-tabs__tab-indicator--"],
+[class*="footer-upsell-nav-item__text--"],
+[class*="user-menu-nav-item--is-active--"],
+[class*="user-menu-nav-item--is-active--"]:active,
+[class*="search-show-card-static__action-button--"],
+[class*="platform-switcher-content__link--is-active--"],
+[class*="platform-switcher-aside__link--is-active--"],
+[class*="release-episode-card-hover__play-label--"],
+[class*="search-episode-card-hover__play--"],
+[class*="speech-bubble__text--"],
+[class*="toggle--is-checked--"] [class*="toggle__controls--"],
+[class*="promo-countdown__time-digits--"],
+[class*="promo-countdown__time-separator--"],
+[class*="alphabetical-slider__letters-item--is-active--"] [class*="alphabetical-slider__letter--"],
+[class*="benefit--highlighted--"],
+::selection,
+.erc-empty-single-custom-list-description .description-link,
+.erc-custom-lists-dropdown-item .list-item-action-button,
+.erc-blocked-stream-age-verification .support-link,
+.erc-premium.first-party-on-hold-container .renewal-date,
+.erc-resubscription-modal .content-wrapper .payment-method-selector .change-link,
+.price-update-card .price-update-card-button,
+.erc-account-change-email .page-action-link,
+.erc-otp-validation-modal .resend-button,
+.erc-phone-form .remove-phone-button,
+.erc-contact-customer-support .customer-support-link,
+.erc-change-password .page-action-link,
+.erc-profile-preferences .highlighted-link,
+.erc-maturity-restrictions-faq .faq-link,
+.erc-manga-maturity-faq .faq-link,
+.erc-device-management .device-management-activate-link,
+.erc-devices-list .devices-list-deactivate-cta,
+.erc-device-management-content .device-management-content-deactivate-cta,
+.erc-email-verification .page-action-link,
+.erc-activate-device-old .activate-device-nav-link,
+.erc-activate-device .device-management-activate-link, .erc-activate-device .need-help-accordion-link,
+.erc-migration-faq .faq-link,
+.erc-profile-form .faq-link,
+.erc-prime-video-error-modal .faq-link,
+.erc-password-confirmation-modal .faq-link,
+.erc-current-music-info .artist-name-link,
+.input-gift-card .footnote .info .more-link,
+.erc-redeem-ineligible .faq-link,
+.erc-redeem-details .contact-us-link,
+.erc-authenticated-consent .authenticated-consent-link,
+.erc-challenge-expired .page-link,
+.erc-challenge-required .page-link {
+    color: var(--primary) !important;
+}
+[class*="playable-card-mini-hover__play--"] { color: var(--primary_fixed) !important; }
+[class*="button--is-type-three--"]:active,
+[class*="button--is-type-eight--"]:active,
+[class*="footer-upsell-nav-item__text--"]:active,
+[class*="browse-menu-item__link--is-active--"],
+[class*="browse-submenu-item__link--is-active--"],
+:is([class^="menu-item__link--is-active--"],[class*=" menu-item__link--is-active--"]),
+[class*="submenu-item__title--is-active--"],
+[class*="search-show-card-static__action-button--"]:active,
+.erc-custom-lists-dropdown-item .list-item-action-button:active,
+.erc-menu-item-title.state-active,
+.erc-restricted-explore-card .explore-card-cta,
+.erc-restricted-faq .faq-question {
+    color: var(--primary_fixed_dim) !important;
+}
+[class*="radio-button__label--"] { color: var(--radio-button-label-color,var(--outline)) !important; }
+[class*="rating-data-toggletip-scale--is-rated--"] { color: var(--rating-data-toggletip-scale-accent-color,var(--primary)) !important; }
+[class*="alert-info-action__action--"],
+[class*="broadcast-message__button--"],
+[class*="episode-rate-action--is-applied--"] [class*="episode-rate-action__text--"],
+[class*="release-episode-card-publish-time--"],
+[class*="select-trigger--is-opened--"][class*="select-trigger--is-type-transparent--"],
+[class*="username--is-moderator--"],
+:is([class^="livestream-countdown__time-digits--"],[class*=" livestream-countdown__time-digits--"]), [class*="livestream-countdown__time-separator--"],
+a,
+.erc-account-restricted-action,
+.erc-current-filters .filtering-result-label,
+.erc-blocked-stream .user-message-action,
+.erc-membership-info .order-history-link,
+.erc-email-notification-error .try-again-cta,
+.erc-apps-error .apps-error-action,
+.erc-empty-devices-list .empty-devices-list-action,
+.erc-anonymous-info-box .user-message-action {
+    color: var(--secondary) !important;
+}
+.erc-series-hero-action-tooltip { color: var(--series-hero-action-tooltip-color,var(--primary)) !important; }
+.erc-series-hero-action-tooltip:active { color: var(--series-hero-action-tooltip-color-active,var(--primary_fixed_dim)) !important; }
+.erc-series-hero-more-button.state-position-hero .hero-more-trigger { color: var(--series-hero-more-trigger-color,var(--primary)) !important; }
+.erc-series-hero-more-button.state-position-hero .hero-more-trigger:active { color: var(--series-hero-more-trigger-color-active,var(--primary_fixed_dim)) !important; }
+.erc-current-media-info .show-title-link { color: var(--series-title-accent-color-default,var(--primary)) !important; }
+[class*="star-rating-controls__star-button--is-rated-star--"],
+[class*="star-rating-controls__star-icon--is-rated-star--"] {
+    color: var(--star-rating-controls-accent-color,var(--primary)) !important;
+}
+[class*="star-rating-controls--"]:focus-within [class*="star-rating-controls__star-icon--"] { color: var(--star-rating-controls-accent-color,var(--primary_fixed)) !important; }
+[class*="star-rating-controls--"]:active [class*="star-rating-controls__star-icon--"] { color: var(--star-rating-controls-accent-color-active,var(--primary)) !important; }
+[class*="alphabetical-slider__letters-item--is-inactive--"] [class*="alphabetical-slider__letter--"],
+.erc-ani-may-banner .ani-may-legal-text {
+    color: var(--surface_container_highest) !important;
+}
+[class*="info-tag--is-three--"],
+[class*="ecom-card__price--is-sale--"],
+[class*="upsell-nav-item__header-crown--"],
+[class*="user-menu-account-item__premium-label--"],
+[class*="manga-card-static__premium-badge-text--"],
+[class*="username--is-premium--"],
+[class*="perk--"] [class*="perk-text--"] span,
+.erc-header-free-trial-tile-old .first-row,
+.erc-premium .title-wrapper,
+.erc-premium .highlighted,
+.erc-profile-item--is-selected,
+.erc-redeem-details .tier-title-wrapper,
+.erc-product-perks .perks-label.state-featured-perk {
+    color: var(--tertiary) !important;
+}
+[class*="livestream-availability-note--"],
+[class*="generic-livestream-countdown__time-digits--"],
+[class*="promo-countdown__time-slot--"],
+[class*="product-card__star--"],
+.erc-series-hero-label.state-new {
+    color: var(--tertiary_fixed) !important;
+}
+[class*="tooltip-icon__action-icon-button--"]:active { color: var(--tooltip-icon-accent-color-active,var(--primary_fixed)) !important; }
+[class*="tooltip-icon__action-icon-button--"] { color: var(--tooltip-icon-accent-color-default,var(--primary)) !important; }
+[class*="teen-avatar-placeholder--is-background-type-two--"] { fill: rgba(var(--on_surface_rgb), 0.04) !important; }
+[class*="card-watchlist-label__icon--"] { fill: var(--card-watchlist-label-icon-color,var(--primary)) !important; }
+[class*="live-dot--"] { fill: var(--error) !important; }
+[class*="premium-icon--black--"],
+[class*="teen-avatar-placeholder--is-background-type-one--"],
+[class*="live-dot--is-post-live--"],
+[class*="fab__close--"],
+[class*="flash-message__close-icon--"],
+[class*="alphabetical-slider-shell__letters-controls-right--"],
+[class*="theatrical-poster-close-button__icon--"],
+.erc-upsell-benefit .benefit-checkmark,
+.erc-profile-add-button .profile-add-button-badge-icon,
+#lanyard_root * .ketch-fill-black {
+    fill: var(--on_primary) !important;
+}
+[class*="watchlist-new__icon--"],
+[class*="accordion__angle-icon--"],
+[class*="content-image__placeholder--"],
+[class*="availability-overlay--"] [class*="availability-overlay__icon--"],
+[class*="dropdown-mobile-heading__close-icon--"],
+[class*="badge__close-icon--"],
+[class*="broadcast-message__close-icon--"],
+[class*="play-media-icon__symbol--"],
+[class*="playable-thumbnail-icon__watched-icon--"],
+[class*="crunchyroll-logo--is-white--"] [class*="crunchyroll-logo__icon--"],
+[class*="episode-rate-action__icon--"],
+[class*="fab-circular-text__text--"],
+[class*="fab__error--"],
+[class*="upsell-popup__title-icon--"],
+[class*="upsell-popup__close-icon--"],
+[class*="watchlist-toggle__icon--"],
+[class*="single-promo-show-card__watchlist-icon--"],
+[class*="star-rating-average-data__toggletip-trigger-icon--"],
+[class*="star-rating-short__trigger-icon--"],
+[class*="tabs-arrow__icon--"],
+[class*="toggle__switch-icon--"],
+[class*="dialog__close-icon--"],
+[class*="end-slate-carousel-close__btn--"],
+[class*="alphabetical-slider__letters-control--"],
+[class*="faq__icon--"],
+:is([class^="cta--"],[class*=" cta--"]) :is([class^="cta-icon--"],[class*=" cta-icon--"]),
+.erc-blocked-stream-icon,
+.erc-avatars-carousel .carousel-arrow-icon,
+.erc-profile-wallpaper-collection .carousel-arrow-icon,
+#lanyard_root * .ketch-fill-white {
+    fill: var(--on_surface) !important;
+}
+[class*="browse-card__footer-touch-icon--"],
+[class*="custom-list-card__drag-icon--"],
+[class*="custom-list-card__footer-touch-icon--"],
+[class*="custom-list-missing-card__drag-icon--"],
+[class*="footer-copyright__sony-logo--"],
+[class*="horizontal-card__footer-touch-icon--"],
+[class*="empty-info-box__icon--"],
+[class*="search-show-card__footer-touch-icon--"],
+.erc-custom-lists-search-no-results .icon {
+    fill: var(--outline) !important;
+}
+[class*="toggle--is-disabled--"] [class*="toggle__switch-icon--"] { fill: var(--outline_variant) !important; }
+[class*="crunchyroll-logo__icon--"],
+[class*="single-promo-show-card__watchlist-icon--is-filled--"],
+[class*="benefit__checkmark--"],
+.erc-anonymous-upsell-banner .anonymous-banner-logo,
+.erc-vertical-menu-store-link .link-icon,
+.erc-header-store-link .link-icon,
+.erc-sticky-header-landing .static-logo-icon,
+.erc-logo .logo-icon,
+.erc-not-found .logo,
+.erc-membership-promotion-info .promotion-star,
+.erc-restricted-welcome-section .logo-icon {
+    fill: var(--primary) !important;
+}
+[class*="single-promo-circles__wrapper--"],
+[class*="episode-rate-action--is-applied--"] [class*="episode-rate-action__icon--"],
+.erc-user-management-layout .lines {
+    fill: var(--secondary) !important;
+}
+[class*="star-rating-short-static__star-icon--is-rated--"] { fill: var(--star-rating-short-static-accent-color,var(--primary)) !important; }
+:is([class^="premium-icon--"],[class*=" premium-icon--"]),
+[class*="premium-filled-icon--"], [class*="premium-filled-icon--"],
+[class*="perk--"] [class*="perk-icon--"],
+.erc-header-free-trial-tile-old .premium-icon svg,
+.erc-product-perk .perk-icon {
+    fill: var(--tertiary) !important;
+}
+[class*="watchlist-toggle--is-colored--"]:active [class*="watchlist-toggle__icon--"] { fill: var(--watchlist-toggle-accent-color-active,var(--primary_fixed_dim)) !important; }
+[class*="watchlist-toggle--is-colored--"] [class*="watchlist-toggle__icon--"],
+[class*="watchlist-toggle--is-active--"] [class*="watchlist-toggle__icon--"] {
+    fill: var(--watchlist-toggle-accent-color-default,var(--primary)) !important;
+}
+[class*="end-slate-carousel-close__icon--"] { stroke: rgba(var(--surface_container_highest_rgb), 0.8) !important; }
+[class*="checkbox--is-disabled--"][class*="checkbox--is-checked--"] [class*="checkbox__path--"],
+[class*="fab-circular-text__text--"],
+#lanyard_root * .ketch-stroke-black {
+    stroke: var(--on_primary) !important;
+}
+[class*="teen-avatar--stroke-white--"] [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-white--"] [class*="teen-avatar__label--"],
+#lanyard_root * .ketch-stroke-white {
+    stroke: var(--on_surface) !important;
+}
+[class*="teen-avatar--stroke-aluminum--"] [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-aluminum--"] [class*="teen-avatar__label--"] { stroke: var(--on_surface_variant) !important; }
+[class*="teen-avatar--stroke-orange--"] [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-orange--"] [class*="teen-avatar__label--"] { stroke: var(--primary) !important; }
+[class*="checkbox--is-checked--"] [class*="checkbox__path--"] { stroke: var(--secondary) !important; }
+[class*="teen-avatar--stroke-gold--"] [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-gold--"] [class*="teen-avatar__label--"] { stroke: var(--tertiary) !important; }
+
+.erc-restricted-explore-card .card-image-wrapper { border-bottom-color: rgba(var(--on_surface_rgb), 0.3) !important; }
+[class*="platform-switcher-trigger--"] { border-bottom-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="label--is-error--"],
+[class*="code-input-cell--"] [class*="input--is-error--"] {
+    border-bottom-color: var(--error) !important;
+}
+.erc-color-select .black,
+.erc-activate-device .item-number {
+    border-bottom-color: var(--on_surface) !important;
+}
+[class*="alert-info-action--"],
+[class*="info-box--"],
+[class*="empty-state--"],
+[class*="pin-digit__input--"]:focus,
+.erc-empty-list-info-box,
+.erc-manage-payment-method .no-payment-info,
+.erc-membership-alert-info {
+    border-bottom-color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__checkmark--"],
+[class*="checkbox__checkmark--"] {
+    border-bottom-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"] [class*="checkbox__checkmark--"],
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-error--"] {
+    border-bottom-color: var(--outline_variant) !important;
+}
+[class*="label--is-focus--"],
+[class*="code-input-cell--"] [class*="input--is-normal--"]:focus,
+[class*="speech-bubble__content--"],
+[class*="search-field__wrapper--"]:focus-within,
+.price-update-card,
+.price-update-card .price-update-card-button {
+    border-bottom-color: var(--primary) !important;
+}
+[class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"] { border-bottom-color: var(--secondary) !important; }
+.erc-redeem-details .product-content { border-bottom-color: var(--surface_container) !important; }
+[class*="notification-badge--has-border--"],
+.erc-anonymous-upsell-banner {
+    border-bottom-color: var(--surface_container_high) !important;
+}
+.erc-devices-list .devices-list-item:last-child,
+.erc-device-management-content .device-management-content-status {
+    border-bottom-color: var(--surface_container_highest) !important;
+}
+.erc-device-management-content .device-management-content-status { border-bottom: 0.125rem solid var(--surface_container_highest) !important; }
+.erc-restricted-explore-card .card-image-wrapper { border-color: rgba(var(--on_surface_rgb), 0.3) !important; }
+[class*="platform-switcher-trigger--"] { border-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="speech-bubble__point--"]::after { border-color: var(--background) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) !important; }
+#lanyard_root * .ketch-border-black,
+#lanyard_root * :is(.ketch-peer:checked ~ .peer-checked\:ketch-border-black) {
+    border-color: var(--background)) !important;
+}
+[class*="label--is-error--"],
+[class*="code-input-cell--"] [class*="input--is-error--"] {
+    border-color: var(--error) !important;
+}
+.erc-color-select .black,
+.erc-activate-device .item-number {
+    border-color: var(--on_surface) !important;
+}
+[class*="alert-info-action--"],
+[class*="info-box--"],
+[class*="empty-state--"],
+[class*="pin-digit__input--"]:focus,
+.erc-empty-list-info-box,
+.erc-manage-payment-method .no-payment-info,
+.erc-membership-alert-info {
+    border-color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__checkmark--"],
+[class*="checkbox__checkmark--"] {
+    border-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"] [class*="checkbox__checkmark--"],
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-error--"] {
+    border-color: var(--outline_variant) !important;
+}
+[class*="label--is-focus--"],
+[class*="code-input-cell--"] [class*="input--is-normal--"]:focus,
+[class*="speech-bubble__content--"],
+[class*="search-field__wrapper--"]:focus-within,
+.price-update-card,
+.price-update-card .price-update-card-button {
+    border-color: var(--primary) !important;
+}
+[class*="speech-bubble__point--"]::before { border-color: var(--primary) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) !important; }
+[class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"] { border-color: var(--secondary) !important; }
+.erc-redeem-details .product-content { border-color: var(--surface_container) !important; }
+[class*="notification-badge--has-border--"],
+.erc-anonymous-upsell-banner {
+    border-color: var(--surface_container_high) !important;
+}
+.erc-devices-list .devices-list-item:last-child,
+.erc-device-management-content .device-management-content-status {
+    border-color: var(--surface_container_highest) !important;
+}
+[class*="tooltip-content__arrow--"] { border-color: var(--surface_container_highest) rgba(0, 0, 0, 0) rgba(0, 0, 0, 0) !important; }
+.erc-restricted-explore-card .card-image-wrapper { border-left-color: rgba(var(--on_surface_rgb), 0.3) !important; }
+[class*="platform-switcher-trigger--"] { border-left-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="label--is-error--"],
+[class*="code-input-cell--"] [class*="input--is-error--"] {
+    border-left-color: var(--error) !important;
+}
+.erc-color-select .black,
+.erc-activate-device .item-number {
+    border-left-color: var(--on_surface) !important;
+}
+[class*="alert-info-action--"],
+[class*="info-box--"],
+[class*="empty-state--"],
+[class*="pin-digit__input--"]:focus,
+.erc-empty-list-info-box,
+.erc-manage-payment-method .no-payment-info,
+.erc-membership-alert-info {
+    border-left-color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__checkmark--"],
+[class*="checkbox__checkmark--"] {
+    border-left-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"] [class*="checkbox__checkmark--"],
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-error--"] {
+    border-left-color: var(--outline_variant) !important;
+}
+[class*="label--is-focus--"],
+[class*="code-input-cell--"] [class*="input--is-normal--"]:focus,
+[class*="speech-bubble__content--"],
+[class*="search-field__wrapper--"]:focus-within,
+.price-update-card,
+.price-update-card .price-update-card-button {
+    border-left-color: var(--primary) !important;
+}
+[class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"] { border-left-color: var(--secondary) !important; }
+.erc-redeem-details .product-content { border-left-color: var(--surface_container) !important; }
+[class*="notification-badge--has-border--"],
+.erc-anonymous-upsell-banner {
+    border-left-color: var(--surface_container_high) !important;
+}
+.erc-devices-list .devices-list-item:last-child,
+.erc-device-management-content .device-management-content-status {
+    border-left-color: var(--surface_container_highest) !important;
+}
+.erc-device-management-content .device-management-content-status { border-left: 0.125rem var(--surface_container_highest) !important; }
+.erc-restricted-explore-card .card-image-wrapper { border-right-color: rgba(var(--on_surface_rgb), 0.3) !important; }
+[class*="platform-switcher-trigger--"] { border-right-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="label--is-error--"],
+[class*="code-input-cell--"] [class*="input--is-error--"] {
+    border-right-color: var(--error) !important;
+}
+.erc-color-select .black,
+.erc-activate-device .item-number {
+    border-right-color: var(--on_surface) !important;
+}
+[class*="alert-info-action--"],
+[class*="info-box--"],
+[class*="empty-state--"],
+[class*="pin-digit__input--"]:focus,
+.erc-empty-list-info-box,
+.erc-manage-payment-method .no-payment-info,
+.erc-membership-alert-info {
+    border-right-color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__checkmark--"],
+[class*="checkbox__checkmark--"] {
+    border-right-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"] [class*="checkbox__checkmark--"],
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-error--"] {
+    border-right-color: var(--outline_variant) !important;
+}
+[class*="label--is-focus--"],
+[class*="code-input-cell--"] [class*="input--is-normal--"]:focus,
+[class*="speech-bubble__content--"],
+[class*="search-field__wrapper--"]:focus-within,
+.price-update-card,
+.price-update-card .price-update-card-button {
+    border-right-color: var(--primary) !important;
+}
+[class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"] { border-right-color: var(--secondary) !important; }
+.erc-redeem-details .product-content { border-right-color: var(--surface_container) !important; }
+[class*="notification-badge--has-border--"],
+.erc-anonymous-upsell-banner {
+    border-right-color: var(--surface_container_high) !important;
+}
+.erc-devices-list .devices-list-item:last-child,
+.erc-device-management-content .device-management-content-status {
+    border-right-color: var(--surface_container_highest) !important;
+}
+.erc-device-management-content .device-management-content-status { border-right: 0.125rem var(--surface_container_highest) !important; }
+.erc-restricted-explore-card .card-image-wrapper { border-top-color: rgba(var(--on_surface_rgb), 0.3) !important; }
+[class*="platform-switcher-trigger--"] { border-top-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+[class*="speech-bubble__point--"]::after { border-top-color: var(--background) !important; }
+[class*="label--is-error--"],
+[class*="code-input-cell--"] [class*="input--is-error--"] {
+    border-top-color: var(--error) !important;
+}
+.erc-color-select .black,
+.erc-activate-device .item-number {
+    border-top-color: var(--on_surface) !important;
+}
+[class*="alert-info-action--"],
+[class*="info-box--"],
+[class*="empty-state--"],
+[class*="pin-digit__input--"]:focus,
+.erc-empty-list-info-box,
+.erc-manage-payment-method .no-payment-info,
+.erc-membership-alert-info {
+    border-top-color: var(--on_surface_variant) !important;
+}
+[class*="radio-button__checkmark--"],
+[class*="checkbox__checkmark--"] {
+    border-top-color: var(--outline) !important;
+}
+[class*="checkbox--is-disabled--"] [class*="checkbox__checkmark--"],
+:is([class^="label--is-disabled--"],[class*=" label--is-disabled--"])[class*="label--is-error--"] {
+    border-top-color: var(--outline_variant) !important;
+}
+[class*="label--is-focus--"],
+[class*="code-input-cell--"] [class*="input--is-normal--"]:focus,
+[class*="speech-bubble__content--"],
+[class*="speech-bubble__point--"]::before,
+[class*="search-field__wrapper--"]:focus-within,
+.price-update-card,
+.price-update-card .price-update-card-button {
+    border-top-color: var(--primary) !important;
+}
+[class*="checkbox--is-checked--"] [class*="checkbox__checkmark--"] { border-top-color: var(--secondary) !important; }
+.erc-redeem-details .product-content { border-top-color: var(--surface_container) !important; }
+[class*="notification-badge--has-border--"],
+.erc-anonymous-upsell-banner {
+    border-top-color: var(--surface_container_high) !important;
+}
+[class*="tooltip-content__arrow--"],
+.erc-devices-list .devices-list-item:last-child,
+.erc-device-management-content .device-management-content-status {
+    border-top-color: var(--surface_container_highest) !important;
+}
+.erc-device-management-content .device-management-content-status { border-top: 0.125rem solid var(--surface_container_highest) !important; }
+[class*="tooltip-content__arrow--"] { border-top: 0.5rem solid var(--surface_container_highest) !important; }
+[class*="radio-button__input--"]:checked ~ [class*="radio-button__checkmark--"] { border: .125rem solid var(--radio-button-checked-color,var(--secondary)) !important; }
+
+[class*="artist-card--"]:focus-within,
+[class*="browse-card-static--"]:focus-within,
+:is([class^="playable-card--"],[class*=" playable-card--"]):has(:focus-visible),
+[class*="playable-card--is-now-playing--"],
+[class*="playable-card-hover--"],
+[class*="ecom-card--"]:focus-within,
+[class*="playable-card-static--"]:focus-within,
+[class*="playable-card-static--is-now-playing--"],
+[class*="horizontal-card-hover__content--"],
+[class*="horizontal-card-static--"]:focus-within,
+[class*="history-playable-card--"]:focus-within,
+[class*="wide-news-card--"]:focus-within,
+[class*="manga-card-static--"]:focus-within,
+[class*="search-show-card-static--"]:focus-within,
+[class*="playable-card-mini--"]:focus-within,
+[class*="playable-card-mini--is-now-playing--"],
+[class*="playable-card-mini-hover--"],
+[class*="playable-card-mini-static--"]:focus-within,
+[class*="playable-card-mini-static--is-now-playing--"],
+[class*="search-episode-card-hover--"],
+[class*="search-episode-card-static--"]:focus-within,
+[class*="square-news-card--"]:focus-within,
+[class*="watchlist-card--"]:focus-within,
+:is([class^="music-card--"],[class*=" music-card--"]):focus-within,
+[class*="music-card--is-now-playing--"],
+[class*="music-card-mini--"]:focus-within,
+[class*="music-card-mini--is-now-playing--"],
+[class*="search-music-card--"]:focus-within {
+    box-shadow: 0 0 0 var(--hover-shadow-size) var(--surface_container) !important;
+}
+.erc-profile-wallpaper-collection .wallpaper-thumbnail.state-selected { box-shadow: 0 0 0 var(--selected-shadow-width) var(--primary) !important; }
+.erc-avatars-carousel .avatar-option.state-active, .erc-avatars-carousel .avatar-option:active { box-shadow: 0 0 0 var(--shadow-width) var(--primary) !important; }
+[class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.1) -0.3125rem -0.3125rem 0.5rem 0px !important; }
+[dir="rtl"] [class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.1) 0.3125rem -0.3125rem 0.5rem 0px !important; }
+[class*="tooltip-content--"] { box-shadow: rgba(var(--background_rgb), 0.2) 0px 0px 0.5rem 0px !important; }
+.erc-browse-filters-onboarding .onboarding-popover { box-shadow: rgba(var(--background_rgb), 0.4) 0px 0.25rem 0.75rem !important; }
+[class*="info-tag--"],
+[class*="info-tag-live--"] {
+    box-shadow: rgba(var(--background_rgb), 0.5) 0px 0px 0.25rem 0px !important;
+}
+[class*="single-playable-card-placeholder__content-thumbnail--"] { box-shadow: rgba(var(--background_rgb), 0.5) 0px 0px 0.5rem 0px !important; }
+[class*="single-promo-playable-card__content-thumbnail--"],
+[class*="single-promo-playable-card-placeholder__content-thumbnail--"] {
+    box-shadow: rgba(var(--background_rgb), 0.8) 0px 0px 0.625rem 0px !important;
+}
+[class*="upsell-popup__content-wrapper--"] { box-shadow: rgba(var(--outline_variant_rgb), 0.5) 0px 0px 0.375rem 0px !important; }
+:is([class^="avatar__corner-icon--"],[class*=" avatar__corner-icon--"]),
+[class*="teen-avatar__corner-icon--"],
+.erc-profile-add-button .profile-add-button-badge {
+    box-shadow: var(--background) 0px 0px 0px 0.125rem !important;
+}
+[class*="release-episode-card-stack-hover__thumbnail-image--"],
+[class*="release-episode-card-stack__thumbnail-image--"],
+[class*="release-episode-card-stack-static__thumbnail-image--"] {
+    box-shadow: var(--first-layer-offset) 0 0 rgba(var(--on_surface_rgb), 0.29),var(--first-layer-offset) 0 0 var(--background),var(--second-layer-offset) 0 0 rgba(var(--on_surface_rgb), 0.22),var(--second-layer-offset) 0 0 var(--background),var(--third-layer-offset) 0 0 hsla(0,0%,100%,.169),var(--third-layer-offset) 0 0 var(--background) !important;
+}
+[class*="dialog__body--has-top-border--"]::before { box-shadow: var(--primary) 0px 0px 0px 0.25rem !important; }
+[class*="browse-card-hover__content--"],
+[class*="search-show-card-hover__content--"],
+[class*="release-episode-card-hover--"],
+[class*="release-episode-card-stack-hover--"] {
+    box-shadow: var(--surface_container) 0px 0px 0px 0.5rem !important;
+}
+.erc-series-details-section { box-shadow: var(--surface_container_high) 0px -0.125rem 0px 0px inset !important; }
+[class*="details-table__table-row--"] { box-shadow: var(--surface_container_highest) 0px -0.0625rem 0px 0px inset !important; }
+.erc-profile-add-button.state-premium-locked .profile-add-button-header { box-shadow: var(--tertiary) 0px 0px 0px 0.125rem !important; }
+@media (hover: hover) {
+
+    .erc-profile-item:focus:not(.erc-profile-item--is-selected):not(.erc-profile-item--is-premium-locked), .erc-profile-item:hover:not(.erc-profile-item--is-selected):not(.erc-profile-item--is-premium-locked) { --avatar-outline-color: var(--on_surface) !important; }
+    :is([class^="dropdown-trigger--"],[class*=" dropdown-trigger--"]):focus, :is([class^="dropdown-trigger--"],[class*=" dropdown-trigger--"]):hover { --dropdown-trigger-background-color: var(--surface_container_high) !important; }
+    :is([class^="dropdown-trigger--"],[class*=" dropdown-trigger--"]):focus, :is([class^="dropdown-trigger--"],[class*=" dropdown-trigger--"]):hover,
+    :is([class^="dropdown-trigger--is-open--"],[class*=" dropdown-trigger--is-open--"]):focus, :is([class^="dropdown-trigger--is-open--"],[class*=" dropdown-trigger--is-open--"]):hover {
+        --dropdown-trigger-color: var(--on_surface) !important;
+    }
+    [class*="dropdown-trigger--is-active--"]:focus, [class*="dropdown-trigger--is-active--"]:hover { --dropdown-trigger-color: var(--secondary) !important; }
+    [class*="notification-card--"]:focus, [class*="notification-card--"]:hover,
+    [class*="release-episode-card-base--"]:focus, [class*="release-episode-card-base--"]:hover {
+        --hover-color: var(--surface_container) !important;
+    }
+    .erc-custom-lists-modal-item:focus, .erc-custom-lists-modal-item:hover { --icon-color: var(--primary_fixed) !important; }
+    [class*="hero-carousel__page--"]:not([class*="hero-carousel__page--is-active--"]):focus, [class*="hero-carousel__page--"]:not([class*="hero-carousel__page--is-active--"]):hover { --pill-color: rgba(var(--primary_rgb), 0.7) !important; }
+
+    [class*="badge__overlay--"]:focus, [class*="badge__overlay--"]:hover,
+    [class*="badge__text-wrapper--"]:focus, [class*="badge__text-wrapper--"]:hover,
+    [class*="badge__close-icon-wrapper--"]:focus, [class*="badge__close-icon-wrapper--"]:hover,
+    [class*="broadcast-message__close--"]:focus, [class*="broadcast-message__close--"]:hover,
+    [class*="platform-switcher-trigger--"]:focus, [class*="platform-switcher-trigger--"]:hover {
+        background-color: rgba(var(--on_surface_rgb), 0.08) !important;
+    }
+    [class*="platform-switcher-aside__link--"]:focus, [class*="platform-switcher-aside__link--"]:hover { background-color: rgba(var(--on_surface_rgb), 0.1) !important; }
+    [class*="flash-message__wrapper--"]:focus, [class*="flash-message__wrapper--"]:hover,
+    [class*="flash-message__action-link--"]:focus, [class*="flash-message__action-link--"]:hover,
+    [class*="flash-message__dismiss--"]:focus, [class*="flash-message__dismiss--"]:hover {
+        background-color: rgba(var(--on_surface_rgb), 0.2) !important;
+    }
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):focus, :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):hover,
+    .erc-profile-wallpaper-collection .carousel-arrow-button:focus, .erc-profile-wallpaper-collection .carousel-arrow-button:hover {
+        background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important;
+    }
+    [class*="button--is-type-one--"]:focus, [class*="button--is-type-one--"]:hover { background-color: var(--button-accent-color-hover,var(--primary_fixed)) !important; }
+    .erc-profile-form .profile-avatar:focus .avatar-edit-icon-wrapper, .erc-profile-form .profile-avatar:hover .avatar-edit-icon-wrapper,
+    .erc-profile-form-wallpaper:focus .edit-icon-wrapper, .erc-profile-form-wallpaper:hover .edit-icon-wrapper {
+        background-color: var(--on_surface) !important;
+    }
+    [class*="button--is-type-two--"]:focus, [class*="button--is-type-two--"]:hover { background-color: var(--on_surface_variant) !important; }
+    [class*="artist-card--"]:focus, [class*="artist-card--"]:hover,
+    [class*="dropdown-radio-option--"] [class*="dropdown-radio-option__label--"]:not([class*="dropdown-radio-option__label--is-disabled--"]):focus, [class*="dropdown-radio-option--"] [class*="dropdown-radio-option__label--"]:not([class*="dropdown-radio-option__label--is-disabled--"]):hover,
+    [class*="dropdown-text-option--"]:not([class*="dropdown-text-option--is-disabled--"]):focus, [class*="dropdown-text-option--"]:not([class*="dropdown-text-option--is-disabled--"]):hover,
+    [class*="dropdown-checkbox-option--"] [class*="dropdown-checkbox-option__label--"]:focus, [class*="dropdown-checkbox-option--"] [class*="dropdown-checkbox-option__label--"]:hover,
+    [class*="button--is-type-seven--"]:focus, [class*="button--is-type-seven--"]:hover,
+    [class*="button--is-type-eight--"]:focus, [class*="button--is-type-eight--"]:hover,
+    [class*="browse-card-static--"]:focus, [class*="browse-card-static--"]:hover,
+    [class*="ecom-card--"]:focus, [class*="ecom-card--"]:hover,
+    [class*="playable-card-static--"]:focus, [class*="playable-card-static--"]:hover,
+    :is([class^="nav-item--"],[class*=" nav-item--"]):focus, :is([class^="nav-item--"],[class*=" nav-item--"]):hover,
+    [class*="user-nav-item--"]:focus, [class*="user-nav-item--"]:hover,
+    [class*="horizontal-card-static--"]:focus, [class*="horizontal-card-static--"]:hover,
+    [class*="history-playable-card--"]:focus, [class*="history-playable-card--"]:hover,
+    [class*="wide-news-card--"]:focus, [class*="wide-news-card--"]:hover,
+    [class*="manga-card-static--"]:focus, [class*="manga-card-static--"]:hover,
+    [class*="search-show-card-static--"]:focus, [class*="search-show-card-static--"]:hover,
+    [class*="playable-card-mini-static--"]:focus, [class*="playable-card-mini-static--"]:hover,
+    [class*="search-episode-card-static--"]:focus, [class*="search-episode-card-static--"]:hover,
+    [class*="select-content__option--"]:focus, [class*="select-content__option--"]:hover,
+    [class*="extended-option--"]:focus, [class*="extended-option--"]:hover,
+    [class*="stacked-option--"]:focus, [class*="stacked-option--"]:hover,
+    [class*="tabs-item--"]:focus, [class*="tabs-item--"]:hover,
+    [class*="square-news-card--"]:focus, [class*="square-news-card--"]:hover,
+    [class*="watchlist-card--"]:focus, [class*="watchlist-card--"]:hover,
+    :is([class^="music-card--"],[class*=" music-card--"]):focus, :is([class^="music-card--"],[class*=" music-card--"]):hover,
+    [class*="music-card-mini--"]:focus, [class*="music-card-mini--"]:hover,
+    [class*="search-music-card--"]:focus, [class*="search-music-card--"]:hover,
+    .erc-custom-lists-modal-item:focus, .erc-custom-lists-modal-item:hover,
+    .erc-header-tile:focus, .erc-header-tile:hover {
+        background-color: var(--surface_container) !important;
+    }
+    [class*="button--is-secondary--"]:focus, [class*="button--is-secondary--"]:hover,
+    [class*="button--is-tertiary--"]:focus, [class*="button--is-tertiary--"]:hover,
+    [class*="user-menu-nav-item--"]:focus, [class*="user-menu-nav-item--"]:hover,
+    [class*="user-menu-nav-item--is-active--"]:focus, [class*="user-menu-nav-item--is-active--"]:hover,
+    [class*="user-menu-account-item--is-interactive--"]:focus, [class*="user-menu-account-item--is-interactive--"]:hover,
+    [class*="browse-menu-item__link--"]:focus, [class*="browse-menu-item__link--"]:hover,
+    [class*="browse-menu-item__link--is-active--"]:focus, [class*="browse-menu-item__link--is-active--"]:hover,
+    [class*="browse-submenu-item__link--"]:focus, [class*="browse-submenu-item__link--"]:hover,
+    [class*="browse-submenu-item__link--is-active--"]:focus, [class*="browse-submenu-item__link--is-active--"]:hover,
+    :is([class^="menu-item__link--"],[class*=" menu-item__link--"]):focus, :is([class^="menu-item__link--"],[class*=" menu-item__link--"]):hover,
+    :is([class^="menu-item__link--is-active--"],[class*=" menu-item__link--is-active--"]):focus, :is([class^="menu-item__link--is-active--"],[class*=" menu-item__link--is-active--"]):hover,
+    [class*="submenu-expandable-item--"]:focus, [class*="submenu-expandable-item--"]:hover,
+    [class*="submenu-item__title--"]:focus, [class*="submenu-item__title--"]:hover,
+    [class*="submenu-item__title--is-active--"]:focus, [class*="submenu-item__title--is-active--"]:hover,
+    [class*="platform-switcher-content__link--"]:focus, [class*="platform-switcher-content__link--"]:hover,
+    [class*="extended-option--is-dark--"]:focus, [class*="extended-option--is-dark--"]:hover,
+    [class*="stacked-option--is-dark--"]:focus, [class*="stacked-option--is-dark--"]:hover,
+    [class*="hero-carousel__arrow--"]:focus, [class*="hero-carousel__arrow--"]:hover,
+    .erc-add-to-custom-list-button .add-to-list-button:focus, .erc-add-to-custom-list-button .add-to-list-button:hover,
+    .erc-menu-item-title:focus, .erc-menu-item-title:hover,
+    .erc-menu-item-title.state-active:focus, .erc-menu-item-title.state-active:hover {
+        background-color: var(--surface_container_high) !important;
+    }
+    [class*="tabs-item--"]:focus [class*="tabs-item__text--"]::before, [class*="tabs-item--"]:hover [class*="tabs-item__text--"]::before { background-image: linear-gradient(to var(--cr-end-direction),#0000 calc(var(--text-max-width) - var(--text-fade-width)),var(--surface_container)) !important; }
+    [class*="select-content__option--"]:focus, [class*="select-content__option--"]:hover,
+    [class*="extended-option--"]:focus, [class*="extended-option--"]:hover,
+    [class*="stacked-option--"]:focus, [class*="stacked-option--"]:hover {
+        background: var(--surface_container) !important;
+    }
+    [class*="extended-option--is-dark--"]:focus, [class*="extended-option--is-dark--"]:hover,
+    [class*="stacked-option--is-dark--"]:focus, [class*="stacked-option--is-dark--"]:hover {
+        background: var(--surface_container_high) !important;
+    }
+
+    [class*="button--is-action-item--"]:focus, [class*="button--is-action-item--"]:hover { color: var(--button-accent-color-hover,var(--on_surface)) !important; }
+    [class*="button--is-type-one-weak--"]:focus, [class*="button--is-type-one-weak--"]:hover,
+    [class*="button--is-type-stacked--"]:focus, [class*="button--is-type-stacked--"]:hover {
+        color: var(--button-accent-color-hover,var(--primary_fixed)) !important;
+    }
+    [class*="button--is-primary-brand--"]:focus, [class*="button--is-primary-brand--"]:hover { color: var(--button-accent-text-color-default,var(--on_primary)) !important; }
+    [class*="button--is-type-one--"]:focus, [class*="button--is-type-one--"]:hover { color: var(--button-accent-text-color-hover,var(--on_primary)) !important; }
+    .erc-current-filters:focus .filtering-result-label, .erc-current-filters:hover .filtering-result-label { color: var(--error) !important; }
+    [class*="expandable-section__button--"]:focus, [class*="expandable-section__button--"]:hover { color: var(--expandable-section-accent-color-hover,var(--on_surface)) !important; }
+    [class*="artist-card--"]:focus [class*="artist-card__watchlist-label--"], [class*="artist-card--"]:hover [class*="artist-card__watchlist-label--"],
+    [class*="button--is-type-two--"]:focus, [class*="button--is-type-two--"]:hover,
+    [class*="button--is-type-five--"]:focus, [class*="button--is-type-five--"]:hover,
+    [class*="button--is-type-seven-weak--"]:focus, [class*="button--is-type-seven-weak--"]:hover,
+    [class*="browse-card-static--"]:focus [class*="browse-card-static__watchlist-label--"], [class*="browse-card-static--"]:hover [class*="browse-card-static__watchlist-label--"],
+    [class*="ecom-card--"]:focus [class*="ecom-card__watchlist-label-background--"], [class*="ecom-card--"]:hover [class*="ecom-card__watchlist-label-background--"],
+    [class*="feed-header__view-link--is-dark-variant--"]:focus, [class*="feed-header__view-link--is-dark-variant--"]:hover,
+    [class*="horizontal-card--"]:focus [class*="horizontal-card__hover--"] [class*="horizontal-card__watchlist-label--"], [class*="horizontal-card--"]:hover [class*="horizontal-card__hover--"] [class*="horizontal-card__watchlist-label--"],
+    [class*="horizontal-card-static--"]:focus [class*="horizontal-card-static__watchlist-label--"], [class*="horizontal-card-static--"]:hover [class*="horizontal-card-static__watchlist-label--"],
+    [class*="search-show-card-static--"]:focus [class*="search-show-card-static__watchlist-label--"], [class*="search-show-card-static--"]:hover [class*="search-show-card-static__watchlist-label--"],
+    .erc-watch-premium-upsell .compare-plans:focus, .erc-watch-premium-upsell .compare-plans:hover,
+    .erc-watch-premium-dub-upsell .premium-dub-upsell-link:focus, .erc-watch-premium-dub-upsell .premium-dub-upsell-link:hover,
+    .erc-premium-dub-modal .compare-plans:focus, .erc-premium-dub-modal .compare-plans:hover {
+        color: var(--on_primary) !important;
+    }
+    [class*="alert-info-action__action--"]:focus, [class*="alert-info-action__action--"]:hover,
+    [class*="radio-button__label--"]:focus, [class*="radio-button__label--"]:hover,
+    [class*="dropdown-text-option--is-dimmed--"]:focus, [class*="dropdown-text-option--is-dimmed--"]:hover,
+    [class*="checkbox__label--"]:focus, [class*="checkbox__label--"]:hover,
+    [class*="button--is-type-two-weak--"]:focus, [class*="button--is-type-two-weak--"]:hover,
+    [class*="button--is-secondary--"]:focus, [class*="button--is-secondary--"]:hover,
+    [class*="button--is-tertiary--"]:focus, [class*="button--is-tertiary--"]:hover,
+    [class*="username-input__button--"]:focus, [class*="username-input__button--"]:hover,
+    [class*="password-input__button--"]:focus, [class*="password-input__button--"]:hover,
+    [class*="breadcrumbs__link--"]:focus, [class*="breadcrumbs__link--"]:hover,
+    [class*="broadcast-message__button--"]:focus, [class*="broadcast-message__button--"]:hover,
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):focus, :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):hover,
+    [class*="playable-card-hover__secondary-title-link--"]:focus, [class*="playable-card-hover__secondary-title-link--"]:hover,
+    [class*="wide-cards-carousel__arrow--"]:focus, [class*="wide-cards-carousel__arrow--"]:hover,
+    [class*="custom-list-card-delete-button--"]:focus, [class*="custom-list-card-delete-button--"]:hover,
+    [class*="episode-rate-action--"]:focus [class*="episode-rate-action__text--"], [class*="episode-rate-action--"]:hover [class*="episode-rate-action__text--"],
+    [class*="footer-nav-item__element--"]:focus, [class*="footer-nav-item__element--"]:hover,
+    [class*="footer-social-icon__link--"]:focus, [class*="footer-social-icon__link--"]:hover,
+    [class*="user-menu-nav-item--"]:focus, [class*="user-menu-nav-item--"]:hover,
+    [class*="user-menu-account-item--is-interactive--"]:focus, [class*="user-menu-account-item--is-interactive--"]:hover,
+    [class*="browse-menu-item__link--"]:focus, [class*="browse-menu-item__link--"]:hover,
+    :is([class^="menu-item__link--"],[class*=" menu-item__link--"]):focus, :is([class^="menu-item__link--"],[class*=" menu-item__link--"]):hover,
+    [class*="submenu-expandable-item--"]:focus, [class*="submenu-expandable-item--"]:hover,
+    [class*="history-playable-card__trash-button--"]:focus, [class*="history-playable-card__trash-button--"]:hover,
+    [class*="no-filtered-results__reset-button--"]:focus, [class*="no-filtered-results__reset-button--"]:hover,
+    [class*="select-trigger--is-type-filled--"]:focus, [class*="select-trigger--is-type-filled--"]:hover,
+    [class*="select-content__option--"]:focus, [class*="select-content__option--"]:hover,
+    [class*="extended-option--"]:focus, [class*="extended-option--"]:hover,
+    [class*="stacked-option--"]:focus, [class*="stacked-option--"]:hover,
+    [class*="single-playable-card__parent-title-component--"]:focus [class*="single-playable-card__parent-title--"], [class*="single-playable-card__parent-title-component--"]:hover [class*="single-playable-card__parent-title--"],
+    [class*="single-playable-card__parent-title--is-clickable--"]:focus, [class*="single-playable-card__parent-title--is-clickable--"]:hover,
+    [class*="single-promo-playable-card__parent-title-link--"]:focus, [class*="single-promo-playable-card__parent-title-link--"]:hover,
+    [class*="single-show-card__title-link--"]:focus, [class*="single-show-card__title-link--"]:hover,
+    [class*="star-rating-average-data__toggletip-trigger--"]:focus, [class*="star-rating-average-data__toggletip-trigger--"]:hover,
+    [class*="star-rating-short--"]:focus, [class*="star-rating-short--"]:hover,
+    [class*="tabs-item--"]:focus, [class*="tabs-item--"]:hover,
+    [class*="toggle__controls--"]:focus, [class*="toggle__controls--"]:hover,
+    [class*="news-and-editorial__view-all-link-content--"]:focus, [class*="news-and-editorial__view-all-link-content--"]:hover,
+    [class*="news-and-editorial-placeholder__view-all-link-content--"]:focus, [class*="news-and-editorial-placeholder__view-all-link-content--"]:hover,
+    [class*="watchlist-card-actions__icon-button--"]:focus, [class*="watchlist-card-actions__icon-button--"]:hover,
+    [class*="hero-carousel__arrow--"]:focus, [class*="hero-carousel__arrow--"]:hover,
+    [class*="clear-button--"]:focus, [class*="clear-button--"]:hover,
+    [class*="alphabetical-slider__letters-item--"]:focus [class*="alphabetical-slider__letter--"], [class*="alphabetical-slider__letters-item--"]:hover [class*="alphabetical-slider__letter--"],
+    [class*="unsupported-modal__browser-info-link--"]:focus [class*="browserTitle--"], [class*="unsupported-modal__browser-info-link--"]:hover [class*="browserTitle--"],
+    [class*="settings-nav-link--"]:focus, [class*="settings-nav-link--"]:hover,
+    a:focus, a:hover,
+    .erc-account-restricted-action:focus, .erc-account-restricted-action:hover,
+    .erc-awards .nominee:focus .vote-btn-text, .erc-awards .nominee:hover .vote-btn-text,
+    .erc-single-custom-list-wrapper .single-custom-list-navigation .navigation-link:focus, .erc-single-custom-list-wrapper .single-custom-list-navigation .navigation-link:hover,
+    .erc-empty-single-custom-list-description .description-link:focus, .erc-empty-single-custom-list-description .description-link:hover,
+    .erc-add-item-dropdown .see-all-results-link:focus .see-all-results-link-content, .erc-add-item-dropdown .see-all-results-link:hover .see-all-results-link-content,
+    .erc-add-to-existing-custom-list .lists-action:focus, .erc-add-to-existing-custom-list .lists-action:hover,
+    .erc-add-to-custom-list-button .add-to-list-button:focus, .erc-add-to-custom-list-button .add-to-list-button:hover,
+    .erc-history-content .clear-history-button:focus, .erc-history-content .clear-history-button:hover,
+    .erc-recent-searches .clear-button:focus, .erc-recent-searches .clear-button:hover,
+    .erc-recent-searches .recent-searches-view-all:focus, .erc-recent-searches .recent-searches-view-all:hover,
+    .erc-see-more:focus, .erc-see-more:hover,
+    .erc-search-clear-button:focus, .erc-search-clear-button:hover,
+    .erc-search-results-back-button:focus, .erc-search-results-back-button:hover,
+    .erc-menu-item-title:focus, .erc-menu-item-title:hover,
+    .erc-header-tile:focus, .erc-header-tile:hover,
+    .erc-watch-related-movies .toggle-button:focus, .erc-watch-related-movies .toggle-button:hover,
+    .erc-blocked-stream .user-message-action:focus, .erc-blocked-stream .user-message-action:hover,
+    .erc-seasons-mobile-view .item:focus, .erc-seasons-mobile-view .item:hover,
+    .erc-watch-up-next-dub-unavailable .dub-unavailable-close-button:focus, .erc-watch-up-next-dub-unavailable .dub-unavailable-close-button:hover,
+    .erc-blocked-stream-age-verification .support-link:focus, .erc-blocked-stream-age-verification .support-link:hover,
+    .erc-season-navigation .cta-wrapper:focus, .erc-season-navigation .cta-wrapper:hover,
+    .erc-genres-collection .view-all-link:focus, .erc-genres-collection .view-all-link:hover,
+    .erc-membership-info .order-history-link:focus, .erc-membership-info .order-history-link:hover,
+    .erc-premium .premium-cta:focus, .erc-premium .premium-cta:hover,
+    .erc-manage-payment-method .premium-cta:focus, .erc-manage-payment-method .premium-cta:hover,
+    .erc-account-change-email .page-action-link:focus, .erc-account-change-email .page-action-link:hover,
+    .erc-otp-validation-modal .resend-button:focus, .erc-otp-validation-modal .resend-button:hover,
+    .erc-phone-form .remove-phone-button:focus, .erc-phone-form .remove-phone-button:hover,
+    .erc-contact-customer-support .customer-support-link:focus, .erc-contact-customer-support .customer-support-link:hover,
+    .erc-change-password .page-action-link:focus, .erc-change-password .page-action-link:hover,
+    .erc-email-notification-error .try-again-cta:focus, .erc-email-notification-error .try-again-cta:hover,
+    .erc-profile-preferences .highlighted-link:focus, .erc-profile-preferences .highlighted-link:hover,
+    .erc-maturity-restrictions-faq .faq-link:focus, .erc-maturity-restrictions-faq .faq-link:hover,
+    .erc-manga-maturity-faq .faq-link:focus, .erc-manga-maturity-faq .faq-link:hover,
+    .erc-closed-captions-page .back-button:focus, .erc-closed-captions-page .back-button:hover,
+    .erc-apps-error .apps-error-action:focus, .erc-apps-error .apps-error-action:hover,
+    .erc-device-management .device-management-activate-link:focus, .erc-device-management .device-management-activate-link:hover,
+    .erc-empty-devices-list .empty-devices-list-action:focus, .erc-empty-devices-list .empty-devices-list-action:hover,
+    .erc-devices-list .devices-list-deactivate-cta:focus, .erc-devices-list .devices-list-deactivate-cta:hover,
+    .erc-device-management-content .device-management-content-deactivate-cta:focus, .erc-device-management-content .device-management-content-deactivate-cta:hover,
+    .erc-account-nav-link:focus, .erc-account-nav-link:hover,
+    .erc-profile-email-back-button:focus, .erc-profile-email-back-button:hover,
+    .erc-email-verification .page-action-link:focus, .erc-email-verification .page-action-link:hover,
+    .erc-activate-device-old .activate-device-nav-link:focus, .erc-activate-device-old .activate-device-nav-link:hover,
+    .erc-activate-device .device-management-activate-link:focus, .erc-activate-device .device-management-activate-link:hover, .erc-activate-device .need-help-accordion-link:focus, .erc-activate-device .need-help-accordion-link:hover,
+    .erc-migration-faq .faq-link:focus, .erc-migration-faq .faq-link:hover,
+    .erc-profile-form .faq-link:focus, .erc-profile-form .faq-link:hover,
+    .erc-profile-item:focus:not(.erc-profile-item--is-selected), .erc-profile-item:hover:not(.erc-profile-item--is-selected),
+    .erc-profile-add-button:focus, .erc-profile-add-button:hover,
+    .erc-profiles-select .logout-link:focus, .erc-profiles-select .logout-link:hover,
+    .erc-profile-pin-access .logout-link:focus, .erc-profile-pin-access .logout-link:hover,
+    .erc-profile-pin-access .back-link:focus, .erc-profile-pin-access .back-link:hover,
+    .erc-prime-video-error-modal .faq-link:focus, .erc-prime-video-error-modal .faq-link:hover,
+    .erc-anonymous-info-box .user-message-action:focus, .erc-anonymous-info-box .user-message-action:hover,
+    .erc-share-button:focus, .erc-share-button:hover,
+    .erc-current-music-info .artist-name-link:focus, .erc-current-music-info .artist-name-link:hover,
+    .erc-music-filters-mobile-view .item:focus, .erc-music-filters-mobile-view .item:hover,
+    .input-gift-card .hero-block .need-help-wrapper .need-help-cta:focus, .input-gift-card .hero-block .need-help-wrapper .need-help-cta:hover,
+    .input-gift-card .footnote .info .more-link:focus, .input-gift-card .footnote .info .more-link:hover,
+    .erc-redeem-ineligible .faq-link:focus, .erc-redeem-ineligible .faq-link:hover,
+    .erc-redeem-details .buttons .check-another-code:focus, .erc-redeem-details .buttons .check-another-code:hover,
+    .erc-redeem-details .contact-us-link:focus, .erc-redeem-details .contact-us-link:hover,
+    .erc-authenticated-consent .authenticated-consent-link:focus, .erc-authenticated-consent .authenticated-consent-link:hover,
+    .erc-challenge-expired .page-link:focus, .erc-challenge-expired .page-link:hover,
+    .erc-challenge-required .page-link:focus, .erc-challenge-required .page-link:hover {
+        color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus, [class*="radio-button__label--is-disabled--"]:hover { color: var(--outline) !important; }
+    [class*="button--is-disabled--"]:focus, [class*="button--is-disabled--"]:hover { color: var(--outline_variant) !important; }
+    [class*="playable-card-hover__link--"]:focus ~ [class*="playable-card-hover__body--"] [class*="playable-card-hover__play--"], [class*="playable-card-hover__link--"]:hover ~ [class*="playable-card-hover__body--"] [class*="playable-card-hover__play--"] { color: var(--playable-card-hover-accent-color-hover,var(--primary_fixed)) !important; }
+    [class*="user-menu-nav-item--is-active--"]:focus, [class*="user-menu-nav-item--is-active--"]:hover,
+    [class*="platform-switcher-content__link--is-active--"]:focus, [class*="platform-switcher-content__link--is-active--"]:hover,
+    [class*="platform-switcher-aside__link--is-active--"]:focus, [class*="platform-switcher-aside__link--is-active--"]:hover,
+    .erc-anonymous-consent .anonymous-consent-link:focus, .erc-anonymous-consent .anonymous-consent-link:hover,
+    .erc-player-anonymous-consent .player-anonymous-consent-link:focus, .erc-player-anonymous-consent .player-anonymous-consent-link:hover {
+        color: var(--primary) !important;
+    }
+    [class*="button--is-type-three--"]:focus, [class*="button--is-type-three--"]:hover,
+    [class*="footer-upsell-nav-item__text--"]:focus, [class*="footer-upsell-nav-item__text--"]:hover,
+    [class*="search-show-card-static__action-button--"]:focus, [class*="search-show-card-static__action-button--"]:hover,
+    [class*="release-episode-card-hover__link--"]:focus ~ [class*="release-episode-card-hover__body--"] [class*="release-episode-card-hover__play-label--"], [class*="release-episode-card-hover__link--"]:hover ~ [class*="release-episode-card-hover__body--"] [class*="release-episode-card-hover__play-label--"],
+    [class*="search-episode-card-hover__link--"]:focus ~ [class*="search-episode-card-hover__body--"] [class*="search-episode-card-hover__play--"], [class*="search-episode-card-hover__link--"]:hover ~ [class*="search-episode-card-hover__body--"] [class*="search-episode-card-hover__play--"],
+    .erc-custom-lists-dropdown-item .list-item-action-button:focus, .erc-custom-lists-dropdown-item .list-item-action-button:hover,
+    .erc-restricted-explore-card .explore-card-cta:focus, .erc-restricted-explore-card .explore-card-cta:hover,
+    .erc-restricted-faq .cos-link:focus, .erc-restricted-faq .cos-link:hover {
+        color: var(--primary_fixed) !important;
+    }
+    [class*="browse-menu-item__link--is-active--"]:focus, [class*="browse-menu-item__link--is-active--"]:hover,
+    [class*="browse-submenu-item__link--is-active--"]:focus, [class*="browse-submenu-item__link--is-active--"]:hover,
+    [class*="toggle--is-checked--"] [class*="toggle__controls--"]:focus, [class*="toggle--is-checked--"] [class*="toggle__controls--"]:hover {
+        color: var(--primary_fixed_dim) !important;
+    }
+    [class*="select-trigger--is-type-transparent--"]:focus, [class*="select-trigger--is-type-transparent--"]:hover { color: var(--secondary) !important; }
+    .erc-series-hero-action-tooltip:focus, .erc-series-hero-action-tooltip:hover { color: var(--series-hero-action-tooltip-color-hover,var(--primary_fixed)) !important; }
+    .erc-series-hero-more-button.state-position-hero .hero-more-trigger:focus, .erc-series-hero-more-button.state-position-hero .hero-more-trigger:hover { color: var(--series-hero-more-trigger-color-hover,var(--primary_fixed)) !important; }
+    .erc-current-media-info .show-title-link:focus, .erc-current-media-info .show-title-link:hover { color: var(--series-title-accent-color-hover,var(--on_surface)) !important; }
+    [class*="star-rating-controls--"]:focus [class*="star-rating-controls__star-icon--"], [class*="star-rating-controls--"]:hover [class*="star-rating-controls__star-icon--"] { color: var(--star-rating-controls-accent-color,var(--primary_fixed)) !important; }
+    [class*="tooltip-icon__action-icon-button--"]:focus, [class*="tooltip-icon__action-icon-button--"]:hover { color: var(--tooltip-icon-accent-color-hover,var(--primary_fixed)) !important; }
+    [class*="episode-rate-action--"]:focus [class*="episode-rate-action__icon--"], [class*="episode-rate-action--"]:hover [class*="episode-rate-action__icon--"],
+    [class*="watchlist-toggle--"]:focus [class*="watchlist-toggle__icon--is-filled--"], [class*="watchlist-toggle--"]:hover [class*="watchlist-toggle__icon--is-filled--"],
+    .erc-logo:focus .logo-icon, .erc-logo:hover .logo-icon {
+        fill: var(--on_surface) !important;
+    }
+    [class*="watchlist-toggle--is-colored--"]:focus [class*="watchlist-toggle__icon--"], [class*="watchlist-toggle--is-colored--"]:hover [class*="watchlist-toggle__icon--"] { fill: var(--watchlist-toggle-accent-color-hover,var(--primary_fixed)) !important; }
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__path--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__path--"],
+    [class*="teen-avatar--stroke-aluminum--"]:focus [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-aluminum--"]:focus [class*="teen-avatar__label--"], [class*="teen-avatar--stroke-aluminum--"]:hover [class*="teen-avatar__frame--"], [class*="teen-avatar--stroke-aluminum--"]:hover [class*="teen-avatar__label--"] {
+        stroke: var(--on_surface) !important;
+    }
+
+    [class*="radio-button__label--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--"]:hover [class*="radio-button__checkmark--"],
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__checkmark--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__checkmark--"] {
+        border-bottom-color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--is-disabled--"]:hover [class*="radio-button__checkmark--"] { border-bottom-color: var(--outline) !important; }
+    [class*="radio-button__label--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--"]:hover [class*="radio-button__checkmark--"],
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__checkmark--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__checkmark--"] {
+        border-color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--is-disabled--"]:hover [class*="radio-button__checkmark--"] { border-color: var(--outline) !important; }
+    [class*="radio-button__label--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--"]:hover [class*="radio-button__checkmark--"],
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__checkmark--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__checkmark--"] {
+        border-left-color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--is-disabled--"]:hover [class*="radio-button__checkmark--"] { border-left-color: var(--outline) !important; }
+    [class*="radio-button__label--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--"]:hover [class*="radio-button__checkmark--"],
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__checkmark--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__checkmark--"] {
+        border-right-color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--is-disabled--"]:hover [class*="radio-button__checkmark--"] { border-right-color: var(--outline) !important; }
+    [class*="radio-button__label--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--"]:hover [class*="radio-button__checkmark--"],
+    [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:focus [class*="checkbox__checkmark--"], [class*="checkbox--"]:not([class*="checkbox--is-checked--"], [class*="checkbox--is-disabled--"]) [class*="checkbox__label--"]:hover [class*="checkbox__checkmark--"] {
+        border-top-color: var(--on_surface) !important;
+    }
+    [class*="radio-button__label--is-disabled--"]:focus [class*="radio-button__checkmark--"], [class*="radio-button__label--is-disabled--"]:hover [class*="radio-button__checkmark--"] { border-top-color: var(--outline) !important; }
+
+    [class*="artist-card--"]:focus, [class*="artist-card--"]:hover,
+    [class*="browse-card-static--"]:focus, [class*="browse-card-static--"]:hover,
+    [class*="ecom-card--"]:focus, [class*="ecom-card--"]:hover,
+    [class*="playable-card-static--"]:focus, [class*="playable-card-static--"]:hover,
+    [class*="horizontal-card-static--"]:focus, [class*="horizontal-card-static--"]:hover,
+    [class*="history-playable-card--"]:focus, [class*="history-playable-card--"]:hover,
+    [class*="wide-news-card--"]:focus, [class*="wide-news-card--"]:hover,
+    [class*="manga-card-static--"]:focus, [class*="manga-card-static--"]:hover,
+    [class*="search-show-card-static--"]:focus, [class*="search-show-card-static--"]:hover,
+    [class*="playable-card-mini-static--"]:focus, [class*="playable-card-mini-static--"]:hover,
+    [class*="search-episode-card-static--"]:focus, [class*="search-episode-card-static--"]:hover,
+    [class*="square-news-card--"]:focus, [class*="square-news-card--"]:hover,
+    [class*="watchlist-card--"]:focus, [class*="watchlist-card--"]:hover,
+    :is([class^="music-card--"],[class*=" music-card--"]):focus, :is([class^="music-card--"],[class*=" music-card--"]):hover,
+    [class*="music-card-mini--"]:focus, [class*="music-card-mini--"]:hover,
+    [class*="search-music-card--"]:focus, [class*="search-music-card--"]:hover {
+        box-shadow: 0 0 0 var(--hover-shadow-size) var(--surface_container) !important;
+    }
+    [class*="tabs-item--"]:focus, [class*="tabs-item--"]:hover { box-shadow: var(--surface_container_highest) 0px -0.125rem 0px 0px inset !important; }
+}
+@media (max-height: 31.25rem) and (min-width: 42.5rem) and (max-width: 49.9375rem) {
+
+    .erc-profile-wallpaper-collection .carousel-arrow-button { background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important; }
+    .erc-profile-wallpaper-collection .carousel-arrow-button:active, .erc-profile-wallpaper-collection .carousel-arrow-button:focus { background-color: var(--surface_container_highest) !important; }
+
+    .erc-profile-wallpaper-collection .carousel-arrow-icon { fill: var(--on_surface) !important; }
+}
+@media (max-height: 31.25rem) and (min-width: 42.5rem) and (max-width: 49.9375rem) and (hover: hover) {
+
+    .erc-profile-wallpaper-collection .carousel-arrow-button:focus, .erc-profile-wallpaper-collection .carousel-arrow-button:hover { background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important; }
+}
+@media (min-height: 20rem) and (max-height: 31.25rem) and (min-width: 35.5rem) and (max-width: 42.4375rem) {
+
+    .erc-profile-wallpaper-collection .carousel-arrow-button { background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important; }
+    .erc-profile-wallpaper-collection .carousel-arrow-button:active, .erc-profile-wallpaper-collection .carousel-arrow-button:focus { background-color: var(--surface_container_highest) !important; }
+
+    .erc-profile-wallpaper-collection .carousel-arrow-icon { fill: var(--on_surface) !important; }
+}
+@media (min-height: 20rem) and (max-height: 31.25rem) and (min-width: 35.5rem) and (max-width: 42.4375rem) and (hover: hover) {
+
+    .erc-profile-wallpaper-collection .carousel-arrow-button:focus, .erc-profile-wallpaper-collection .carousel-arrow-button:hover { background-color: rgba(var(--surface_container_highest_rgb), 0.84) !important; }
+}
+@media (min-width: 135em) {
+
+    [class*="hero-background--is-error--"] { --fade-gradients: linear-gradient(to top,var(--background),#0000 25%),linear-gradient(to var(--cr-end-direction),var(--background),#0000 25%,#0000 75%,var(--background)) !important; }
+    [class*="hero-background--is-dark-backdrop--"] { --fade-gradients: linear-gradient(to var(--cr-start-direction),var(--background),#0000 20%),linear-gradient(to var(--cr-end-direction),var(--background),rgba(var(--background_rgb), 0.85) 3%,rgba(var(--background_rgb), 0.5) 15%,#0000 35%),linear-gradient(to bottom,#0000 45%,var(--background) 82.06%) !important; }
+    [class*="hero-background--"] { --fade-gradients: linear-gradient(var(--deg),rgba(var(--background_rgb), 0.55) 5%,#0000 20%),linear-gradient(to var(--cr-end-direction),rgba(var(--background_rgb), 0.85) 0%,rgba(var(--background_rgb), 0.5) 15%,#0000 35%),linear-gradient(to bottom,#0000 45%,var(--background) 82.06%) !important; }
+}
+@media (min-width: 35.5em) {
+
+    [class*="end-slate-card--"]::before,
+    [class*="thumbnails__thumb--"] {
+        background-color: var(--background) !important;
+    }
+    [class*="select-content--is-bg-type-dark--"] { background-color: var(--surface_container) !important; }
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):active,
+    :is([class^="dialog--"],[class*=" dialog--"]):not([class*="dialog--is-full-screen--"]) [class*="dialog__close-button--has-background--"] {
+        background-color: var(--surface_container_high) !important;
+    }
+    .erc-current-media-info .show-title-link:has(+ .current-media-ratings)::after { background-color: var(--surface_container_highest) !important; }
+    [class*="select-content__fade--is-dark--"]::after { background-image: linear-gradient(0deg, var(--surface_container), rgba(21, 21, 21, 0)) !important; }
+    [class*="promo-curated-feed--is-odd--"] [class*="promo-curated-feed__background-overlay-top--"] { background-image: linear-gradient(to top,var(--background),rgba(var(--background_rgb), 0.5) var(--overlay-color-stop),#2abdbb00) !important; }
+    [class*="promo-curated-feed--is-even--"] [class*="promo-curated-feed__background-overlay-top--"] { background-image: linear-gradient(to top,var(--background),rgba(var(--background_rgb), 0.5) var(--overlay-color-stop),#fab81800) !important; }
+    [class*="select-content__fade--is-dark--"]::before { background-image: linear-gradient(var(--surface_container), rgba(21, 21, 21, 0)) !important; }
+    :is([class^="background--"],[class*=" background--"])::after,
+    [class*="thumbnails__image-wrapper--"]::after {
+        background: linear-gradient(to var(--cr-end-direction),var(--background) 0,#0000 33%),linear-gradient(to var(--cr-start-direction),var(--background) 0,#0000 33%),linear-gradient(to bottom,#0000 67%,var(--background) 100%) !important;
+    }
+    [class*="end-slate-card--"]::before { background: var(--background) !important; }
+
+    [class*="feed-header__view-link--is-dark-variant--"] { color: var(--on_primary) !important; }
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):active { color: var(--on_surface) !important; }
+    [class*="feed-header__view-link--"],
+    [class*="search-show-card-hover--"]:not([class*="search-show-card-hover--is-small--"]) [class*="search-show-card-hover__description--"],
+    .erc-activate-device-old .activate-device-disclaimer {
+        color: var(--outline) !important;
+    }
+    [class*="upsell-nav-item__first-row--"] { color: var(--tertiary) !important; }
+    [class*="dialog__close-icon--is-dark--"] { fill: var(--on_primary) !important; }
+
+    [class*="single-playable-card-placeholder__content-thumbnail--"] { box-shadow: rgba(var(--background_rgb), 0.5) 0px 0px 0.4375rem 0px !important; }
+    :is([class^="dialog--"],[class*=" dialog--"]):not([class*="dialog--is-full-screen--"]) [class*="dialog__body--"] { box-shadow: rgba(var(--background_rgb), 0.7) 0px 0px 1rem 0px !important; }
+    [class*="single-playable-card__content-thumbnail--"] { box-shadow: rgba(var(--background_rgb), 0.8) 0px 0px 0.4375rem 0px !important; }
+}
+@media (min-width: 35.5em) and (hover: hover) {
+
+    .erc-avatars-carousel .carousel-arrow-button:focus, .erc-avatars-carousel .carousel-arrow-button:hover { background-color: rgba(var(--surface_container_highest_rgb), 0.8) !important; }
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):focus, :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):hover,
+    [class*="select-content--is-bg-type-dark--"] [class*="select-content__option--"]:focus, [class*="select-content--is-bg-type-dark--"] [class*="select-content__option--"]:hover {
+        background-color: var(--surface_container_high) !important;
+    }
+    [class*="select-content--is-bg-type-dark--"] [class*="select-content__option--"]:focus, [class*="select-content--is-bg-type-dark--"] [class*="select-content__option--"]:hover { background: var(--surface_container_high) !important; }
+
+    [class*="feed-header__view-link--is-dark-variant--"]:focus, [class*="feed-header__view-link--is-dark-variant--"]:hover { color: var(--on_primary) !important; }
+    :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):focus, :is([class^="cards-carousel__arrow--"],[class*=" cards-carousel__arrow--"]):hover { color: var(--on_surface) !important; }
+}
+@media (min-width: 35.5em) and (min-height: 31.25em) {
+
+    .erc-watch-up-next-dub-unavailable .dub-unavailable-subtitle { color: var(--on_surface_variant) !important; }
+}
+@media (min-width: 42.5em) {
+
+    [class*="custom-list-card-hover__description--"],
+    [class*="horizontal-card-hover__description--"],
+    [class*="horizontal-card__description--"],
+    [class*="horizontal-card-static__description--"] {
+        color: var(--outline) !important;
+    }
+    .erc-closed-captions-page .learn-more-button { color: var(--secondary) !important; }
+
+    [class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.3) -0.6875rem -0.625rem 0.875rem 0px !important; }
+    [dir="rtl"] [class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.3) 0.6875rem -0.625rem 0.875rem 0px !important; }
+}
+@media (min-width: 42.5em) and (hover: hover) {
+
+    .erc-closed-captions-page .learn-more-button:focus, .erc-closed-captions-page .learn-more-button:hover { color: var(--on_surface) !important; }
+}
+@media (min-width: 50em) {
+
+    [class*="hero-background--is-medium-breakpoint--"] { --fade-gradients: linear-gradient(var(--deg),rgba(var(--background_rgb), 0.55) 5%,#0000 25%),linear-gradient(to var(--cr-end-direction),rgba(var(--background_rgb), 0.85) 0%,rgba(var(--background_rgb), 0.5) 30%,#0000 55%),linear-gradient(to bottom,#0000 50.04%,var(--background) 100%) !important; }
+
+    [class*="dialog__close-button--has-background--"] { background-color: var(--surface_container_high) !important; }
+    [class*="hero-background--"]::after { background: linear-gradient(to bottom,#0000 50%,var(--background) 100%),linear-gradient(to var(--cr-end-direction),rgba(var(--background_rgb), 0.85) 0,rgba(var(--background_rgb), 0.5) 30%,#0000 55%) !important; }
+
+    [class*="hero-carousel__arrow--is-placeholder--"] { fill: var(--on_primary) !important; }
+    [class*="hero-carousel__arrow--"] { fill: var(--on_surface) !important; }
+    [class*="hero-carousel__arrow-icon--"] { stroke: rgba(var(--surface_container_highest_rgb), 0.4) !important; }
+
+    [class*="single-playable-card-placeholder__content-thumbnail--"] { box-shadow: rgba(var(--background_rgb), 0.5) 0px 0px 0.625rem 0px !important; }
+    [class*="dialog__body--"] { box-shadow: rgba(var(--background_rgb), 0.7) 0px 0px 1rem 0px !important; }
+    [class*="single-playable-card__content-thumbnail--"] { box-shadow: rgba(var(--background_rgb), 0.8) 0px 0px 0.625rem 0px !important; }
+}
+@media (min-width: 50em) and (hover: hover) {
+
+    [class*="hero-carousel__arrow--"]:focus, [class*="hero-carousel__arrow--"]:hover { fill: rgba(var(--on_surface_rgb), 0.5) !important; }
+}
+@media (min-width: 61.25em) {
+
+    .erc-watch-episode-layout .poster-wrapper,
+    .erc-watch-movie-layout .poster-wrapper,
+    .erc-watch-music-layout .poster-wrapper {
+        background-color: rgba(var(--background_rgb), 0.5) !important;
+    }
+    [class*="carousel-tabs__tab--"]::after { background-color: rgba(var(--on_surface_rgb), 0.1) !important; }
+    [class*="carousel-tabs__tab-indicator--"] { background-color: rgba(var(--on_surface_rgb), 0.5) !important; }
+    .erc-watch-episode .poster-hover-layer,
+    .erc-watch-music .poster-hover-layer {
+        background-color: rgba(var(--surface_container_high_rgb), 0.8) !important;
+    }
+    [class*="carousel-tabs__tab--is-active--"] { background-color: var(--secondary_container) !important; }
+    [class*="carousel-tabs__tab--"]:active { background-color: var(--surface_container) !important; }
+    [class*="carousel-tabs__tab--"] { background-color: var(--surface_container_high) !important; }
+    [class*="hero-carousel-background__yellow--"] { background-image: linear-gradient(to var(--cr-end-direction),var(--tertiary),var(--primary) 59%,var(--tertiary)) !important; }
+    [dir="rtl"] [class*="hero-carousel-background__yellow--"] { background-image: linear-gradient(to var(--cr-start-direction),var(--tertiary),var(--primary) 59%,var(--tertiary)) !important; }
+
+    [class*="carousel-tabs__text--"],
+    .erc-watch-episode .poster-hover-layer,
+    .erc-watch-music .poster-hover-layer {
+        color: var(--on_surface) !important;
+    }
+    [class*="settings-nav-link--is-active--"],
+    .erc-account-nav-link.state-active {
+        color: var(--primary) !important;
+    }
+
+    [class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.3) -0.625rem -0.5625rem 0.8125rem 0px !important; }
+    [dir="rtl"] [class*="promo-ecom-feed-card__background--"] { box-shadow: rgba(var(--background_rgb), 0.3) 0.625rem -0.5625rem 0.8125rem 0px !important; }
+    .erc-watch-episode-layout .poster-wrapper,
+    .erc-watch-movie-layout .poster-wrapper,
+    .erc-watch-music-layout .poster-wrapper {
+        box-shadow: rgba(var(--background_rgb), 0.5) 0px 0px 0.5rem !important;
+    }
+}
+@media (min-width: 61.25em) and (hover: hover) {
+
+    [class*="settings-nav-link--"]:focus, [class*="settings-nav-link--"]:hover,
+    [class*="settings-nav-link--is-active--"]:focus, [class*="settings-nav-link--is-active--"]:hover,
+    .erc-account-nav-link:focus, .erc-account-nav-link:hover,
+    .erc-account-nav-link.state-active:focus, .erc-account-nav-link.state-active:hover {
+        background-color: rgba(var(--surface_container_high_rgb), 0.7) !important;
+    }
+
+    [class*="settings-nav-link--is-active--"]:focus, [class*="settings-nav-link--is-active--"]:hover { color: var(--primary) !important; }
+}
+@media (min-width: 64em) {
+
+    [class*="hero-background--is-large-breakpoint--"] { --fade-gradients: linear-gradient(var(--deg),rgba(var(--background_rgb), 0.55) 5%,#0000 25%),linear-gradient(to var(--cr-end-direction),rgba(var(--background_rgb), 0.85) 0%,rgba(var(--background_rgb), 0.5) 30%,#0000 55%),linear-gradient(to bottom,#0000 50.04%,var(--background) 100%) !important; }
+
+    [class*="nav-horizontal-layout__switcher--"]::after { background-color: rgba(var(--on_surface_rgb), 0.1) !important; }
+    [class*="browse-menu--"] { background-color: var(--surface_container) !important; }
+    .erc-menu .state-visible-on-desktop::after { background-color: var(--surface_container_highest) !important; }
+
+    [class*="hero-content-card__description--is-placeholder--"] { color: rgba(var(--on_primary_rgb), 0.6) !important; }
+    [class*="hero-content-card__description--"] { color: var(--on_surface_variant) !important; }
+    [class*="user-nav-item__svg--"],
+    [class*="browse-submenu-placeholder__icon--"] {
+        fill: var(--on_surface) !important;
+    }
+}
+@media (min-width: 90em) {
+
+    [class*="hero-background--"] { --fade-gradients: linear-gradient(var(--deg),rgba(var(--background_rgb), 0.55) 5%,#0000 20%),linear-gradient(to var(--cr-end-direction),rgba(var(--background_rgb), 0.85) 0%,rgba(var(--background_rgb), 0.5) 30%,#0000 55%),linear-gradient(to bottom,#0000 45%,var(--background) 85%) !important; }
+}
+@media screen and (max-width: 799px) {
+
+    [class*="unsupported-modal__close-button--"] { background-color: var(--background) !important; }
+}
+@media screen-small and (aspect-ratio <= 16 / 9) {
+
+    [class*="thumbnails__image-wrapper--"]::after { background: linear-gradient(to var(--cr-end-direction),var(--background) 0,#0000 33%),linear-gradient(to bottom,#0000 67%,var(--background) 100%) !important; }
+}
+
+
+}
