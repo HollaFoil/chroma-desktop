@@ -1,40 +1,48 @@
 #!/usr/bin/env python3
-"""Keybind cheatsheet for SUPER+slash: renders ~/.config/hypr/keybinds.txt in
-two balanced columns inside a floating kitty (class "cheatsheet", see the
-window rule in hyprland.lua). Sections stay whole; the split point is chosen
-so both columns are as close in height as possible. Any key closes it.
+"""Keybind cheatsheet for SUPER+slash.
+
+A layer-shell overlay (not a window): a frosted card in the middle of the
+screen with ~/.config/hypr/keybinds.txt laid out in two columns, sections kept
+whole and split where the column heights are closest. It holds keyboard focus
+no matter where the pointer wanders; any key, or a click outside the card,
+closes it - the click is swallowed rather than passed to what is underneath.
+Running it again while open closes it, so the bind toggles.
 
 keybinds.txt: "# Section" starts a section, "KEYS | description" is a row,
-blank lines are ignored. Colours come from matugen via colors.sh.
+blank lines are ignored. Colours are matugen's via ~/.config/waybar/colors.css;
+blur comes from Hyprland (frosted-cheatsheet layer rule).
 """
+from __future__ import annotations
+
 import os
-import re
-import shutil
+import signal
 import sys
-import termios
-import tty
 from pathlib import Path
 
+import gi
+
+gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+gi.require_version("GtkLayerShell", "0.1")
+from gi.repository import Gdk, Gtk, GtkLayerShell  # noqa: E402
+
 DATA = Path.home() / ".config/hypr/keybinds.txt"
-COLORS = Path.home() / ".config/matugen/colors.sh"
-KEY_W = 24          # width of the key column inside each column
-GUTTER = 6          # space between the two columns
-MARGIN = 3
+COLORS = Path.home() / ".config/waybar/colors.css"
+PIDFILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "cheatsheet.pid"
 
-palette = {"PRIMARY": "8ad0ee", "ON_SURFACE": "dde4e1", "OUTLINE": "899390"}
-if COLORS.exists():
-    for line in COLORS.read_text().splitlines():
-        m = re.match(r"^(\w+)=#?([0-9a-fA-F]{6})$", line.strip())
-        if m:
-            palette[m.group(1)] = m.group(2)
-
-
-def fg(name: str) -> str:
-    h = palette[name]
-    return f"\033[38;2;{int(h[0:2], 16)};{int(h[2:4], 16)};{int(h[4:6], 16)}m"
-
-
-RESET, BOLD = "\033[0m", "\033[1m"
+STYLE = """
+window { background: transparent; }
+.card {
+  background: alpha(@surface, 0.62);
+  border-radius: 24px;
+  padding: 26px 34px 30px 34px;
+}
+* { font-family: "GeistMono Nerd Font Propo", "MesloLGS Nerd Font Propo", monospace; font-size: 13px; }
+.title { color: @primary; font-weight: bold; margin-top: 14px; margin-bottom: 4px; }
+.title.first { margin-top: 0; }
+.key  { color: @on_surface; font-weight: bold; margin-right: 22px; }
+.desc { color: @on_surface_variant; }
+"""
 
 
 def sections():
@@ -52,26 +60,11 @@ def sections():
     return out
 
 
-def render_section(title, rows, width):
-    """Return (visible-text, coloured-text) line pairs for one section."""
-    lines = [(title, f"{BOLD}{fg('PRIMARY')}{title}{RESET}")]
-    desc_w = width - KEY_W - 2
-    for key, desc in rows:
-        if len(desc) > desc_w:
-            desc = desc[: max(0, desc_w - 1)] + "…"
-        plain = f"  {key:<{KEY_W}}{desc}"
-        col = f"  {fg('ON_SURFACE')}{key:<{KEY_W}}{RESET}{fg('OUTLINE')}{desc}{RESET}"
-        lines.append((plain, col))
-    lines.append(("", ""))
-    return lines
-
-
 def split_balanced(blocks):
-    """Split a list of section blocks into two columns with the closest heights."""
-    heights = [len(b) for b in blocks]
+    """Two columns of whole sections with the closest total row counts."""
+    heights = [len(rows) + 2 for _, rows in blocks]      # title + spacing
     total = sum(heights)
-    best, best_diff = 1, None
-    running = 0
+    best, best_diff, running = 1, None, 0
     for i, h in enumerate(heights[:-1], start=1):
         running += h
         diff = abs(running - (total - running))
@@ -80,38 +73,96 @@ def split_balanced(blocks):
     return blocks[:best], blocks[best:]
 
 
-def main():
-    cols, rows_avail = shutil.get_terminal_size((160, 40))
-    col_w = (cols - 2 * MARGIN - GUTTER) // 2
-    blocks = [render_section(t, r, col_w) for t, r in sections()]
-    left, right = split_balanced(blocks)
-    left = [l for b in left for l in b]
-    right = [l for b in right for l in b]
-    while left and left[-1][0] == "":
-        left.pop()
-    while right and right[-1][0] == "":
-        right.pop()
+def label(text, cls, xalign=0.0):
+    lab = Gtk.Label(label=text)
+    lab.set_xalign(xalign)
+    lab.get_style_context().add_class(cls)
+    return lab
 
-    out = ["\033[?25l\033[2J\033[H", ""]           # hide cursor, clear, home
-    for i in range(max(len(left), len(right))):
-        lp, lc = left[i] if i < len(left) else ("", "")
-        rc = right[i][1] if i < len(right) else ""
-        pad = " " * (col_w - len(lp) + GUTTER)
-        out.append(" " * MARGIN + lc + pad + rc)
-    sys.stdout.write("\n".join(out) + "\n")
-    sys.stdout.flush()
 
-    # wait for any key, then restore the cursor for whoever inherits the tty
-    fd = sys.stdin.fileno()
-    old = termios.tcgetattr(fd)
+def column(blocks) -> Gtk.Grid:
+    grid = Gtk.Grid(row_spacing=4, column_spacing=0)
+    grid.set_valign(Gtk.Align.START)
+    row = 0
+    for i, (title, rows) in enumerate(blocks):
+        t = label(title, "title")
+        if i == 0:
+            t.get_style_context().add_class("first")
+        grid.attach(t, 0, row, 2, 1)
+        row += 1
+        for key, desc in rows:
+            grid.attach(label(key, "key"), 0, row, 1, 1)
+            grid.attach(label(desc, "desc"), 1, row, 1, 1)
+            row += 1
+    return grid
+
+
+class Overlay(Gtk.Window):
+    def __init__(self):
+        super().__init__(title="cheatsheet")
+        self.set_decorated(False)
+        GtkLayerShell.init_for_window(self)
+        GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
+        GtkLayerShell.set_namespace(self, "cheatsheet")
+        GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.EXCLUSIVE)
+        for edge in (GtkLayerShell.Edge.TOP, GtkLayerShell.Edge.RIGHT,
+                     GtkLayerShell.Edge.BOTTOM, GtkLayerShell.Edge.LEFT):
+            GtkLayerShell.set_anchor(self, edge, True)
+        GtkLayerShell.set_exclusive_zone(self, -1)
+
+        self.connect("key-press-event", lambda *_: self.quit() or True)
+
+        backdrop = Gtk.EventBox()                 # eats the click and closes
+        backdrop.set_visible_window(False)
+        backdrop.connect("button-press-event", lambda *_: self.quit() or True)
+        self.add(backdrop)
+
+        card = Gtk.EventBox()                     # clicks on the card do nothing
+        card.set_visible_window(False)
+        card.connect("button-press-event", lambda *_: True)
+        card.set_halign(Gtk.Align.CENTER)
+        card.set_valign(Gtk.Align.CENTER)
+        backdrop.add(card)
+
+        body = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=56)
+        body.get_style_context().add_class("card")
+        card.add(body)
+
+        left, right = split_balanced(sections())
+        body.pack_start(column(left), False, False, 0)
+        body.pack_start(column(right), False, False, 0)
+
+    def quit(self):
+        Gtk.main_quit()
+
+
+def toggle_instance() -> bool:
     try:
-        tty.setraw(fd)
-        os.read(fd, 1)
+        os.kill(int(PIDFILE.read_text()), signal.SIGTERM)
+        PIDFILE.unlink(missing_ok=True)
+        return True
+    except (FileNotFoundError, ValueError, ProcessLookupError):
+        PIDFILE.unlink(missing_ok=True)
+        return False
+
+
+def main():
+    if toggle_instance():
+        return 0
+    PIDFILE.write_text(str(os.getpid()))
+    try:
+        css = Gtk.CssProvider()
+        css.load_from_data(((COLORS.read_text() if COLORS.exists() else "") + STYLE).encode())
+        Gtk.StyleContext.add_provider_for_screen(Gdk.Screen.get_default(), css,
+                                                 Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        win = Overlay()
+        win.show_all()
+        signal.signal(signal.SIGTERM, lambda *_: win.quit())
+        Gtk.main()
     finally:
-        termios.tcsetattr(fd, termios.TCSADRAIN, old)
-        sys.stdout.write("\033[?25h")
-        sys.stdout.flush()
+        PIDFILE.unlink(missing_ok=True)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

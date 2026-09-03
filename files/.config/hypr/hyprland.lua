@@ -287,16 +287,6 @@ hl.animation({ leaf = "zoomFactor",    enabled = true,  speed = 7,    bezier = "
 --     rounding    = 0,
 -- })
 
-hl.window_rule({
-    name  = "cheatsheet-float",
-    match = { class = "^cheatsheet$" },
-
-    float       = true,
-    size        = "1560 500",   -- two columns of keybinds at kitty's 11.5pt
-    center      = true,
-    border_size = 0,
-})
-
 -- Ordinary windows tile normally on whatever workspace they open on, so
 -- several can share one and be cycled with SUPER+TAB. The only workspace
 -- that is protected is the one the dashboard currently occupies.
@@ -441,7 +431,7 @@ local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 hl.bind(mainMod .. " + Q", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy'))
 hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
-hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd("kitty --class cheatsheet -e ~/.local/bin/cheatsheet"))
+hl.bind(mainMod .. " + slash", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/cheatsheet"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/rofi-cliphist"))
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
 -- lock: without it the translucent-all rule is re-applied on every focus
@@ -581,6 +571,7 @@ for _, r in ipairs({
     { name = "frosted-notifs",  ns = "^swaync-notification-window$" },
     { name = "frosted-volpop",  ns = "^volpop$" },
     { name = "frosted-wallstrip", ns = "^wallstrip$" },
+    { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
 }) do
     hl.layer_rule({
         name         = r.name,
