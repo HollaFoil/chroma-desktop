@@ -64,9 +64,6 @@
 .config/kdeglobals
 .config/matugen/templates/Matugen.colors
 
-# homelab-dash
-.config/homelab-dash/config.toml
-.local/bin/homelab-dash
 
 # chrome
 .config/chrome-flags.conf
@@ -95,3 +92,4 @@
 .mozilla/native-messaging-hosts/matugenfox.json
 .local/bin/matugenfox-host
 .config/dusky_sites
+.local/bin/patch-credentialsd-xpi
