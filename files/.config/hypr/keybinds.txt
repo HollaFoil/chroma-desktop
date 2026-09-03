@@ -7,6 +7,8 @@ SUPER + R | App launcher
 SUPER + C | Close window
 SUPER + V | Toggle floating
 SUPER + P | Pseudo-tile
+SUPER + F | Fake fullscreen (app thinks it is fullscreen, window keeps its size)
+SUPER + SHIFT + F | Real fullscreen
 SUPER + J | Toggle split direction
 SUPER + arrows | Move focus
 SUPER + TAB | Cycle windows on this workspace

@@ -470,6 +470,20 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())
+-- "Fake" fullscreen: the client is TOLD it is fullscreen (so it drops its own
+-- chrome and renders a fullscreen layout) while Hyprland leaves the window at
+-- its normal tiled geometry. Verified live: size stayed [961, 671] with
+-- fullscreenClient going 0 -> 2.
+--
+-- Not the old `fakefullscreen` dispatcher, which is gone in 0.56. The API is
+-- fullscreen_state{ internal, client } where both are REQUIRED and take the
+-- mode ints 0 = none, 1 = maximized, 2 = fullscreen. internal = 0 is what
+-- keeps the window its current size; client = 2 is the lie the app is told.
+-- action = "toggle" makes the one bind flip both ways.
+--
+-- SUPER + SHIFT + F is real fullscreen, for when you do want the whole screen.
+hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen_state({ internal = 0, client = 2, action = "toggle" }))
+hl.bind(mainMod .. " + SHIFT + F", hl.dsp.window.fullscreen({ mode = "fullscreen", action = "toggle" }))
 hl.bind(mainMod .. " + J", hl.dsp.layout("togglesplit"))    -- dwindle only
 
 -- Move focus with mainMod + arrow keys
