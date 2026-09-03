@@ -20,14 +20,92 @@
         --yt-spec-10-percent-layer: var(--surface_variant) !important;
         --yt-spec-badge-chip-background: var(--surface_container_high) !important;
         --yt-spec-button-chip-background-hover: var(--surface_bright) !important;
-        --t2d807bb79e75606d: var(--primary) !important;
-        --t6216186c28b3834b: var(--on_primary) !important;
-        --t617db776af0de196: var(--primary) !important;
-        --t08a7c6c176cbc5c2: var(--surface_container) !important;
-        --ta889dfda9605a358: var(--surface) !important;
-        --t3e41d7b17b187f69: var(--surface) !important;
-        --t4a6da19e16bf221a: var(--on_surface_variant) !important;
-        --t518e925f61bdcb91: var(--surface_container) !important;
+        --ytd-searchbox-background: var(--surface_container) !important;
+        --ytd-searchbox-text-color: var(--on_surface) !important;
+
+        /* Hashed tokens (YouTube's obfuscated color vars; comment = original dark value) */
+        --tffc2fd3a644f6275: var(--on_surface) !important;                 /* #f1f1f1 text-primary */
+        --t1405e70a39276293: var(--on_surface) !important;                 /* #f1f1f1 */
+        --t4a6da19e16bf221a: var(--on_surface_variant) !important;         /* #aaa text-secondary */
+        --t7e34d5baa4ea6277: var(--outline) !important;                    /* #717171 text-disabled */
+        --t6216186c28b3834b: var(--on_primary) !important;                 /* #0f0f0f text on filled buttons */
+        --t3e41d7b17b187f69: var(--surface) !important;                    /* #0f0f0f base background */
+        --t45b2a38314924357: var(--surface) !important;                    /* #0f0f0f */
+        --t518e925f61bdcb91: var(--surface_container) !important;          /* #212121 raised background */
+        --t08a7c6c176cbc5c2: var(--surface_container) !important;          /* #282828 menu background */
+        --te1b64e6971040396: var(--surface_container_high) !important;     /* #272727 */
+        --t7f4f2c6d54836ce0: var(--surface_container_high) !important;     /* rgba(255,255,255,.1) badge/chip + description box */
+        --tf3fc855af2285f5f: var(--surface_container_highest) !important;  /* rgba(255,255,255,.2) hover */
+        --t20480717de80f555: var(--outline_variant) !important;            /* rgba(255,255,255,.2) outline */
+        --t416e5931fc464589: var(--outline_variant) !important;            /* rgba(255,255,255,.2) outline */
+        --td8562cdc203bc683: var(--outline_variant) !important;            /* #3f3f3f outline-opaque */
+        --t2d807bb79e75606d: var(--primary) !important;                    /* #3ea6ff call-to-action */
+        --t617db776af0de196: var(--primary_fixed) !important;              /* #65b8ff call-to-action hover */
+        --tb628117fc164ad87: var(--inverse_primary) !important;            /* #065fd4 call-to-action inverse */
+        --tfa3475c508f5dfef: var(--primary_container) !important;          /* #263850 suggested-action */
+        --t9bc0b740242da017: var(--primary_container) !important;          /* #515561 suggested-action hover */
+        --t441a0e44e495381a: var(--primary_fixed) !important;              /* #def1ff suggested-action inverse */
+        --td545df04e2c659d7: var(--error) !important;                      /* #f57 error */
+        --t854c79338d8ca8a7: var(--error) !important;                      /* #f57 error */
+        --t8cdc9846a76caf1f: var(--on_surface_variant) !important;         /* #d9d9d9 mono-filled hover */
+        --tad8443faed66c111: var(--on_surface_variant) !important;         /* #d9d9d9 */
+        --t832f22ce6618e99e: var(--inverse_surface) !important;            /* #e6e6e6 solid background */
+        --ta889dfda9605a358: rgba(var(--surface_rgb), 0.85) !important;    /* rgba(15,15,15,.8) frosted glass */
+        --t5978da8d584b8fe9: rgba(var(--surface_rgb), 0.7) !important;     /* rgba(15,15,15,.7) frosted glass */
+
+        /* Newer semantic tokens (--yt-sys-color-baseline--*) */
+        --yt-sys-color-baseline--text-primary: var(--on_surface) !important;
+        --yt-sys-color-baseline--text-secondary: var(--on_surface_variant) !important;
+        --yt-sys-color-baseline--text-disabled: var(--outline) !important;
+        --yt-sys-color-baseline--text-primary-inverse: var(--on_primary) !important;
+        --yt-sys-color-baseline--base-background: var(--surface) !important;
+        --yt-sys-color-baseline--raised-background: var(--surface_container) !important;
+        --yt-sys-color-baseline--menu-background: var(--surface_container) !important;
+        --yt-sys-color-baseline--additive-background: var(--surface_container_high) !important;
+        --yt-sys-color-baseline--tonal-background: var(--surface_container_high) !important;
+        --yt-sys-color-baseline--mono-tonal-hover: var(--surface_container_highest) !important;
+        --yt-sys-color-baseline--button-chip-background-hover: var(--surface_container_highest) !important;
+        --yt-sys-color-baseline--outline: var(--outline_variant) !important;
+        --yt-sys-color-baseline--outline-opaque: var(--outline_variant) !important;
+        --yt-sys-color-baseline--inverted-background: var(--on_surface) !important;
+        --yt-sys-color-baseline--inverted-background-hover: var(--on_surface_variant) !important;
+        --yt-sys-color-baseline--mono-filled-hover: var(--on_surface_variant) !important;
+        --yt-sys-color-baseline--call-to-action: var(--primary) !important;
+        --yt-sys-color-baseline--call-to-action-hover: var(--primary_fixed) !important;
+        --yt-sys-color-baseline--call-to-action-inverse: var(--inverse_primary) !important;
+        --yt-sys-color-baseline--suggested-action: var(--primary_container) !important;
+        --yt-sys-color-baseline--suggested-action-hover: var(--primary_container) !important;
+        --yt-sys-color-baseline--error-indicator: var(--error) !important;
+        --yt-sys-color-baseline--red-indicator: var(--primary) !important;
+        --yt-sys-color-baseline--static-brand-red: var(--primary) !important;
+        --yt-sys-color-baseline--solid-background: var(--inverse_surface) !important;
+        --yt-sys-color-baseline--frosted-glass-desktop: rgba(var(--surface_rgb), 0.85) !important;
+        --yt-sys-color-baseline--frosted-glass-mobile: rgba(var(--surface_rgb), 0.7) !important;
+        --yt-sys-color-baseline--scrim-background-gradient-1: rgba(var(--surface_rgb), 0) !important;
+        --yt-sys-color-baseline--scrim-background-gradient-2: rgba(var(--surface_rgb), 0.3) !important;
+        --yt-sys-color-baseline--scrim-background-gradient-3: rgba(var(--surface_rgb), 0.6) !important;
+        --yt-sys-color-baseline--scrim-background-gradient-4: rgba(var(--surface_rgb), 0.9) !important;
+        --yt-sys-color-baseline--scrim-background-gradient-5: var(--surface) !important;
+    }
+
+    /* Hardcoded backgrounds (not driven by tokens). YouTube's html[dark] rule is
+       !important too and comes later in the cascade, so out-specify it. */
+    html[dark]:root,
+    ytd-masthead.shell.dark,
+    ytd-masthead.shell.theater {
+        background-color: var(--background) !important;
+    }
+
+    /* Theater-mode band behind the player */
+    ytd-watch-flexy[full-bleed-player] #full-bleed-container.ytd-watch-flexy,
+    ytd-watch-grid[full-bleed-player] #player-full-bleed-container.ytd-watch-grid {
+        background-color: var(--surface_container_lowest) !important;
+    }
+
+    /* Description links: YouTube inlines style="color: rgb(62,166,255)" on the wrapper span */
+    .ytAttributedStringLinkInheritColor[style*="62, 166, 255"],
+    .ytAttributedStringLinkInheritColor[style*="3ea6ff"] {
+        color: var(--primary) !important;
     }
 
     /* Sidebar / Navigation */

@@ -1,0 +1,224 @@
+/* Jellyfin (jellyfin-web). Its dark theme is one flat stylesheet of class
+   rules (themes/dark/theme.css), so this mirrors it rule for rule with
+   matugen roles. Everything needs !important because the theme is loaded
+   after the page and MatugenFox's <style> sits in <head>. */
+@-moz-document domain("watch.hollafoil.com") {
+    /* surfaces */
+    html,
+    .backgroundContainer,
+    .dialog,
+    .nowPlayingContextMenu,
+    .nowPlayingPlaylist,
+    .ui-corner-all,
+    .ui-shadow,
+    .wizardStartForm,
+    .drawer-open,
+    .mainDrawer,
+    .noBackdropTransparency .detailPagePrimaryContainer,
+    .noBackdropTransparency .detailPageSecondaryContainer,
+    #bookPlayer,
+    #comicsPlayer,
+    #pdfPlayer,
+    #dialogToc {
+        background-color: var(--surface) !important;
+    }
+    .backgroundContainer.withBackdrop {
+        background-color: rgba(var(--surface_rgb), .86) !important;
+    }
+    .skinHeader.semiTransparent {
+        background-color: rgba(var(--surface_rgb), .4) !important;
+    }
+    .skinHeader-withBackground,
+    .collapseContent,
+    .formDialogFooter:not(.formDialogFooter-clear),
+    .formDialogHeader:not(.formDialogHeader-clear),
+    .paperList,
+    .visualCardBox,
+    .appfooter,
+    .playlistSectionButton,
+    .infoBanner,
+    .cardCenterBackgroundColor {
+        background-color: var(--surface_container) !important;
+        color: var(--on_surface) !important;
+    }
+    .fab,
+    .raised,
+    .toast,
+    .programCell-active,
+    .listItem:hover,
+    .navMenuOption:hover {
+        background: var(--surface_container_high) !important;
+        color: var(--on_surface) !important;
+    }
+    .fab:focus,
+    .raised:focus,
+    .listItem:focus {
+        background: var(--surface_container_highest) !important;
+    }
+    .detailTableBodyRow-shaded:nth-child(2n) {
+        background: rgba(var(--surface_container_rgb), .9) !important;
+    }
+    .detailRibbon {
+        background: rgba(var(--surface_container_rgb), .8) !important;
+    }
+    .mediaInfoText {
+        background: rgba(var(--on_surface_variant_rgb), .2) !important;
+        color: var(--on_surface) !important;
+    }
+
+    /* text */
+    html,
+    .skinHeader,
+    .emby-tab-button-active,
+    .alphaPickerButton-selected,
+    #dialogToc .bookplayerButtonIcon,
+    #dialogToc .toc li a:link {
+        color: var(--on_surface) !important;
+    }
+    .checkboxListLabel,
+    .inputLabel,
+    .inputLabelUnfocused,
+    .paperListLabel,
+    .textareaLabelUnfocused,
+    .cardText-secondary,
+    .fieldDescription,
+    .guide-programNameCaret,
+    .listItem .secondary,
+    .nowPlayingBarSecondaryText,
+    .programSecondaryTitle,
+    .secondaryText,
+    .emby-tab-button,
+    .alphaPickerButton,
+    .guide-date-tab-button {
+        color: var(--on_surface_variant) !important;
+    }
+
+    /* accent */
+    .button-submit,
+    .selectionCommandsPanel,
+    .navMenuOption-selected,
+    .emby-button.show-focus:focus,
+    .emby-button.detailFloatingButton,
+    .countIndicator,
+    .fullSyncIndicator,
+    .mediaSourceIndicator,
+    .playedIndicator,
+    .emby-checkbox:checked + span + .checkboxOutline,
+    .itemProgressBarForeground,
+    .alphaPickerButton-tv:focus,
+    .guide-channelHeaderCell:focus,
+    .programCell:focus,
+    .emby-select-tv-withcolor:focus,
+    .guide-date-tab-button.show-focus:focus {
+        background: var(--primary) !important;
+        background-color: var(--primary) !important;
+        color: var(--on_primary) !important;
+    }
+    .button-submit:focus {
+        background: var(--primary_fixed_dim) !important;
+        color: var(--on_primary_fixed) !important;
+    }
+    .layout-tv .emby-button.detailFloatingButton:focus {
+        background-color: var(--on_primary) !important;
+        color: var(--primary) !important;
+    }
+    .paper-icon-button-light:hover:not(:disabled),
+    .paper-icon-button-light:active:not(:disabled) {
+        background-color: rgba(var(--primary_rgb), .2) !important;
+        color: var(--primary) !important;
+    }
+    .paper-icon-button-light.show-focus:focus,
+    .inputLabelFocused,
+    .selectLabelFocused,
+    .textareaLabelFocused,
+    .upNextDialog-countdownText,
+    .button-flat:hover,
+    .button-link,
+    .emby-tab-button.show-focus:focus,
+    .emby-tab-button:hover,
+    .guide-date-tab-button.emby-tab-button-active,
+    .guide-date-tab-button:focus,
+    .buttonActive,
+    .metadataSidebarIcon,
+    #dialogToc .bookplayerButtonIcon:hover,
+    #dialogToc .toc li a:hover,
+    #dialogToc .toc li a:active {
+        color: var(--primary) !important;
+    }
+    .emby-input:focus,
+    .emby-textarea:focus,
+    .emby-select-withcolor:focus,
+    .emby-checkbox:checked + span + .checkboxOutline,
+    .emby-checkbox:focus:not(:checked) + span + .checkboxOutline,
+    .progressring-spiner,
+    .itemSelectionPanel,
+    .card:focus .cardBox.visualCardBox,
+    .card:focus .cardBox:not(.visualCardBox) .cardScalable {
+        border-color: var(--primary) !important;
+    }
+    .emby-checkbox:focus + span + .checkboxOutline {
+        border-color: var(--on_surface) !important;
+    }
+
+    /* inputs */
+    .emby-input,
+    .emby-textarea,
+    .emby-select-withcolor,
+    .emby-select-withcolor > option {
+        background: var(--surface_container_high) !important;
+        border-color: var(--surface_container_high) !important;
+        color: var(--on_surface) !important;
+    }
+
+    /* borders and rules */
+    .emby-collapsible-button,
+    .listItem-border {
+        border-color: var(--outline_variant) !important;
+    }
+    .actionsheetDivider {
+        background: var(--outline_variant) !important;
+    }
+    .channelPrograms,
+    .guide-channelHeaderCell,
+    .programCell {
+        border-color: rgba(var(--on_surface_rgb), .05) !important;
+    }
+    .guide-programTextIcon {
+        background: var(--outline) !important;
+        color: var(--surface) !important;
+    }
+
+    /* status */
+    .button-delete,
+    .itemProgressBarForeground-recording {
+        background: var(--error) !important;
+        color: var(--on_error) !important;
+    }
+    .ratingbutton-icon-withrating,
+    .playstatebutton-icon-played {
+        color: var(--tertiary) !important;
+    }
+    .downloadbutton-icon-complete,
+    .downloadbutton-icon-on {
+        color: var(--primary) !important;
+    }
+
+    /* placeholder card colours for items without art */
+    .defaultCardBackground1 { background-color: var(--primary_container) !important; }
+    .defaultCardBackground2 { background-color: var(--secondary_container) !important; }
+    .defaultCardBackground3 { background-color: var(--tertiary_container) !important; }
+    .defaultCardBackground4 { background-color: var(--surface_container_highest) !important; }
+    .defaultCardBackground5 { background-color: var(--primary_fixed_dim) !important; }
+
+    /* scrollbars */
+    * {
+        scrollbar-color: var(--surface_container_highest) var(--surface) !important;
+    }
+    ::-webkit-scrollbar-track-piece {
+        background-color: var(--surface_container) !important;
+    }
+    ::-webkit-scrollbar-thumb:horizontal,
+    ::-webkit-scrollbar-thumb:vertical {
+        background: var(--outline) !important;
+    }
+}

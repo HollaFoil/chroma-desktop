@@ -1,0 +1,175 @@
+/* Prowlarr (Servarr UI). The frontend copies its theme object onto <html> as
+   inline --camelCase custom properties (ApplyTheme.tsx), and every stylesheet
+   reads them. Inline style loses to !important, so re-pointing the same
+   names here is enough. The brand colour (--themeBlue, despite the name) is
+   the app's own accent; it becomes --primary. Shared verbatim between
+   sonarr, radarr and prowlarr: change one, change all three. */
+@-moz-document domain("prowlarr.hollafoil.com") {
+    :root {
+        /* text */
+        --textColor: var(--on_surface) !important;
+        --defaultColor: var(--on_surface) !important;
+        --disabledColor: var(--outline) !important;
+        --dimColor: var(--outline_variant) !important;
+        --helpTextColor: var(--on_surface_variant) !important;
+        --darkGray: var(--outline) !important;
+        --mediumGray: var(--outline) !important;
+        --gray: var(--on_surface_variant) !important;
+        --lightGray: var(--on_surface_variant) !important;
+        --white: var(--on_surface) !important;
+        --offWhite: var(--on_surface) !important;
+        --black: var(--surface_container_lowest) !important;
+
+        /* brand and accents */
+        --themeBlue: var(--primary) !important;
+        --themeAlternateBlue: var(--primary_fixed_dim) !important;
+        --themeAlternateYellow: var(--primary_fixed_dim) !important;
+        --themeLightColor: var(--primary) !important;
+        --themeRed: var(--error) !important;
+        --primaryColor: var(--primary) !important;
+        --infoColor: var(--primary) !important;
+        --selectedColor: var(--tertiary) !important;
+        --successColor: var(--ansi_green) !important;
+        --dangerColor: var(--error) !important;
+        --warningColor: var(--ansi_yellow) !important;
+        --purple: var(--tertiary) !important;
+        --pink: var(--tertiary) !important;
+        --torrentColor: var(--ansi_green) !important;
+        --usenetColor: var(--ansi_cyan) !important;
+        --sliderAccentColor: var(--primary) !important;
+
+        /* page */
+        --pageBackground: var(--surface) !important;
+        --pageFooterBackground: rgba(var(--surface_container_lowest_rgb), .5) !important;
+        --pageHeaderBackgroundColor: var(--surface_container_low) !important;
+        --themeDarkColor: var(--surface_container_highest) !important;
+        --borderColor: var(--outline_variant) !important;
+
+        /* sidebar / toolbar */
+        --sidebarColor: var(--on_surface) !important;
+        --sidebarBackgroundColor: var(--surface_container_low) !important;
+        --sidebarActiveBackgroundColor: var(--surface_container_high) !important;
+        --toolbarColor: var(--on_surface) !important;
+        --toolbarLabelColor: var(--on_surface_variant) !important;
+        --toolbarBackgroundColor: var(--surface_container) !important;
+        --toolbarMenuItemBackgroundColor: var(--surface_container_high) !important;
+        --toolbarMenuItemHoverBackgroundColor: var(--surface_container_highest) !important;
+        --toobarButtonHoverColor: var(--primary) !important;
+        --toobarButtonSelectedColor: var(--primary) !important;
+
+        /* links */
+        --linkColor: var(--primary) !important;
+        --linkHoverColor: var(--primary_fixed_dim) !important;
+        --defaultLinkHoverColor: var(--on_surface) !important;
+
+        /* labels */
+        --inverseLabelColor: var(--on_surface) !important;
+        --inverseLabelTextColor: var(--surface) !important;
+        --disabledLabelColor: var(--outline) !important;
+        --infoTextColor: var(--on_primary) !important;
+
+        /* buttons */
+        --defaultButtonTextColor: var(--on_surface) !important;
+        --defaultBackgroundColor: var(--surface_container_high) !important;
+        --defaultBorderColor: var(--outline_variant) !important;
+        --defaultHoverBackgroundColor: var(--surface_container_highest) !important;
+        --defaultHoverBorderColor: var(--outline) !important;
+        --primaryBackgroundColor: var(--primary) !important;
+        --primaryBorderColor: var(--primary) !important;
+        --primaryHoverBackgroundColor: var(--primary_fixed_dim) !important;
+        --primaryHoverBorderColor: var(--primary_fixed_dim) !important;
+        --successBackgroundColor: var(--ansi_green) !important;
+        --successBorderColor: var(--ansi_green) !important;
+        --successHoverBackgroundColor: var(--ansi_green_container) !important;
+        --successHoverBorderColor: var(--ansi_green_container) !important;
+        --warningBackgroundColor: var(--ansi_yellow) !important;
+        --warningBorderColor: var(--ansi_yellow) !important;
+        --warningHoverBackgroundColor: var(--ansi_yellow_container) !important;
+        --warningHoverBorderColor: var(--ansi_yellow_container) !important;
+        --dangerBackgroundColor: var(--error) !important;
+        --dangerBorderColor: var(--error) !important;
+        --dangerHoverBackgroundColor: var(--error_container) !important;
+        --dangerHoverBorderColor: var(--error_container) !important;
+        --iconButtonDisabledColor: var(--outline_variant) !important;
+        --iconButtonHoverColor: var(--on_surface_variant) !important;
+        --iconButtonHoverLightColor: var(--on_surface) !important;
+
+        /* modal / menu / popover */
+        --modalBackdropBackgroundColor: rgba(var(--surface_container_lowest_rgb), .7) !important;
+        --modalBackgroundColor: var(--surface_container_low) !important;
+        --modalCloseButtonHoverColor: var(--on_surface_variant) !important;
+        --menuItemColor: var(--on_surface) !important;
+        --menuItemHoverColor: var(--primary) !important;
+        --menuItemHoverBackgroundColor: var(--surface_container_highest) !important;
+        --popoverTitleBackgroundColor: var(--surface_container_high) !important;
+        --popoverTitleBorderColor: var(--surface_container_low) !important;
+        --popoverBodyBackgroundColor: var(--surface_container_low) !important;
+        --popoverArrowBorderColor: var(--surface_container_low) !important;
+        --popoverTitleBackgroundInverseColor: var(--surface_container_highest) !important;
+        --popoverTitleBorderInverseColor: var(--outline_variant) !important;
+        --popoverArrowBorderInverseColor: var(--surface_container_highest) !important;
+
+        /* cards */
+        --cardBackgroundColor: var(--surface_container) !important;
+        --cardShadowColor: var(--surface_container_lowest) !important;
+        --cardAlternateBackgroundColor: var(--surface_container) !important;
+        --cardCenterBackgroundColor: var(--surface_container_low) !important;
+
+        /* alerts */
+        --alertDangerBorderColor: var(--error) !important;
+        --alertDangerBackgroundColor: rgba(var(--error_rgb), .1) !important;
+        --alertDangerColor: var(--on_surface) !important;
+        --alertInfoBorderColor: var(--primary) !important;
+        --alertInfoBackgroundColor: rgba(var(--primary_rgb), .1) !important;
+        --alertInfoColor: var(--on_surface) !important;
+        --alertSuccessBorderColor: var(--ansi_green) !important;
+        --alertSuccessBackgroundColor: rgba(var(--ansi_green_rgb), .1) !important;
+        --alertSuccessColor: var(--on_surface) !important;
+        --alertWarningBorderColor: var(--ansi_yellow) !important;
+        --alertWarningBackgroundColor: rgba(var(--ansi_yellow_rgb), .1) !important;
+        --alertWarningColor: var(--on_surface) !important;
+
+        /* forms */
+        --inputBackgroundColor: var(--surface_container_high) !important;
+        --inputReadOnlyBackgroundColor: var(--surface_container) !important;
+        --inputHoverBackgroundColor: rgba(var(--on_surface_rgb), .12) !important;
+        --inputSelectedBackgroundColor: rgba(var(--on_surface_rgb), .05) !important;
+        --inputBorderColor: var(--outline_variant) !important;
+        --inputBoxShadowColor: rgba(var(--surface_container_lowest_rgb), .3) !important;
+        --inputFocusBorderColor: var(--primary) !important;
+        --inputFocusBoxShadowColor: rgba(var(--primary_rgb), .6) !important;
+        --inputErrorBorderColor: var(--error) !important;
+        --inputErrorBoxShadowColor: rgba(var(--error_rgb), .6) !important;
+        --inputWarningBorderColor: var(--ansi_yellow) !important;
+        --inputWarningBoxShadowColor: rgba(var(--ansi_yellow_rgb), .6) !important;
+        --advancedFormLabelColor: var(--tertiary) !important;
+        --disabledCheckInputColor: var(--on_surface_variant) !important;
+        --disabledInputColor: var(--outline) !important;
+
+        /* calendar / table / misc */
+        --calendarTodayBackgroundColor: var(--surface_container_high) !important;
+        --calendarBackgroundColor: var(--surface_container_low) !important;
+        --calendarBorderColor: var(--outline_variant) !important;
+        --calendarTextDim: var(--on_surface_variant) !important;
+        --calendarTextDimAlternate: var(--on_surface) !important;
+        --tableRowHoverBackgroundColor: rgba(var(--on_surface_rgb), .08) !important;
+        --scrollbarBackgroundColor: var(--surface_container_highest) !important;
+        --scrollbarHoverBackgroundColor: var(--outline) !important;
+        --progressBarBackgroundColor: var(--surface_container_highest) !important;
+        --progressBarFrontTextColor: var(--on_primary) !important;
+        --progressBarBackTextColor: var(--on_surface) !important;
+        --logEventsBackgroundColor: var(--surface_container_low) !important;
+        --colorImpairedGradient: var(--outline) !important;
+        --colorImpairedGradientDark: var(--surface_container_highest) !important;
+
+        /* media pages (series/movie/indexer share the same names) */
+        --addSeriesBackgroundColor: var(--surface_container_low) !important;
+        --seriesBackgroundColor: var(--surface_container_low) !important;
+        --addMovieBackgroundColor: var(--surface_container_low) !important;
+        --movieBackgroundColor: var(--surface_container_low) !important;
+        --searchIconContainerBackgroundColor: var(--surface_container) !important;
+        --collapseButtonBackgroundColor: var(--surface_container_low) !important;
+        --seasonBackgroundColor: var(--surface_container_high) !important;
+        --episodesBackgroundColor: var(--surface_container_low) !important;
+    }
+}

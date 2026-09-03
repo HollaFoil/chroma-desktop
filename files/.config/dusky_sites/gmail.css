@@ -2,36 +2,42 @@
 
 	/* COLOR PALETTE */
 
-	/* stylelint-disable color-no-hex */
+	/* The original userstyle's --GR0..--GR19 is a monotonic dark -> light gray
+	   ramp (GR0 = page background, GR19 = brightest hover text). Map it onto
+	   matugen's surface tiers and text tones in the same order so read/unread
+	   rows, hovers and text keep their relative contrast. */
 	:root {
+		/* Backgrounds */
 		--GR0: var(--surface);
-		/* Background */
 		--GR1: var(--surface);
 		--GR2: var(--surface);
 		--GR3: var(--surface);
-		--GR4: var(--surface_container);
+		--GR4: var(--surface_container_low);
+		/* Read rows, app bar, sidebar hover */
 		--GR5: var(--surface);
-		--GR6: var(--surface_container_lowest);
-		/* Dropdown/Popover Background */
-		--GR7: var(--surface_container_low);
-		--GR8: var(--surface_container_high);
-		--GR9: var(--surface_container_highest);
-		--GR10: #606970;
-		--GR11: #70787E;
-		--GR12: #80878C;
-		--GR13: #90969B;
-		--GR14: #A0A5A9;
-		--GR15: #AFB4B7;
-		--GR16: #BFC3C5;
-		--GR17: var(--on_surface);
+		--GR6: var(--surface_container);
+		/* Unread rows, compose, dropdown/popover background */
+		--GR7: var(--surface_container_high);
+		--GR8: var(--surface_container_highest);
+		/* Hover */
+		--GR9: var(--surface_bright);
+		/* Dividers */
+		--GR10: var(--outline_variant);
+		--GR11: var(--outline_variant);
+		/* Secondary text (dates, snippets, counts) */
+		--GR12: var(--outline);
+		--GR13: var(--outline);
+		--GR14: var(--on_surface_variant);
+		--GR15: var(--on_surface_variant);
+		--GR16: var(--on_surface_variant);
 		/* Text/Icons */
-		--GR18: var(--primary_container);
-		--GR19: var(--surface_bright);
-		/* Text/Icons Hover */
+		--GR17: var(--on_surface);
+		/* Links */
+		--GR18: var(--primary);
+		/* Text/Icons Hover, unread rows — kept neutral; accent text is GR18/GRSELECTED */
+		--GR19: var(--on_surface);
 		--GRSELECTED: var(--primary);
 	}
-
-	/* stylelint-enable color-no-hex */
 
 	/* GLOBAL */
 
@@ -730,15 +736,13 @@
 	.v .fZ .f0 {
 		color: var(--GRSELECTED) !important
 	}
-}
-}
-}
 
-}
 
+/* Mail list card (rounded container behind the toolbar, section headers and
+   rows). Gmail paints it rgba(51,51,51,.8) in its own dark theme. */
+.bkK > .nH {
+	background: var(--GR4) !important
 }
-}
-
 
 /* With preview pane enabled */
 .age {
@@ -1731,12 +1735,35 @@ td.apU>.T-KT.aXw::before {
 	background-image: url("https://www.gstatic.com/images/icons/material/system/1x/forward_white_20dp.png") !important
 }
 
-/* Email Content */
+/* Email Content — dark "paper" card. Plain / unstyled emails inherit these;
+   HTML emails that set their own background and colors keep them. */
 .a3s {
-	background: #FFF;
-	/* stylelint-disable-line color-no-hex */
+	background: var(--GR6) !important;
+	color: var(--GR17) !important;
 	border-radius: 8px;
 	padding: 32px;
+}
+
+.a3s a {
+	color: var(--GRSELECTED) !important
+}
+
+/* Quoted text (Gmail tints it dark purple, invisible on a dark surface) */
+.a3s .im {
+	color: var(--GR15) !important
+}
+
+/* Label chip next to the subject */
+.hN,
+.hO {
+	background: var(--GR8) !important;
+	color: var(--GR17) !important;
+}
+
+/* Footer row holding the Reply / Forward buttons (sticky; must be opaque so
+   the message body does not show through — same tone as the list card) */
+.btDi4d {
+	background: var(--GR4) !important
 }
 
 /* Attachments */
@@ -1895,7 +1922,7 @@ td.apU>.T-KT.aXw::before {
 
 /* Footer */
 .iN {
-	background: var(--GR18) !important;
+	background: var(--GR6) !important;
 	border-radius: 0 0 14px 14px !important;
 }
 
@@ -2015,4 +2042,5 @@ td.apU>.T-KT.aXw::before {
 /* Text */
 .v .fZ .f0 {
 	color: var(--GRSELECTED) !important
+}
 }

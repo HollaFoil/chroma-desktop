@@ -1,0 +1,311 @@
+/* Seerr (Jellyseerr). Tailwind v3 with the colours compiled in as literal
+   rgb() values, so there is no token to re-point: the utility classes it
+   actually ships are overridden one by one. Palette in use is gray-900/800/
+   700 for surfaces, indigo for the accent, purple for the secondary accent.
+   Opacity variants keep their alpha via the *_rgb triplets. */
+@-moz-document domain("request.hollafoil.com") {
+    /* ---- surfaces ------------------------------------------------------ */
+    body,
+    .bg-gray-900,
+    .focus\:bg-gray-900:focus {
+        background-color: var(--surface) !important;
+    }
+    .bg-gray-900\/80 { background-color: rgba(var(--surface_rgb), .8) !important; }
+    .bg-gray-900\/90 { background-color: rgba(var(--surface_rgb), .9) !important; }
+
+    code,
+    .bg-gray-800,
+    .bg-neutral-800,
+    .dark\:bg-slate-800,
+    .hover\:bg-gray-800:hover {
+        background-color: var(--surface_container) !important;
+    }
+    .bg-gray-800\/10 { background-color: rgba(var(--surface_container_rgb), .1) !important; }
+    .bg-gray-800\/30 { background-color: rgba(var(--surface_container_rgb), .3) !important; }
+    .bg-gray-800\/50 { background-color: rgba(var(--surface_container_rgb), .5) !important; }
+    .bg-gray-800\/70 { background-color: rgba(var(--surface_container_rgb), .7) !important; }
+    .bg-gray-800\/75 { background-color: rgba(var(--surface_container_rgb), .75) !important; }
+    .bg-gray-800\/80 { background-color: rgba(var(--surface_container_rgb), .8) !important; }
+    .bg-gray-800\/90 { background-color: rgba(var(--surface_container_rgb), .9) !important; }
+
+    .bg-gray-700,
+    .bg-gray-700\/100,
+    .dark\:bg-gray-700,
+    .hover\:bg-gray-700:hover,
+    .focus\:bg-gray-700:focus,
+    .active\:bg-gray-700:active {
+        background-color: var(--surface_container_high) !important;
+    }
+    .bg-gray-700\/20 { background-color: rgba(var(--surface_container_high_rgb), .2) !important; }
+    .bg-gray-700\/80 { background-color: rgba(var(--surface_container_high_rgb), .8) !important; }
+    .bg-gray-700\/90 { background-color: rgba(var(--surface_container_high_rgb), .9) !important; }
+
+    .bg-gray-600,
+    .hover\:bg-gray-600:hover,
+    .focus\:bg-gray-600:focus,
+    .dark\:hover\:bg-gray-600:hover {
+        background-color: var(--surface_container_highest) !important;
+    }
+    .bg-gray-500,
+    .hover\:bg-gray-500:hover {
+        background-color: var(--outline_variant) !important;
+    }
+    .dark\:bg-white\/10,
+    .dark\:hover\:bg-white\/10:hover,
+    .dark\:focus\:bg-white\/10:focus {
+        background-color: rgba(var(--on_surface_rgb), .1) !important;
+    }
+
+    /* ---- text ---------------------------------------------------------- */
+    .text-gray-50,
+    .text-gray-100,
+    .text-gray-200,
+    .text-neutral-200,
+    .dark\:text-gray-200,
+    .hover\:text-gray-100:hover,
+    .hover\:text-gray-200:hover,
+    .active\:text-gray-200:active,
+    .focus-within\:text-gray-200:focus-within,
+    .media-overview h2,
+    ul.media-crew > li,
+    a.crew-name:hover,
+    .media-fact-value a:hover,
+    .media-fact-value button:hover,
+    label a,
+    .prose :where(h1, h2, h3, h4, h5, h6, code):not(:where([class~=not-prose], [class~=not-prose] *)) {
+        color: var(--on_surface) !important;
+    }
+    .text-gray-300,
+    .text-gray-400,
+    .text-gray-500,
+    .hover\:text-gray-300:hover,
+    .focus\:text-gray-300:focus,
+    .focus\:text-gray-500:focus,
+    .media-overview p,
+    a.crew-name,
+    .media-fact-value a,
+    .media-fact-value button,
+    label,
+    .group-label,
+    .prose :where(strong, figcaption):not(:where([class~=not-prose], [class~=not-prose] *)) {
+        color: var(--on_surface_variant) !important;
+    }
+    .text-gray-600,
+    .text-gray-700,
+    .text-gray-800,
+    .dark\:text-gray-700,
+    .disabled\:text-gray-800:disabled {
+        color: var(--outline) !important;
+    }
+    .placeholder-gray-300::placeholder,
+    .placeholder-gray-400::placeholder,
+    .placeholder\:text-gray-400::placeholder,
+    .focus\:placeholder-gray-400:focus::placeholder,
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--outline) !important;
+    }
+
+    /* ---- accent (indigo -> primary, purple -> tertiary) ---------------- */
+    .bg-indigo-400,
+    .bg-indigo-500,
+    .bg-indigo-600,
+    .bg-indigo-700,
+    .hover\:bg-indigo-500:hover,
+    .hover\:bg-indigo-600:hover,
+    .hover\:bg-indigo-700:hover,
+    .active\:bg-indigo-600:active,
+    .active\:bg-indigo-700:active,
+    button.input-action,
+    button.input-action:not([disabled]):hover {
+        background-color: var(--primary) !important;
+        color: var(--on_primary) !important;
+    }
+    .bg-indigo-500\/80,
+    .bg-indigo-600\/80 {
+        background-color: rgba(var(--primary_rgb), .8) !important;
+        color: var(--on_primary) !important;
+    }
+    .bg-indigo-400\/20 { background-color: rgba(var(--primary_rgb), .2) !important; }
+    .bg-indigo-100,
+    .bg-indigo-200,
+    .focus\:bg-indigo-100\/50:focus {
+        background-color: var(--primary_container) !important;
+        color: var(--on_primary_container) !important;
+    }
+    button.input-action:not([disabled]):active {
+        background-color: var(--primary_fixed_dim) !important;
+        color: var(--on_primary_fixed) !important;
+    }
+    .bg-purple-500,
+    .bg-purple-600,
+    .hover\:bg-purple-600:hover {
+        background-color: var(--tertiary) !important;
+        color: var(--on_tertiary) !important;
+    }
+    .bg-purple-600\/80 {
+        background-color: rgba(var(--tertiary_rgb), .8) !important;
+        color: var(--on_tertiary) !important;
+    }
+    .bg-purple-100,
+    .bg-purple-200,
+    .focus\:bg-purple-100\/50:focus {
+        background-color: var(--tertiary_container) !important;
+        color: var(--on_tertiary_container) !important;
+    }
+    .text-indigo-100,
+    .text-indigo-200,
+    .text-indigo-500,
+    .text-indigo-600,
+    .dark\:text-indigo-400,
+    .hover\:text-indigo-400:hover,
+    .hover\:text-indigo-700:hover,
+    .dark\:hover\:text-indigo-400:hover,
+    .prose :where(a):not(:where([class~=not-prose], [class~=not-prose] *)),
+    .prose :where(a):not(:where([class~=not-prose], [class~=not-prose] *)):hover {
+        color: var(--primary) !important;
+    }
+    .text-purple-500,
+    .text-purple-600,
+    .dark\:text-purple-400,
+    .hover\:text-purple-700:hover,
+    .dark\:hover\:text-purple-400:hover {
+        color: var(--tertiary) !important;
+    }
+    input[type=checkbox] {
+        color: var(--primary) !important;
+    }
+
+    /* gradient buttons (Request, Approve): indigo -> purple */
+    .from-indigo-600,
+    .from-indigo-700,
+    .hover\:from-indigo-500:hover {
+        --tw-gradient-from: var(--primary) var(--tw-gradient-from-position) !important;
+        --tw-gradient-to: rgba(var(--primary_rgb), 0) var(--tw-gradient-to-position) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+        color: var(--on_primary) !important;
+    }
+    .to-purple-600,
+    .to-purple-700,
+    .hover\:to-purple-500:hover,
+    .hover\:to-purple-200:hover {
+        --tw-gradient-to: var(--primary_fixed_dim) var(--tw-gradient-to-position) !important;
+    }
+    .from-gray-800 {
+        --tw-gradient-from: var(--surface_container) var(--tw-gradient-from-position) !important;
+        --tw-gradient-to: rgba(var(--surface_container_rgb), 0) var(--tw-gradient-to-position) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+    }
+    .from-gray-900 {
+        --tw-gradient-from: var(--surface) var(--tw-gradient-from-position) !important;
+        --tw-gradient-to: rgba(var(--surface_rgb), 0) var(--tw-gradient-to-position) !important;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+    }
+    .to-gray-900 {
+        --tw-gradient-to: var(--surface) var(--tw-gradient-to-position) !important;
+    }
+
+    /* ---- borders and rings --------------------------------------------- */
+    .border-gray-500,
+    .border-gray-600,
+    .border-gray-700,
+    .border-gray-800,
+    .sm\:border-gray-800,
+    .dark\:border-slate-600,
+    .hover\:border-gray-500:hover,
+    .hover\:border-gray-600:hover,
+    .active\:border-gray-600:active,
+    .focus\:border-gray-500:focus {
+        border-color: var(--outline_variant) !important;
+    }
+    .border-gray-200,
+    .border-gray-300,
+    .border-gray-400,
+    .hover\:border-gray-200:hover,
+    .hover\:border-gray-400:hover,
+    .focus\:border-gray-400:focus,
+    .focus\:border-gray-100:focus,
+    .active\:border-gray-100:active {
+        border-color: var(--outline) !important;
+    }
+    .border-indigo-400,
+    .border-indigo-500,
+    .border-indigo-600,
+    .hover\:border-indigo-500:hover,
+    .focus\:border-indigo-500:focus,
+    .focus\:border-indigo-700:focus,
+    .active\:border-indigo-700:active {
+        border-color: var(--primary) !important;
+    }
+    .border-purple-500,
+    .border-purple-600,
+    .focus\:border-purple-500:focus {
+        border-color: var(--tertiary) !important;
+    }
+    .ring-gray-500,
+    .ring-gray-600,
+    .ring-gray-700,
+    .focus\:ring-gray-500:focus,
+    .hover\:ring-gray-500:hover {
+        --tw-ring-color: var(--outline_variant) !important;
+    }
+    .ring-indigo-300,
+    .ring-indigo-400,
+    .ring-indigo-500,
+    .focus\:ring-indigo-500:focus {
+        --tw-ring-color: var(--primary) !important;
+    }
+    .focus\:ring-indigo-500\/20:focus { --tw-ring-color: rgba(var(--primary_rgb), .2) !important; }
+    .focus\:ring-indigo-500\/50:focus { --tw-ring-color: rgba(var(--primary_rgb), .5) !important; }
+    .focus\:ring-purple-500:focus { --tw-ring-color: var(--tertiary) !important; }
+    .focus\:ring-purple-500\/20:focus { --tw-ring-color: rgba(var(--tertiary_rgb), .2) !important; }
+    .focus\:ring-purple-500\/50:focus { --tw-ring-color: rgba(var(--tertiary_rgb), .5) !important; }
+
+    /* ---- forms --------------------------------------------------------- */
+    input[type=text],
+    input[type=password],
+    select,
+    textarea,
+    .react-select-container .react-select__control,
+    .react-select-container .react-select__control--is-focused,
+    .react-select-container .react-select__menu {
+        background-color: var(--surface_container_high) !important;
+        border-color: var(--outline_variant) !important;
+        color: var(--on_surface) !important;
+    }
+    .react-select-container-dark .react-select__control,
+    .react-select-container-dark .react-select__control--is-focused,
+    .react-select-container .react-select__multi-value {
+        background-color: var(--surface_container) !important;
+        border-color: var(--outline_variant) !important;
+    }
+    .react-select-container .react-select__option--is-focused {
+        background-color: var(--surface_container_highest) !important;
+        color: var(--on_surface) !important;
+    }
+    .react-select-container .react-select__single-value,
+    .react-select-container .react-select__input-container,
+    .react-select-container .react-select__multi-value__label {
+        color: var(--on_surface) !important;
+    }
+    .react-select-container .react-select__multi-value__remove:hover {
+        background-color: var(--error) !important;
+        color: var(--on_error) !important;
+    }
+    button.input-action {
+        border-color: var(--outline_variant) !important;
+    }
+    .error,
+    .\!error {
+        color: var(--error) !important;
+    }
+
+    /* ---- scrollbar ----------------------------------------------------- */
+    html,
+    html:hover {
+        scrollbar-color: var(--surface_container_highest) var(--surface) !important;
+    }
+    html::-webkit-scrollbar-track { background: var(--surface) !important; }
+    html::-webkit-scrollbar-thumb,
+    html:hover::-webkit-scrollbar-thumb { background-color: var(--surface_container_highest) !important; }
+}

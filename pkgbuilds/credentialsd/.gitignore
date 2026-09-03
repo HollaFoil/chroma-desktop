@@ -1,0 +1,6 @@
+# makepkg work and outputs
+src/
+pkg/
+*.pkg.tar.*
+*.tar.gz
+cargo-home/

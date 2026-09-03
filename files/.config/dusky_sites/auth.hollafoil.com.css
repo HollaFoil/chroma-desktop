@@ -1,0 +1,53 @@
+/* authentik (2025.x). The UI is Lit components in shadow roots, which a
+   document-level stylesheet cannot reach; but the dark theme is built on
+   --ak-dark-* and --ak-accent custom properties declared on :root in the
+   light DOM, and custom properties inherit across shadow boundaries. So the
+   tokens are re-pointed and the components follow. The PatternFly globals
+   authentik maps them onto are set too for the pieces rendered in the light
+   DOM (flow background, page shell). */
+@-moz-document domain("auth.hollafoil.com") {
+    :root {
+        --ak-accent: var(--primary) !important;
+        --ak-dark-foreground: var(--on_surface) !important;
+        --ak-dark-foreground-darker: var(--on_surface_variant) !important;
+        --ak-dark-foreground-link: var(--primary) !important;
+        --ak-dark-background: var(--surface) !important;
+        --ak-dark-background-darker: var(--surface_container_lowest) !important;
+        --ak-dark-background-light: var(--surface_container_low) !important;
+        --ak-dark-background-light-ish: var(--surface_container) !important;
+        --ak-dark-background-lighter: var(--surface_container_high) !important;
+
+        --pf-global--Color--100: var(--on_surface) !important;
+        --pf-global--Color--200: var(--on_surface_variant) !important;
+        --pf-global--link--Color: var(--primary) !important;
+        --pf-global--link--Color--hover: var(--primary_fixed_dim) !important;
+        --pf-global--BorderColor--100: var(--outline_variant) !important;
+        --pf-global--BackgroundColor--100: var(--surface_container_low) !important;
+        --pf-global--BackgroundColor--200: var(--surface) !important;
+        --pf-global--BackgroundColor--dark-100: var(--surface_container_low) !important;
+        --pf-global--BackgroundColor--dark-200: var(--surface) !important;
+        --pf-global--BackgroundColor--dark-300: var(--surface_container) !important;
+        --pf-global--primary-color--100: var(--primary) !important;
+        --pf-global--primary-color--200: var(--primary_fixed_dim) !important;
+        --pf-global--active-color--100: var(--primary) !important;
+        --pf-global--danger-color--100: var(--error) !important;
+        --pf-global--success-color--100: var(--ansi_green) !important;
+        --pf-global--warning-color--100: var(--ansi_yellow) !important;
+    }
+    html,
+    body,
+    .pf-c-page,
+    .pf-c-login,
+    .pf-c-background-image {
+        background-color: var(--surface) !important;
+        color: var(--on_surface) !important;
+    }
+    /* the login flow paints a photo behind the card; mute it into the palette */
+    .pf-c-background-image::before,
+    .pf-c-login::before {
+        opacity: .25 !important;
+    }
+    ::-webkit-scrollbar-thumb {
+        background-color: var(--primary) !important;
+    }
+}

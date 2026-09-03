@@ -1,0 +1,47 @@
+/* Open WebUI. Tailwind v4: every utility resolves through the --color-gray-*
+   theme tokens (dark mode is gray-900 page, gray-850 sidebar, gray-800 hover,
+   gray-950 for the deepest layer), so re-mapping the scale on html.dark
+   restyles the whole app. Scoped to .dark so the light scheme, which uses
+   the same tokens the other way round, is left alone. */
+@-moz-document domain("llm.hollafoil.com") {
+    html.dark {
+        --color-gray-50: var(--on_surface) !important;
+        --color-gray-100: var(--on_surface) !important;
+        --color-gray-200: var(--on_surface) !important;
+        --color-gray-300: var(--on_surface_variant) !important;
+        --color-gray-400: var(--on_surface_variant) !important;
+        --color-gray-500: var(--outline) !important;
+        --color-gray-600: var(--surface_container_highest) !important;
+        --color-gray-700: var(--surface_container_high) !important;
+        --color-gray-800: var(--surface_container) !important;
+        --color-gray-850: var(--surface_container_low) !important;
+        --color-gray-900: var(--surface) !important;
+        --color-gray-950: var(--surface_container_lowest) !important;
+        /* bg-black is the app shell behind everything */
+        --color-black: var(--surface_container_lowest) !important;
+    }
+    html.dark,
+    html.dark body {
+        background-color: var(--surface) !important;
+        color: var(--on_surface) !important;
+    }
+    /* accent: links, focus rings and the few blue/sky/indigo touches */
+    html.dark {
+        --color-blue-400: var(--primary) !important;
+        --color-blue-500: var(--primary) !important;
+        --color-blue-600: var(--primary) !important;
+        --color-sky-400: var(--primary) !important;
+        --color-sky-500: var(--primary) !important;
+        --color-sky-600: var(--primary) !important;
+        --color-indigo-400: var(--primary) !important;
+        --color-indigo-500: var(--primary) !important;
+        --color-indigo-600: var(--primary) !important;
+    }
+    html.dark ::selection {
+        background: var(--primary_container) !important;
+        color: var(--on_primary_container) !important;
+    }
+    html.dark * {
+        scrollbar-color: var(--surface_container_highest) transparent !important;
+    }
+}
