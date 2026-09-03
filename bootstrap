@@ -1,0 +1,223 @@
+#!/bin/bash
+# First-time setup for these dotfiles on an Arch/CachyOS machine.
+#
+#   ./bootstrap --check            report missing packages and files, change nothing
+#   ./bootstrap                    install packages (asks first), link, wire up the session
+#   ./bootstrap --wallpaper IMG    ...and run setwall on IMG so the colours exist at first login
+#
+# Everything here is idempotent; run it again after pulling changes. The
+# per-app integrations (Steam, Spotify, Discord, Firefox, oh-my-posh) are only
+# set up when the app is installed, and are always safe to skip.
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CHECK=0
+WALL=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --check)     CHECK=1 ;;
+        --wallpaper) WALL="${2:-}"; shift ;;
+        -h|--help)   sed -n '2,12p' "$0"; exit 0 ;;
+        *) echo "unknown option: $1" >&2; exit 2 ;;
+    esac
+    shift
+done
+
+bold() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+ask()  { local a; read -r -p "  $1 [y/N] " a; [[ "$a" =~ ^[Yy] ]]; }
+
+# ---- packages -------------------------------------------------------
+# packages.txt is sectioned; collect names per section, keep the purposes for
+# the report.
+declare -A PKG_SECTION PKG_WHY
+ORDER=()
+section=""
+while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%%$'\r'}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    if [[ "$line" =~ ^\[(.+)\]$ ]]; then section="${BASH_REMATCH[1]}"; continue; fi
+    name="${line%%[[:space:]]*}"
+    why="${line#*#}"; [[ "$why" == "$line" ]] && why=""
+    PKG_SECTION[$name]="$section"; PKG_WHY[$name]="${why# }"; ORDER+=("$name")
+done < "$REPO/packages.txt"
+
+# A package counts as present if pacman has it, or if the command it provides
+# is on PATH (oh-my-posh and spicetify are often installed by hand).
+declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [waybar-git]=waybar)
+installed() { pacman -Qq "$1" >/dev/null 2>&1 || { [[ -n "${BIN_OF[$1]:-}" ]] && command -v "${BIN_OF[$1]}" >/dev/null 2>&1; }; }
+
+if ! command -v pacman >/dev/null 2>&1; then
+    warn "no pacman: this is written for Arch/CachyOS. Skipping packages; see packages.txt for what to install."
+fi
+
+bold "Packages"
+declare -A MISSING_BY
+for p in "${ORDER[@]}"; do
+    s="${PKG_SECTION[$p]}"
+    if installed "$p"; then :; else
+        # waybar-git satisfies waybar, and vice versa
+        [[ "$p" == waybar ]] && installed waybar-git && continue
+        MISSING_BY[$s]+=" $p"
+    fi
+done
+for s in core fonts theming optional aur; do
+    [[ -n "${MISSING_BY[$s]:-}" ]] || { ok "$s: all present"; continue; }
+    miss "$s:"
+    for p in ${MISSING_BY[$s]}; do printf '      %-28s %s\n' "$p" "${PKG_WHY[$p]}"; done
+done
+
+if [[ $CHECK == 0 ]] && command -v pacman >/dev/null 2>&1; then
+    for s in core fonts; do
+        [[ -n "${MISSING_BY[$s]:-}" ]] || continue
+        if ask "install the missing [$s] packages with pacman?"; then
+            # shellcheck disable=SC2086
+            sudo pacman -S --needed ${MISSING_BY[$s]}
+        fi
+    done
+    for s in theming optional; do
+        [[ -n "${MISSING_BY[$s]:-}" ]] || continue
+        if ask "install the missing [$s] packages too? (apps you may not want)"; then
+            # shellcheck disable=SC2086
+            sudo pacman -S --needed ${MISSING_BY[$s]}
+        fi
+    done
+    if [[ -n "${MISSING_BY[aur]:-}" ]]; then
+        helper=""
+        for h in paru yay; do command -v "$h" >/dev/null 2>&1 && { helper="$h"; break; }; done
+        if [[ -n "$helper" ]] && ask "install the missing [aur] packages with $helper?"; then
+            # shellcheck disable=SC2086
+            "$helper" -S --needed ${MISSING_BY[aur]}
+        elif [[ -z "$helper" ]]; then
+            warn "no AUR helper (paru/yay) found; install the [aur] entries you want by hand"
+        fi
+    fi
+fi
+
+# ---- link -----------------------------------------------------------
+bold "Symlinks"
+if [[ $CHECK == 1 ]]; then
+    n=0
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        if [[ ! -L "$HOME/$line" || "$(readlink -f "$HOME/$line")" != "$(readlink -f "$REPO/files/$line")" ]]; then
+            miss "not linked: ~/$line"; n=$((n+1))
+        fi
+    done < "$REPO/manifest.txt"
+    [[ $n == 0 ]] && ok "every manifest entry is linked"
+else
+    "$REPO/link" | grep -v '^ok:' || true
+    ok "manifest linked (originals, if any, went to $REPO/backup-*)"
+fi
+
+# ---- files that have to be rendered per user ------------------------
+bold "Per-user files"
+# Firefox native-messaging manifests need an absolute path, so this one is a
+# template rather than a symlink.
+NM_DIR="$HOME/.mozilla/native-messaging-hosts"
+if [[ $CHECK == 1 ]]; then
+    [[ -f "$NM_DIR/matugenfox.json" ]] && ok "matugenfox.json rendered" || miss "matugenfox.json not rendered (Firefox site theming)"
+else
+    mkdir -p "$NM_DIR"
+    sed "s|@HOME@|$HOME|" "$REPO/files/.mozilla/native-messaging-hosts/matugenfox.json.in" > "$NM_DIR/matugenfox.json"
+    ok "rendered $NM_DIR/matugenfox.json"
+fi
+
+# ---- systemd user session -------------------------------------------
+bold "systemd --user"
+if [[ $CHECK == 1 ]]; then
+    systemctl --user is-enabled waybar.service >/dev/null 2>&1 && ok "waybar.service enabled" || miss "waybar.service not enabled"
+else
+    systemctl --user daemon-reload
+    if systemctl --user cat waybar.service >/dev/null 2>&1; then
+        systemctl --user enable waybar.service >/dev/null 2>&1 && ok "waybar.service enabled (starts with hyprland-session.target)"
+    else
+        warn "waybar.service unit not found; install waybar first, then re-run"
+    fi
+    # hyprland-session.target is started by hyprland.lua at login; nothing to enable.
+    ok "hyprland-session.target is linked (hyprland.lua starts it at login)"
+fi
+
+# ---- optional integrations ------------------------------------------
+bold "App integrations"
+
+# Steam: Adwaita-for-Steam skin + DevTools flag so reload-steam-css can push live
+if command -v steam >/dev/null 2>&1; then
+    AFS="$HOME/.local/src/Adwaita-for-Steam"
+    if [[ $CHECK == 1 ]]; then
+        [[ -d "$AFS" ]] && ok "Adwaita-for-Steam cloned" || miss "Adwaita-for-Steam not cloned ($AFS)"
+        [[ -f "$HOME/.steam/steam/.cef-enable-remote-debugging" ]] && ok "Steam DevTools flag set" || miss "Steam DevTools flag missing (live reload)"
+    elif ask "Steam found: set up the matugen skin (clone Adwaita-for-Steam, enable Steam's DevTools port)?"; then
+        [[ -d "$AFS" ]] || git clone -q --depth 1 https://github.com/tkashkin/Adwaita-for-Steam "$AFS"
+        [[ -d "$HOME/.steam/steam" ]] && touch "$HOME/.steam/steam/.cef-enable-remote-debugging"
+        ok "Steam ready; port 8080 must be free on this machine (Steam hardcodes it)"
+    fi
+else
+    warn "steam not installed: skipping Steam skin"
+fi
+
+# Spotify: spicetify is not packaged
+if command -v spotify-launcher >/dev/null 2>&1; then
+    if command -v spicetify >/dev/null 2>&1 || [[ -x "$HOME/.spicetify/spicetify" ]]; then
+        ok "spicetify present; set current_theme = Text, color_scheme = matugen in ~/.config/spicetify/config-xpui.ini"
+    else
+        warn "Spotify found but no spicetify: install it from https://spicetify.app (curl installer puts it in ~/.spicetify)"
+    fi
+fi
+
+# Vesktop: Vencord only loads quickCss.css if enabled
+if command -v vesktop >/dev/null 2>&1; then
+    VS="$HOME/.config/vesktop/settings/settings.json"
+    if [[ -f "$VS" ]] && grep -q '"useQuickCss": *true' "$VS"; then ok "vesktop quickCss enabled"
+    else warn "vesktop: enable Settings > Vencord > \"Enable Custom CSS\" (useQuickCss) for the matugen theme"; fi
+fi
+
+# btop: theme file is generated, but btop has to be told to use it
+if command -v btop >/dev/null 2>&1; then
+    BC="$HOME/.config/btop/btop.conf"
+    if [[ -f "$BC" ]] && grep -q 'color_theme *= *"matugen"' "$BC"; then ok "btop uses the matugen theme"
+    else warn "btop: set color_theme = \"matugen\" and theme_background = False in ~/.config/btop/btop.conf (or pick it in btop's menu)"; fi
+fi
+
+# Firefox: extension is manual
+if command -v firefox >/dev/null 2>&1; then
+    warn "firefox: install the MatugenFox extension and point it at ~/.config/matugen/generated/firefox_websites.css and ~/.config/dusky_sites"
+fi
+
+# oh-my-posh: needs the source theme the recolouring script reads
+if command -v oh-my-posh >/dev/null 2>&1; then
+    OMP="$HOME/.config/oh-my-posh/themes/agnoster.omp.json"
+    if [[ -f "$OMP" ]]; then ok "oh-my-posh theme source present"
+    elif [[ $CHECK == 0 ]] && ask "oh-my-posh found: fetch agnoster.omp.json so setwall can recolour the prompt?"; then
+        mkdir -p "$(dirname "$OMP")"
+        curl -fsSL -o "$OMP" https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/agnoster.omp.json && ok "fetched $OMP"
+    else miss "oh-my-posh theme missing: $OMP (fish falls back to its own prompt)"; fi
+fi
+
+# ---- first colours --------------------------------------------------
+bold "Colours"
+if [[ -f "$HOME/.config/waybar/colors.css" ]]; then
+    ok "matugen colours exist"
+elif [[ $CHECK == 1 ]]; then
+    miss "no colours yet: waybar/rofi/hyprlock will not start until setwall has run once"
+fi
+if [[ $CHECK == 0 ]]; then
+    if [[ -z "$WALL" ]]; then
+        WALL="$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | head -1)"
+    fi
+    if [[ -n "$WALL" && -f "$WALL" ]] && command -v matugen >/dev/null 2>&1; then
+        "$HOME/.local/bin/setwall" "$WALL" && ok "colours generated from $WALL"
+    else
+        warn "run  setwall <image>  before your first login (put wallpapers in ~/Pictures/Wallpapers for SUPER+W)"
+    fi
+fi
+
+# ---- what is still yours to edit ------------------------------------
+bold "Make it yours (see README.md, 'Make it yours')"
+echo "  files/.config/hypr/monitors.lua        your monitors (nwg-displays writes this)"
+echo "  files/.config/hypr/hyprland.lua        ws_home fallback, kb_layout, apps on SUPER+E/Q"
+echo "  files/.config/waybar/config.jsonc      persistent-workspaces per monitor, temperature hwmon path"
+echo "  ~/.config/relayout/config.sh           dashboard monitors and apps (examples/relayout.config.sh)"
+echo

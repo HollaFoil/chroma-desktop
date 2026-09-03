@@ -7,17 +7,17 @@ post_hook = 'systemctl --user reload waybar 2>/dev/null || pkill -SIGUSR2 waybar
 [templates.swaync]
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/swaync/colors.css'
-post_hook = 'swaync-client -rs'
+post_hook = 'swaync-client -rs 2>/dev/null || true'  # non-zero when swaync is not running
 
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hypr-colors.lua'
 output_path = '~/.config/hypr/colors.lua'
-post_hook = 'hyprctl reload'
+post_hook = 'hyprctl reload 2>/dev/null || true'  # no-op outside a Hyprland session
 
 [templates.kitty]
 input_path = '~/.config/matugen/templates/kitty-colors.conf'
 output_path = '~/.config/kitty/colors.conf'
-post_hook = 'pkill -SIGUSR1 kitty'
+post_hook = 'pkill -SIGUSR1 kitty || true'  # pkill is non-zero with no kitty open
 
 [templates.hyprlock]
 input_path = '~/.config/matugen/templates/hyprlock-colors.conf'
@@ -62,14 +62,6 @@ output_path = '~/.config/gtk-4.0/colors.css'
 [templates.kde]
 input_path = '~/.config/matugen/templates/Matugen.colors'
 output_path = '~/.local/share/color-schemes/Matugen.colors'
-
-[templates.vscode-raw]
-input_path = '~/.config/matugen/templates/vscode-colors'
-output_path = '~/.cache/matugen/vscode-colors'
-
-[templates.vscode-json]
-input_path = '~/.config/matugen/templates/vscode-colors.json'
-output_path = '~/.cache/matugen/vscode-colors.json'
 
 [templates.btop]
 input_path = '~/.config/matugen/templates/btop.theme'

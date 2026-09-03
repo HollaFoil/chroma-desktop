@@ -53,17 +53,16 @@
 .local/bin/cheatsheet
 .local/bin/relayout
 .local/bin/powermenu
+.local/bin/gen-ohmyposh-template
 
 # gtk
 .config/gtk-3.0/gtk.css
 .config/gtk-4.0/gtk.css
 .config/matugen/templates/gtk-colors.css
-.config/matugen/templates/steam-colors.css
 
 # kde / qt
 .config/kdeglobals
 .config/matugen/templates/Matugen.colors
-
 
 # chrome
 .config/chrome-flags.conf
@@ -78,6 +77,9 @@
 # btop
 .config/matugen/templates/btop.theme
 .local/bin/reload-btop
+
+# steam (Adwaita-for-Steam + live push)
+.config/matugen/templates/steam-colors.css
 .local/bin/reload-steam-css
 
 # discord (vesktop)
@@ -89,7 +91,6 @@
 
 # firefox (matugenfox)
 .config/matugen/templates/firefox-colors.css
-.mozilla/native-messaging-hosts/matugenfox.json
 .local/bin/matugenfox-host
 .config/dusky_sites
 .local/bin/patch-credentialsd-xpi

@@ -16,9 +16,17 @@ if [[ ! -f "$WALL" ]]; then
     exit 1
 fi
 
-awww img "$WALL"
+# The wallpaper daemon is optional: matugen still recolours everything else
+# if it is not running (or not installed), the picture just does not change.
+if command -v awww >/dev/null 2>&1; then
+    awww img "$WALL" || echo "setwall: awww failed (is awww-daemon running?)" >&2
+fi
 matugen image "$WALL" -m dark --source-color-index 0
 ~/.local/bin/rofi-wallthumbs "$WALL"   # crops the rofi launcher paints behind itself
-~/dotfiles/gen-ohmyposh-template
+
+# Prompt colours, only for oh-my-posh users who have the source theme in place.
+if command -v oh-my-posh >/dev/null 2>&1 && [[ -f ~/.config/oh-my-posh/themes/agnoster.omp.json ]]; then
+    ~/.local/bin/gen-ohmyposh-template
+fi
 
 echo "setwall: applied $WALL"

@@ -1,7 +1,7 @@
 {
   "name": "matugenfox",
   "description": "MatugenFox Native Messaging Host",
-  "path": "/home/holla/.local/bin/matugenfox-host",
+  "path": "@HOME@/.local/bin/matugenfox-host",
   "type": "stdio",
   "allowed_extensions": [
     "matugenfox@ubaid.com"

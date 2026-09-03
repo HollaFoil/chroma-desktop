@@ -9,6 +9,11 @@ if [[ ! -f "$COLORS" ]]; then
     echo "no colours yet, run setwall first" >&2
     exit 1
 fi
+if [[ ! -f "$SRC" ]]; then
+    echo "gen-ohmyposh-template: $SRC not found; copy agnoster.omp.json from" >&2
+    echo "  https://github.com/JanDeDobbeleer/oh-my-posh/tree/main/themes there" >&2
+    exit 1
+fi
 
 source "$COLORS"
 

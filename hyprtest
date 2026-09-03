@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run with: ~/dotfiles/hyprtest    (takes ~3 min, moves windows around)
+# Run with: ./hyprtest (from the repo root)    (takes ~3 min, moves windows around)
 # Automated checks for the relayout / window-management setup.
 set -uo pipefail
 export RELAYOUT_QUIET=1

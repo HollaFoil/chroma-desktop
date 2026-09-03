@@ -45,7 +45,7 @@ ALT_LAYOUT=(
 )
 
 # ---- general config ------------------------------------------------
-BAR=46                      # waybar footprint
+# BAR (the top edge waybar reserves) is read from hyprctl per monitor below.
 GAP=8                       # gap between windows
 SETTLE=0.06                 # pause after the float toggle
 STASH_WS="special:magic"    # where dashboard apps this profile doesn't use go
@@ -62,11 +62,33 @@ WS_HOME=(
     "6 DP-2"     "7 DP-2"     "8 DP-2"
     "9 HDMI-A-2" "10 HDMI-A-2"
 )
-CLASS_RE='^(Spotify|slack|vesktop|layout-sysmon|homelab-dash)$'
+# How each dashboard app is started (--boot, or when a keybind finds one
+# missing). An app whose command is not installed is left out of the layout
+# and never waited for, so a machine without, say, Slack still gets the rest.
+declare -A LAUNCH_CMD=(
+    [Spotify]="spotify-launcher"
+    [slack]="slack"
+    [vesktop]="vesktop"
+    [layout-sysmon]="kitty --class layout-sysmon -o font_size=9 -e btop"
+    [homelab-dash]="$HOME/.local/bin/homelab-dash"
+)
 # Windows allowed to open on the dashboard workspace anyway: deliberate
 # overlays that are meant to appear on top of whatever you are looking at.
 GUARD_EXEMPT=(cheatsheet hyprland-run)
 LAUNCH=0                    # --boot turns this on
+
+# Everything above is one machine's setup: its monitor names, its apps. Put
+# your own values in ~/.config/relayout/config.sh (plain bash, same variable
+# names) and they replace these defaults without editing this script.
+RELAYOUT_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/relayout/config.sh"
+[[ -f "$RELAYOUT_CONF" ]] && source "$RELAYOUT_CONF"
+
+# Only apps that can actually be launched take part. The regex feeding the
+# window rules and the focus guard is derived from that list.
+available() { [[ -n "${LAUNCH_CMD[$1]:-}" ]] && command -v "${LAUNCH_CMD[$1]%% *}" >/dev/null 2>&1; }
+_apps=(); for c in "${ALL_APPS[@]}"; do available "$c" && _apps+=("$c"); done
+ALL_APPS=("${_apps[@]}")
+CLASS_RE="^($(IFS='|'; echo "${ALL_APPS[*]}"))$"
 # --------------------------------------------------------------------
 
 usage() {
@@ -190,9 +212,9 @@ write_rules() {
 # ---- monitor geometry ----------------------------------------------
 MW=""
 for _ in $(seq 1 10); do
-    read -r MX MY MW MH < <(
+    read -r MX MY MW MH BAR < <(
       hyprctl monitors -j | jq -r --arg m "$MON" \
-        '.[] | select(.name==$m) | "\(.x) \(.y) \(.width) \(.height)"'
+        '.[] | select(.name==$m) | "\(.x) \(.y) \(.width) \(.height) \(.reserved[1])"'
     )
     [[ -n "${MW:-}" ]] && break
     sleep 1
@@ -208,9 +230,9 @@ if [[ -z "${MW:-}" ]]; then
         LAYOUT_APPS=(); for row in "${LAYOUT[@]}"; do LAYOUT_APPS+=("${row%% *}"); done
         printf '%s' "$TARGET" > "$STATE"
         write_rules
-        read -r MX MY MW MH < <(
+        read -r MX MY MW MH BAR < <(
           hyprctl monitors -j | jq -r --arg m "$MON" \
-            '.[] | select(.name==$m) | "\(.x) \(.y) \(.width) \(.height)"'
+            '.[] | select(.name==$m) | "\(.x) \(.y) \(.width) \(.height) \(.reserved[1])"'
         )
     fi
     if [[ -z "${MW:-}" ]]; then
@@ -368,13 +390,9 @@ dispatch hl.dsp.workspace.toggle_special(\"$name\")" >/dev/null
 # first --boot leaves SUPER+SHIFT+R and SUPER+ALT+R silently doing nothing for
 # the rest of the session.
 launch() {
-    case "$1" in
-        Spotify)       setsid spotify-launcher >/dev/null 2>&1 9>&- & ;;
-        slack)         setsid slack            >/dev/null 2>&1 9>&- & ;;
-        vesktop)       setsid vesktop          >/dev/null 2>&1 9>&- & ;;
-        layout-sysmon) setsid kitty --class layout-sysmon -o font_size=9 -e btop >/dev/null 2>&1 9>&- & ;;
-        homelab-dash)  setsid "$HOME/.local/bin/homelab-dash" >/dev/null 2>&1 9>&- & ;;
-    esac
+    available "$1" || return 0
+    # shellcheck disable=SC2086  # the table entries are command lines
+    setsid ${LAUNCH_CMD[$1]} >/dev/null 2>&1 9>&- &
 }
 
 # ---- go ------------------------------------------------------------

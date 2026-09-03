@@ -18,8 +18,8 @@ end
 -- rules below survive a `hyprctl reload` (matugen fires one on every wallpaper
 -- change, and reload drops anything injected with `hyprctl eval`).
 local LP = { dash_ws = 1, work_ws = 2, stash_ws = "special:magic",
-             used_re = "^(Spotify|slack|discord|layout-sysmon|layout-term)$",
-             guard_re = "negative:^(Spotify|slack|discord|layout-sysmon|layout-term|cheatsheet|hyprland-run)$",
+             used_re = "^(Spotify|slack|vesktop|layout-sysmon|homelab-dash)$",
+             guard_re = "negative:^(Spotify|slack|vesktop|layout-sysmon|homelab-dash|cheatsheet|hyprland-run)$",
              -- bootstrap fallback only; relayout owns the real map
              ws_home = { [1] = "HDMI-A-1", [2] = "HDMI-A-1", [3] = "HDMI-A-1",
                          [4] = "HDMI-A-1", [5] = "HDMI-A-1",
@@ -131,7 +131,11 @@ hl.on("hyprland.start", function()
     -- restarts in under a second, and was still inside its rate-limit window
     -- when the next session asked for it, leaving the session with no polkit
     -- agent and so no authentication prompts at all.
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE && (systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal waybar.service hyprland-session.target 2>/dev/null || true) && systemctl --user restart hyprpolkitagent xdg-desktop-portal && systemctl --user restart hyprland-session.target")
+    -- The agent and portal restarts are deliberately not && -chained into the
+    -- target start: on a machine without hyprpolkitagent or the portal
+    -- installed, a failed restart there would otherwise leave the session
+    -- target (and so waybar) never started at all.
+    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal waybar.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
     hl.exec_cmd("swaync")
     -- waybar runs as a systemd user unit rather than a bare exec_cmd: it
     -- segfaults in its mpris module when a player (Chrome) goes away, and
@@ -152,7 +156,7 @@ hl.on("hyprland.start", function()
     -- relayout --boot launches every dashboard app that is not already
     -- running and waits for it to map. Launching them here as well raced
     -- with that check and produced duplicate kitty windows.
-    hl.exec_cmd("/home/holla/.local/bin/relayout --boot")
+    hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/relayout --boot")
 end)
 
 -------------------------------
@@ -438,8 +442,8 @@ hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
 -- change and fights the prop (visible as flicker while hovering)
 hl.bind(mainMod .. " + T", hl.dsp.window.set_prop({ prop = "opaque", value = "toggle", lock = true }))
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallstrip"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("/home/holla/.local/bin/relayout"))
-hl.bind(mainMod .. " + ALT + R",   hl.dsp.exec_cmd("/home/holla/.local/bin/relayout toggle"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/relayout"))
+hl.bind(mainMod .. " + ALT + R",   hl.dsp.exec_cmd(os.getenv("HOME") .. "/.local/bin/relayout toggle"))
 
 -- Cycle windows on the current workspace (there was no alt-tab bind at all).
 -- Forward only: cycle_next accepts "prev" / { prev = true } / { last = true }

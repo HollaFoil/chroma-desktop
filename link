@@ -1,7 +1,7 @@
 #!/bin/bash
 set -uo pipefail
 
-REPO="$HOME/dotfiles"
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MANIFEST="$REPO/manifest.txt"
 BACKUP="$REPO/backup-$(date +%Y%m%d-%H%M%S)"
 
