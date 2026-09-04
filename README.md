@@ -220,10 +220,6 @@ only once configured. `bootstrap` prints which of these still need a step.
 ## Day to day
 
 - `setwall <image>` or `SUPER+W` — new wallpaper and palette everywhere.
-- `SUPER+RMB` drag resizes; `SUPER+SHIFT+RMB` drag resizes *keeping the
-  window's aspect ratio*, and `SUPER+SHIFT+T` snaps the window to 16:9 first
-  (video). Both are exact on floating windows; a tiled window's size belongs to
-  the layout, which no ratio can be held against.
 - Edit a file in `files/`; it is live immediately (symlinks). Templates take effect on the next `setwall`.
 - Added a new config? Append its path to `manifest.txt`, `./adopt` (copies it in), `./link` (replaces it with a symlink).
 - KDE's `kde-gtk-config` occasionally rewrites `~/.config/gtk-{3,4}.0/gtk.css` as regular files; `./link` puts the symlinks back.

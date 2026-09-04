@@ -81,37 +81,6 @@ A.define({ id = "win.resize_drag", name = "Resize window (drag)", category = "Wi
            keys = { mainMod .. " + mouse:273" }, keys_label = mainMod .. " + RMB drag",
            run = hl.dsp.window.resize(), flags = { mouse = true } })
 
--- Same drag, with the ratio pinned. keep_aspect_ratio holds whatever ratio the
--- window already has, so for video it is worth snapping to 16:9 once
--- (SUPER+SHIFT+T) and then this drag can only ever scale it. The dispatcher is
--- bound directly rather than wrapped in a function: a mouse bind has to hand
--- the drag session the held button, and going through a Lua handler is not
--- worth risking that for.
-A.define({ id = "win.resize_ratio", name = "Resize window keeping its aspect ratio (drag)", category = "Windows",
-           keys = { mainMod .. " + SHIFT + mouse:273" }, keys_label = mainMod .. " + SHIFT + RMB drag",
-           run = hl.dsp.window.resize({ keep_aspect_ratio = true }), flags = { mouse = true } })
-
--- Snap the focused window to an aspect ratio, keeping its area, so it neither
--- grows off the screen nor collapses. Exact for floating windows; a tiled
--- window is resized as far as its splits allow, since the layout owns tiled
--- geometry - there is no way to hold a ratio against it.
-local function snap_ratio(num, den)
-    return function()
-        local ok, win = pcall(hl.get_active_window)
-        if not ok or not win then return end
-        local got, size = pcall(function() return win.size end)
-        if not got or type(size) ~= "table" then return end
-        local w, h = tonumber(size.x), tonumber(size.y)
-        if not w or not h or w <= 0 or h <= 0 then return end
-        local nw = math.floor(math.sqrt(w * h * num / den) + 0.5)
-        local nh = math.floor(nw * den / num + 0.5)
-        hl.dispatch(hl.dsp.window.resize({ x = nw, y = nh, exact = true }))
-    end
-end
-
-A.define({ id = "win.ratio_169", name = "Snap window to 16:9", category = "Windows",
-           keys = { mainMod .. " + SHIFT + T" }, run = snap_ratio(16, 9) })
-
 -- lock: without it the translucent-all rule is re-applied on every focus
 -- change and fights the prop (visible as flicker while hovering)
 A.define({ id = "win.opaque", name = "Toggle window opaque (for video)", category = "Windows",
