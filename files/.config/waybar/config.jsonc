@@ -33,26 +33,14 @@
   ],
 
   // ── launcher ────────────────────────────────────────────────────────────
-  // Arch glyph, coloured in style.css. Left click pops the GTK menu described
-  // in menu.xml (a popup on the bar's layer, not a window); each id there maps
-  // to a command here.
+  // Arch glyph, coloured in style.css. Clicks open barpop panels: each is its
+  // own layer-shell surface (~/.local/lib/barpop), not a GTK popup on the bar,
+  // which is what keeps them repainting at full refresh under Hyprland.
+  // The items themselves live in barpop/panels/launcher.py.
   "custom/launcher": {
     "format": "󰣇",
     "tooltip": false,
-    "menu": "on-click",
-    "menu-file": "~/.config/waybar/menu.xml",
-    "menu-actions": {
-      "launcher":      "~/.local/bin/rofi-launcher",
-      "clipboard":     "~/.local/bin/rofi-cliphist",
-      "screenshot":    "grim -g \"$(slurp)\" - | wl-copy",
-      "notifications": "swaync-client -t -sw",
-      "audio":         "~/.local/bin/volpop",
-      "lock":          "hyprlock",
-      "suspend":       "systemctl suspend",
-      "logout":        "hyprctl dispatch 'hl.dsp.exit()'",
-      "reboot":        "systemctl reboot",
-      "shutdown":      "systemctl poweroff"
-    }
+    "on-click": "~/.local/bin/barpop launcher --anchor left --offset 8"
   },
 
   // ── media (Spotify) ─────────────────────────────────────────────────────
@@ -176,7 +164,7 @@
     "format": "{icon} {volume}%",
     "format-icons": { "default": ["󰕿", "󰖀", "󰕾"] },
     "format-muted": "󰝟",
-    "on-click": "~/.local/bin/volpop",
+    "on-click": "~/.local/bin/barpop audio",
     "on-click-right": "pactl set-sink-mute @DEFAULT_SINK@ toggle",
     "scroll-step": 5,
     "tooltip": false
@@ -189,7 +177,7 @@
     "tooltip-format-wifi": "{essid} ({signalStrength}%)  {ipaddr}\n↓ {bandwidthDownBytes}  ↑ {bandwidthUpBytes}",
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
-    "on-click": "kitty --title nmtui sh -c 'sleep 0.1; nmtui'"
+    "on-click": "~/.local/bin/barpop network"
   },
 
   "clock": {

@@ -1,0 +1,178 @@
+/* barpop - appended after waybar's matugen colors.css, so every colour is a
+   @define-color token and the popups retint with the wallpaper. */
+
+* {
+  font-family: "GeistMono Nerd Font Propo", "MesloLGS Nerd Font Propo", monospace;
+  font-size: 13px;
+  font-weight: bold;
+  color: @on_surface;
+}
+window { background: transparent; }
+
+.popup {
+  background: alpha(@surface, 0.62); /* Hyprland blurs behind it (frosted-barpop layer rule) */
+  border: none;
+  border-radius: 24px 10px 24px 10px;
+  padding: 14px 16px;
+  min-width: 340px;
+}
+button { outline: none; }
+button:focus { outline: none; box-shadow: none; }
+
+.row { min-height: 30px; }
+.divider { background: alpha(@outline_variant, 0.6); min-height: 1px; margin: 8px 0; }
+.empty, .status, .detail { color: @on_surface_variant; font-size: 12px; }
+.empty { font-style: italic; padding: 4px 6px; }
+.status { padding: 2px 4px; }
+.status.error { color: @error; }
+.detail { padding-left: 34px; }
+.inactive .detail, .inactive .section-icon, .inactive .section-title { color: @on_surface_variant; }
+
+/* ── section headers ── */
+.section-icon { color: @primary; font-size: 18px; min-width: 24px; }
+.section-title { font-size: 14px; }
+
+/* ── generic buttons ── */
+.icon-btn {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 8px;
+  font-size: 18px;
+  color: @primary;
+  min-width: 30px;
+}
+.icon-btn:hover { background: alpha(@primary, 0.15); }
+.icon-btn.muted { color: @on_surface_variant; }
+.icon-btn.small { font-size: 14px; padding: 2px 6px; min-width: 24px; }
+.icon-btn.danger { color: @on_surface_variant; }
+.icon-btn.danger:hover { color: @error; background: alpha(@error, 0.15); }
+
+.pill {
+  background: @surface_container_high;
+  border: none;
+  border-radius: 10px;
+  padding: 3px 10px;
+  color: @on_surface;
+  font-size: 12px;
+}
+.pill:hover { background: @surface_container_highest; }
+.pill.small { padding: 1px 9px; min-height: 22px; min-width: 76px; }
+.pill:disabled { color: @on_surface_variant; background: alpha(@surface_container_high, 0.5); }
+
+/* ── switches ── */
+switch {
+  background: @surface_container_highest;
+  border-radius: 999px;
+  border: none;
+  min-width: 40px;
+  min-height: 20px;
+  box-shadow: none;
+}
+switch:checked { background: @primary; }
+switch slider {
+  background: @on_surface_variant;
+  border-radius: 999px;
+  border: none;
+  box-shadow: none;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 2px;
+}
+switch:checked slider { background: @on_primary; }
+
+/* ── entries ── */
+entry {
+  background: @surface_container_high;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 10px;
+  min-height: 26px;
+  color: @on_surface;
+  caret-color: @primary;
+  font-size: 12px;
+}
+entry:focus { box-shadow: inset 0 0 0 1px @primary; }
+entry selection { background: alpha(@primary, 0.35); color: @on_surface; }
+.prompt { margin: 4px 0 2px 0; }
+
+/* ── scrolled lists ── */
+scrolledwindow { background: transparent; }
+scrollbar { background: transparent; border: none; }
+scrollbar slider { background: alpha(@outline, 0.5); border-radius: 999px; min-width: 4px; border: none; }
+scrollbar slider:hover { background: @outline; }
+
+/* ── launcher ── */
+.item {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+}
+.item:hover { background: alpha(@primary, 0.15); }
+.item-icon { color: @primary; font-size: 17px; min-width: 22px; }
+.item-chevron { color: @on_surface_variant; font-size: 12px; }
+.power-row { margin-top: 2px; }
+.power-btn {
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  padding: 4px 2px;
+}
+.power-btn:hover { background: alpha(@primary, 0.15); }
+.power-btn:hover .power-icon { color: @primary; }
+.power-btn:last-child:hover { background: alpha(@error, 0.15); }
+.power-btn:last-child:hover .power-icon { color: @error; }
+.power-icon { font-size: 17px; color: @on_surface_variant; }
+.power-label { font-size: 10px; color: @on_surface_variant; }
+
+/* ── audio ── */
+.pct { min-width: 44px; color: @on_surface_variant; font-size: 12px; }
+scale { padding: 0; min-width: 190px; }
+scale trough {
+  background: @surface_container_highest;
+  border-radius: 999px;
+  min-height: 6px;
+  border: none;
+}
+scale highlight { background: @primary; border-radius: 999px; }
+scale slider {
+  background: @primary;
+  border-radius: 999px;
+  min-width: 14px; min-height: 14px;
+  margin: -5px;
+  border: none;
+  box-shadow: none;
+}
+scale slider:hover { background: @primary_fixed; }
+.muted scale highlight, .muted scale slider { background: @on_surface_variant; }
+.device-btn { min-width: 110px; }
+.device-list { margin: 2px 0 4px 38px; }
+.device-row {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+.device-row:hover { background: alpha(@primary, 0.15); }
+.device-row.current .device-name { color: @primary; }
+.device-check { color: @primary; min-width: 16px; font-size: 12px; }
+.device-name { font-size: 12px; }
+.apps-toggle {
+  background: transparent; border: none; padding: 2px 6px; border-radius: 8px;
+  color: @on_surface_variant; font-size: 12px;
+}
+.apps-toggle:hover { background: alpha(@primary, 0.15); color: @on_surface; }
+.app-name { color: @on_surface; font-size: 12px; }
+.app-icon { color: @tertiary; margin-right: 4px; }
+
+/* ── network ── */
+.ap-list, .bt-list { margin-left: 4px; }
+.ap-row, .bt-row { padding: 2px 6px; border-radius: 10px; }
+.ap-row:hover, .bt-row:hover { background: alpha(@on_surface, 0.05); }
+.ap-icon, .bt-icon { color: @on_surface_variant; font-size: 16px; min-width: 22px; }
+.ap-row.active .ap-icon, .ap-row.active .ap-name,
+.bt-row.active .bt-icon, .bt-row.active .bt-name { color: @primary; }
+.ap-lock { color: @on_surface_variant; font-size: 12px; }
+.ap-state { color: @on_surface_variant; font-size: 11px; margin-right: 4px; }
+.ap-name, .bt-name { font-size: 12px; }

@@ -8,7 +8,9 @@
 # Waybar
 .config/waybar/config.jsonc
 .config/waybar/style.css
-.config/waybar/menu.xml
+.local/bin/barpop
+.local/lib/barpop
+.config/networkmanagement.notifyrc
 .local/bin/waybar-widget
 
 # swaync
@@ -27,7 +29,6 @@
 .local/bin/rofi-launcher
 .local/bin/rofi-cliphist
 .local/bin/rofi-wallthumbs
-.local/bin/volpop
 .local/bin/wallstrip
 
 # fuzzel
@@ -73,6 +74,7 @@
 .config/systemd/user/hyprland-session.target
 .config/systemd/user/notify-unit-failure@.service
 .config/systemd/user/waybar.service.d/override.conf
+.config/systemd/user/barpop-watch.service
 .config/systemd/user/hyprpolkitagent.service.d/override.conf
 .local/bin/notify-unit-failure
 

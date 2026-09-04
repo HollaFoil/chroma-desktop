@@ -1,0 +1,8 @@
+# kded6's networkmanagement module pops a notification for every connection
+# change, whoever caused it. barpop-watch does that job instead and stays quiet
+# for changes made from the barpop network panel. Failures are still shown.
+[Event/ConnectionActivated]
+Action=
+
+[Event/ConnectionDeactivated]
+Action=

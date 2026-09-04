@@ -564,16 +564,16 @@ hl.window_rule({
 -- })
 -- overlayLayerRule:set_enabled(false)
 
--- Frosted popups: blur the wallpaper behind the bar, its launcher menu, the
--- swaync panels and volpop. Their stylesheets paint translucent @surface so
--- the blur shows through; ignore_alpha keeps the fully transparent parts of
--- the surfaces (swaync's screen-wide window, volpop's click-away backdrop)
--- from being blurred as well.
+-- Frosted popups: blur the wallpaper behind the bar, the swaync panels and
+-- the barpop menus. Their stylesheets paint translucent @surface so the blur
+-- shows through; ignore_alpha keeps the fully transparent parts of the
+-- surfaces (swaync's screen-wide window, barpop's click-away backdrop) from
+-- being blurred as well.
 for _, r in ipairs({
     { name = "frosted-waybar",  ns = "^waybar$",                      popups = true },
     { name = "frosted-swaync",  ns = "^swaync-control-center$" },
     { name = "frosted-notifs",  ns = "^swaync-notification-window$" },
-    { name = "frosted-volpop",  ns = "^volpop$" },
+    { name = "frosted-barpop",  ns = "^barpop$" },
     { name = "frosted-wallstrip", ns = "^wallstrip$" },
     { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
 }) do
