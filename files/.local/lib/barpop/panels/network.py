@@ -31,6 +31,8 @@ INTENT_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "barpop.intent"
 SCAN_SECONDS = 15
 
 WIFI_ICONS = ["󰤯", "󰤟", "󰤢", "󰤥", "󰤨"]
+# row actions are glyphs, not words: link / link-off / plus / refresh / delete
+CONNECT, DISCONNECT, PAIR, SCAN, FORGET = "󰌷", "󰌸", "󰐕", "󰑐", "󰆴"
 BT_ICONS = {
     "audio-headset": "󰋋", "audio-headphones": "󰋋", "audio-card": "󰓃",
     "input-mouse": "󰍽", "input-keyboard": "󰌌", "input-gaming": "󰊴",
@@ -128,7 +130,7 @@ class Wifi(Section):
         self.entry.set_hexpand(True)
         self.entry.connect("activate", lambda *_: self._join())
         self.prompt.pack_start(self.entry, True, True, 0)
-        self.prompt.pack_start(w.pill_button("Join", self._join, "small"), False, False, 0)
+        self.prompt.pack_start(w.icon_button(CONNECT, self._join, "small"), False, False, 0)
         self.prompt.pack_start(w.icon_button("󰅖", self._cancel_prompt, "small"), False, False, 0)
         self.prompt_rev = w.revealer(self.prompt)
         self.pack_start(self.prompt_rev, False, False, 0)
@@ -201,12 +203,12 @@ class Wifi(Section):
         if secured:
             row.pack_start(w.label("󰌾", "ap-lock"), False, False, 0)
         if active:
-            row.pack_end(w.pill_button("Disconnect", lambda: self._disconnect(), "small"), False, False, 0)
+            row.pack_end(w.icon_button(DISCONNECT, lambda: self._disconnect(), "small", "action"), False, False, 0)
         else:
-            row.pack_end(w.pill_button("Connect", lambda: self._connect(ap, saved, bool(secured)), "small"),
+            row.pack_end(w.icon_button(CONNECT, lambda: self._connect(ap, saved, bool(secured)), "small", "action"),
                          False, False, 0)
         if saved is not None:
-            row.pack_end(w.icon_button("󰆴", lambda: self._forget(saved), "small", "danger"), False, False, 0)
+            row.pack_end(w.icon_button(FORGET, lambda: self._forget(saved), "small", "danger"), False, False, 0)
         return row
 
     # actions
@@ -400,8 +402,8 @@ class Bluetooth(Section):
         self.discovering = False
 
         self.switch = w.switch(False, self._set_powered)
-        self.scan_btn = w.pill_button("Scan", self._scan, "small")
-        trailing = w.hbox(8)
+        self.scan_btn = w.icon_button(SCAN, self._scan, "small", "action")
+        trailing = w.hbox(4)
         trailing.pack_start(self.scan_btn, False, False, 0)
         trailing.pack_start(self.switch, False, False, 0)
         self.pack_start(w.header("󰂯", "Bluetooth", trailing), False, False, 0)
@@ -428,7 +430,7 @@ class Bluetooth(Section):
         powered = bool(ad.get("Powered", False))
         self.discovering = bool(ad.get("Discovering", False))
         w.switch_set(self.switch, powered)
-        self.scan_btn.set_label("Scanning…" if self.discovering else "Scan")
+        w.set_class(self.scan_btn, "busy", self.discovering)   # pulses while scanning
         self.scan_btn.set_sensitive(powered)
 
         w.clear(self.list)
@@ -457,19 +459,20 @@ class Bluetooth(Section):
         w.set_class(row, "active", connected)
         row.pack_start(w.label(BT_ICONS.get(d.get("Icon", ""), "󰂯"), "bt-icon"), False, False, 0)
         row.pack_start(w.label(d.get("Alias") or d.get("Address", "?"), "bt-name", ellipsize=True), True, True, 0)
-        # same shape as the Wi-Fi rows: one action pill, trash for saved ones
+        # same shape as the Wi-Fi rows: one action glyph, trash for saved ones
         if connected:
             pct = d.get("Battery Percentage")
             if pct is not None:
                 row.pack_start(w.label(f"{pct}%", "ap-state"), False, False, 0)
-            row.pack_end(w.pill_button("Disconnect", lambda: self._call(path, "Disconnect"), "small"),
+            row.pack_end(w.icon_button(DISCONNECT, lambda: self._call(path, "Disconnect"), "small", "action"),
                          False, False, 0)
         elif paired:
-            row.pack_end(w.pill_button("Connect", lambda: self._call(path, "Connect"), "small"), False, False, 0)
+            row.pack_end(w.icon_button(CONNECT, lambda: self._call(path, "Connect"), "small", "action"),
+                         False, False, 0)
         else:
-            row.pack_end(w.pill_button("Pair", lambda: self._pair(path), "small"), False, False, 0)
+            row.pack_end(w.icon_button(PAIR, lambda: self._pair(path), "small", "action"), False, False, 0)
         if paired:
-            row.pack_end(w.icon_button("󰆴", lambda: self._remove(path), "small", "danger"), False, False, 0)
+            row.pack_end(w.icon_button(FORGET, lambda: self._remove(path), "small", "danger"), False, False, 0)
         return row
 
     # actions

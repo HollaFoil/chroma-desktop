@@ -45,8 +45,13 @@ button:focus { outline: none; box-shadow: none; }
 .icon-btn:hover { background: alpha(@primary, 0.15); }
 .icon-btn.muted { color: @on_surface_variant; }
 .icon-btn.small { font-size: 14px; padding: 2px 6px; min-width: 24px; }
+/* row actions (connect / disconnect / pair / scan) sit quiet until hovered */
+.icon-btn.action { color: @on_surface_variant; }
+.icon-btn.action:hover { color: @primary; }
 .icon-btn.danger { color: @on_surface_variant; }
 .icon-btn.danger:hover { color: @error; background: alpha(@error, 0.15); }
+@keyframes pulse { to { opacity: 0.3; } }
+.icon-btn.busy { color: @primary; animation: pulse 0.7s ease-in-out infinite alternate; }
 
 .pill {
   background: @surface_container_high;
