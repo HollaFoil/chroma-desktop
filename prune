@@ -22,7 +22,49 @@ loupe                   # images: swayimg
 eog                     # images: swayimg
 celluloid               # video: mpv + ModernZ
 totem                   # video: mpv + ModernZ
+greetd-regreet          # login screen: wallgreet
+ffmpegthumbs            # dolphin'"'"'s video thumbnails; nemo uses ffmpegthumbnailer
+plasma-desktop          # the Plasma desktop: Hyprland
+kdeplasma-addons        # Plasma widgets
+kinfocenter             # Settings > About PC (fastfetch)
+kscreen                 # monitors: nwg-displays / gen-monitors
+plasma-nm               # network: barpop network
+plasma-pa               # audio: barpop audio
+bluedevil               # bluetooth: barpop network
+powerdevil              # idle/lock/brightness: hypridle, brightnessctl
+plasma-firewall         # ufw front end for systemsettings
+plasma-systemmonitor    # btop
+plasma-thunderbolt      # bolt front end for systemsettings
+plymouth-kcm            # systemsettings module
+kde-gtk-config          # rewrote gtk settings.ini and xsettingsd.conf behind matugen'"'"'s back
+breeze-gtk              # GTK theme: adw-gtk3 + matugen colours
+kwallet-pam             # only a Plasma session unlocked the wallet at login
+cachyos-emerald-kde-theme-git # Plasma theme
+cachyos-iridescent-kde  # Plasma theme
+cachyos-nord-kde-theme-git # Plasma theme
 '
+
+# The Plasma core. Only redundant once greetd is the login manager (./greeter
+# enable, then a reboot) and qt6ct the Qt platform theme (packages.txt [core]):
+# plasma-login-manager needs plasma-workspace, and so does plasma-integration
+# through its portal backend.
+PLASMA_CORE='
+plasma-login-manager    # login: greetd + ReGreet (./greeter)
+plasma-workspace        # Plasma session, kwin, plasmashell
+plasma-integration      # Qt theming: qt6ct (QT_QPA_PLATFORMTHEME=qt6ct)
+xdg-desktop-portal-kde  # portals: xdg-desktop-portal-hyprland + -gtk
+plasma-browser-integration # needs plasmashell to do anything
+'
+dm="$(basename "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" .service 2>/dev/null)"
+core_ok=0
+if [[ "$dm" == greetd ]] && pacman -Qq qt6ct >/dev/null 2>&1; then
+    core_ok=1
+    REDUNDANT+="$PLASMA_CORE"
+fi
+
+# Dependencies of the Plasma core that stay useful without it. Marked explicit
+# before the removal so the orphan sweep does not take them.
+KEEP=(breeze breeze-icons qqc2-breeze-style qqc2-desktop-style kio-extras kimageformats qtkeychain-qt6 socat hunspell)
 
 REMOVE=0
 [[ "${1:-}" == "--remove" ]] && REMOVE=1
@@ -38,6 +80,12 @@ while IFS= read -r line; do
     fi
 done <<< "$REDUNDANT"
 
+if [[ $core_ok == 0 ]] && pacman -Qq plasma-workspace >/dev/null 2>&1; then
+    echo
+    echo "  plasma-workspace (and plasma-login-manager, plasma-integration) stay until greetd is the"
+    echo "  display manager (./greeter enable + reboot) and qt6ct is installed; then ./prune lists them."
+fi
+
 if [[ ${#present[@]} -eq 0 ]]; then
     echo "  nothing redundant installed"
     exit 0
@@ -48,6 +96,9 @@ fi
 echo
 read -r -p "  remove ${#present[@]} package(s) and their orphaned dependencies? [y/N] " a
 [[ "$a" =~ ^[Yy] ]] || exit 0
+keep=()
+for k in "${KEEP[@]}"; do pacman -Qq "$k" >/dev/null 2>&1 && keep+=("$k"); done
+[[ ${#keep[@]} -gt 0 ]] && sudo pacman -D --asexplicit "${keep[@]}" >/dev/null
 sudo pacman -Rns "${present[@]}"
 orphans="$(pacman -Qdtq 2>/dev/null)"
 if [[ -n "$orphans" ]]; then

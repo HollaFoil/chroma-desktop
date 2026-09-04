@@ -9,7 +9,7 @@ choice=$(printf '%s\n' \
   | fuzzel --dmenu --lines 4 --prompt "power: ")
 
 case "$choice" in
-    Lock)     hyprlock ;;
+    Lock)     "$HOME/.local/bin/wallgreet" --lock || hyprlock ;;
     Logout)   hyprctl dispatch 'hl.dsp.exit()' ;;
     Reboot)   systemctl reboot ;;
     Shutdown) systemctl poweroff ;;

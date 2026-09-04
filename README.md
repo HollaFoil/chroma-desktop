@@ -17,7 +17,9 @@ files/              the dotfiles themselves, mirrored on ~ (files/.config/... ->
 packages.txt        what to install and why; read by ./bootstrap
 bootstrap           first-time setup (--check to only report, --monitors for your displays)
 link / adopt        symlink the manifest into ~ / pull live files back into the repo
-prune               list (or --remove) packages this setup makes redundant: dolphin, haruna, gwenview, vlc...
+prune               list (or --remove) packages this setup makes redundant: dolphin, haruna, gwenview, vlc, the Plasma desktop...
+greeter             the login screen: ./greeter install | preview | enable (greetd + wallgreet)
+system/             files that live outside ~: greetd's config, the greeter's Hyprland config and wallgreet itself; ./greeter installs them
 examples/           relayout.config.sh, hypr-user.lua: per-machine files that live outside the repo
 wallpapers/         one default wallpaper, so a fresh clone has colours before you pick your own
 hyprtest            integration test for the window-management scripts (moves windows around)
@@ -120,7 +122,8 @@ but they have no keys and nothing launches uninvited.
 | **swaync** | Notifications and control centre. |
 | **rofi** | Launcher (`SUPER+R`) and clipboard history (`SUPER+SHIFT+C`, via cliphist). Styles paint crops of the current wallpaper. |
 | **kitty**, **fish**, **oh-my-posh** | Terminal and shell; the prompt theme is recoloured per wallpaper. `config.fish` only does anything if fish is your login shell — bootstrap offers the `chsh`. |
-| **hyprlock / hypridle** | Lock and idle. |
+| **wallgreet / hypridle** (`.local/bin/wallgreet`) | Lock screen (`wallgreet --lock`: SUPER+L, powermenu, hypridle) and, run by greetd, the login screen — one program, one look. `hyprlock` stays installed as the fallback if it cannot start, with a `hyprlock.conf` styled to match. |
+| **greetd** (`system/greetd/`, `./greeter`) | The login manager: a Hyprland instance running as the `greeter` user runs `wallgreet`. Wallpaper and palette are the last ones set while logged in — see *Login screen*. |
 | **matugen** | The colour engine: one template per app in `matugen/templates/`, wired in `matugen/config.toml`. |
 | **awww** | Wallpaper daemon (swww fork). |
 | Layer-shell overlays (Python + GTK3) | `barpop` (the bar's menus and the **Settings** window), `cheatsheet` (`SUPER+/`), `wallstrip` (`SUPER+W`, wallpaper picker). |
@@ -181,14 +184,68 @@ cheatsheet (`SUPER+/`) and the Keybinds page both read `~/.cache/hypr/binds.json
 which the config writes at the end of every load — there is no list to keep in
 sync by hand.
 
+## Login screen and lock screen
+
+One program, `wallgreet` (Python + GTK3, like the desktop's other overlays),
+draws both. Idle it shows the date top-left, sleep/restart/power top-right, the
+clock as two big numbers and "Press any key" at the bottom, over the wallpaper.
+Any key, a scroll, or a drag in any direction fades the clock out and the form
+in where it was: your name, a pill input with an Enter glyph. The drag follows
+the hand and completes on its own once it has gone far enough; Escape, a drag
+with an empty input, or a while of nothing fades it back. Buttons tint softly
+under the pointer.
+
+- **Lock**: `wallgreet --lock` (SUPER+L, the powermenu, hypridle) locks the
+  session over ext-session-lock — the protocol hyprlock uses, via
+  `gtk-session-lock` — and checks the password through PAM (`python-pam`,
+  `/etc/pam.d/wallgreet`). A second instance exits at once, so hypridle can
+  fire freely. If it cannot start, `hyprlock` runs instead (its config is
+  styled to match, as far as hyprlock allows: no hover, no gestures). Should
+  a locker ever die while locked, `misc.allow_session_lock_restore` lets
+  SUPER+L (a `locked` bind) start a fresh one. `wallgreet --lock --demo` locks
+  with Esc as the unlock, for looking at it.
+- **Login**: optional, and the last piece that replaces KDE on a machine that
+  started as a Plasma install. `greetd` runs a Hyprland instance as the
+  `greeter` user (`system/greetd/hyprland.lua`: the same monitors as the
+  session, no gaps, no animations) and that runs `wallgreet` as the greeter:
+  layer-shell surfaces on every monitor, the UI on the largest, plus a small
+  drop-up list bottom-left for the session (Wayland sessions only). It
+  remembers the last user and session in `/var/lib/wallgreet`.
+
+What changes with the wallpaper is not in `/etc`: on every `setwall`, matugen
+renders `templates/wallgreet.css` (its first line names the wallpaper; the lock
+reads that file directly) and `greeter-sync` (its post_hook) copies the
+stylesheet, that wallpaper, `monitors.lua` and `colors.lua` into
+`/etc/greetd/theme`, a directory `./greeter install` created and made writable
+by you. So the login screen always shows the wallpaper and palette that were
+current when you last logged in; there is no way to change them from the login
+screen itself. Until that directory exists the hook is a no-op.
+
+```sh
+./greeter install    # greetd, gtk-session-lock, python-pam, /etc/greetd/*, /usr/local/bin/wallgreet, PAM file, theme dir
+./greeter preview    # the greeter over this session in demo mode (Esc quits; add --form for the login view)
+./greeter enable     # greetd becomes the display manager from the next boot
+./greeter check      # what is installed, enabled and synced
+```
+
+`enable` does not touch the running session. If the login screen ever fails to
+appear, `Ctrl+Alt+F2` gives a text login (greetd holds tty1); `./greeter
+disable` re-enables the previous display manager, or `start-hyprland` gets you
+a desktop directly. Once greetd is the display manager and qt6ct is installed,
+`./prune` also lists `plasma-workspace`, `plasma-login-manager` and
+`plasma-integration`, and `./prune --remove` marks what still matters
+(`breeze`, `qqc2-breeze-style`, `kio-extras`, ...) explicit before removing
+them.
+
 ## Packages
 
 `packages.txt` is the authoritative list with a purpose per line;
 `./bootstrap --check` diffs it against your system. Summary:
 
-- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, adwaita-icon-theme, breeze + breeze-icons, plasma-integration, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
+- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, adwaita-icon-theme, breeze + breeze-icons + qqc2-breeze-style, qt6ct, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
 - **Fonts**: `otf-geist-mono-nerd` (UI), `ttf-meslo-nerd` (fallback), `ttf-jetbrains-mono-nerd` (kitty), `noto-fonts`.
 - **Themed apps (optional)**: btop, spotify-launcher (+ spicetify), steam, firefox, capitaine-cursors.
+- **Login screen (optional)**: greetd (`./greeter`; wallgreet needs only the core python-gobject/gtk3/gtk-layer-shell). xsettingsd for Xwayland apps.
 - **AUR**: slack-desktop, google-chrome, oh-my-posh-bin, vesktop, vscodium-bin, waybar-git (the reference machine runs `waybar-git` for an mpris crash fix; `extra/waybar` 0.15 works). CachyOS carries vesktop and vscodium in its own repos, plain Arch does not — hence the `[aur]` section.
 
 Not packaged, installed by hand where wanted: [spicetify](https://spicetify.app),
@@ -206,7 +263,7 @@ only once configured. `bootstrap` prints which of these still need a step.
 - **Firefox** — MatugenFox extension + `matugenfox-host` (a native-messaging host; bootstrap renders its manifest with your home path). Per-site CSS lives in `dusky_sites/`, one file per site, each wrapped in `@-moz-document domain("…")` — the host reads the domain out of that line and falls back to the file name, so a file using `url-prefix(...)` instead is silently served for a domain that does not exist.
 - **VSCodium / VS Code** — install the *Matugen Theme* extension (`haikalllp.matugen-theme`); it watches `~/.cache/matugen/vscode-colors{,.json}` and reloads the editor theme live.
 - **btop** — set `color_theme = "matugen"`; `reload-btop` repaints running instances (btop ≥ 1.4.7).
-- **GTK / Qt** — `adw-gtk3-dark` with generated `colors.css`; Qt via `plasma-integration` and `kdeglobals`. A `Matugen.colors` KDE scheme is generated but nothing applies it automatically.
+- **GTK / Qt** — `adw-gtk3-dark` with generated `colors.css`. Qt via **qt6ct** (`QT_QPA_PLATFORMTHEME=qt6ct` in `hypr/conf/env.lua`): Breeze widget style, palette from the generated `qt6ct/colors/matugen.conf`, Matugen icons, portal file dialogs. Qt has no live reload, so open Qt windows recolour on relaunch. KDE apps (kate, kdeconnect) follow the generated `Matugen.colors` scheme through `[UiSettings] ColorScheme=Matugen` in `kdeglobals` — without that line KF6 apps on a non-Plasma desktop pick Breeze Light or Dark from the platform theme's hint and ignore both palettes. Xwayland apps get the same GTK settings from `xsettingsd`.
 - **Icons** — `matugen-icons` builds `~/.local/share/icons/Matugen` on every `setwall`: Adwaita's folders and file-type accents with their blues remapped onto the primary, the rest of Adwaita symlinked in, `breeze-dark` inherited for app icons. Needs `adwaita-icon-theme`; bootstrap selects the theme in gsettings (kdeglobals is linked). Nemo repaints live.
 - **Viewers** — images open in **swayimg** (floats centred, Enter for the
   gallery, colours from `swayimg/colors.lua` which matugen writes), video in
@@ -222,7 +279,7 @@ only once configured. `bootstrap` prints which of these still need a step.
 - `setwall <image>` or `SUPER+W` — new wallpaper and palette everywhere.
 - Edit a file in `files/`; it is live immediately (symlinks). Templates take effect on the next `setwall`.
 - Added a new config? Append its path to `manifest.txt`, `./adopt` (copies it in), `./link` (replaces it with a symlink).
-- KDE's `kde-gtk-config` occasionally rewrites `~/.config/gtk-{3,4}.0/gtk.css` as regular files; `./link` puts the symlinks back.
+- If a Plasma leftover (`kde-gtk-config`) is still installed it rewrites `~/.config/gtk-{3,4}.0/gtk.css` and `xsettingsd.conf` behind matugen's back; `./prune --remove` gets rid of it, `./link` puts the symlinks back.
 - `./hyprtest` exercises `relayout` end to end (~3 min, moves windows).
 - Changed monitors? `./bootstrap --monitors` again.
 

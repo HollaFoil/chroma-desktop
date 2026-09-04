@@ -207,12 +207,20 @@ fi
 bold "systemd --user"
 if [[ $CHECK == 1 ]]; then
     systemctl --user is-enabled waybar.service >/dev/null 2>&1 && ok "waybar.service enabled" || miss "waybar.service not enabled"
+    if command -v xsettingsd >/dev/null; then
+        [[ -e "$HOME/.config/systemd/user/graphical-session.target.wants/xsettingsd.service" ]] && ok "xsettingsd.service wanted by graphical-session.target" || miss "xsettingsd.service not hooked into graphical-session.target"
+    fi
 else
     systemctl --user daemon-reload
     if systemctl --user cat waybar.service >/dev/null 2>&1; then
         systemctl --user enable waybar.service >/dev/null 2>&1 && ok "waybar.service enabled (starts with hyprland-session.target)"
     else
         warn "waybar.service unit not found; install waybar first, then re-run"
+    fi
+    # xsettingsd (GTK settings for Xwayland apps) ships a static unit with no
+    # [Install]; add-wants is how a static unit gets pulled in by a target.
+    if command -v xsettingsd >/dev/null; then
+        systemctl --user add-wants graphical-session.target xsettingsd.service >/dev/null 2>&1 && ok "xsettingsd.service wanted by graphical-session.target"
     fi
     # hyprland-session.target is started by hyprland.lua at login; nothing to enable.
     ok "hyprland-session.target is linked (hyprland.lua starts it at login)"
@@ -405,4 +413,5 @@ echo "  files/.config/hypr/conf/input.lua      kb_layout (or Settings > Input)"
 echo "  files/.config/waybar/config.jsonc      temperature hwmon path (an AMD k10temp one by default)"
 echo "  ~/.config/relayout/config.sh           opt into the dashboard layout (examples/relayout.config.sh)"
 echo "  ~/.config/hypr/user/init.lua           machine-local Hyprland extras (examples/hypr-user.lua)"
+echo "  ./greeter install && ./greeter enable  login screen: greetd + wallgreet, themed by matugen (README, 'Login screen')"
 echo

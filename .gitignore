@@ -19,3 +19,4 @@ files/.config/hypr/state/monitors.json
 __pycache__/
 *.bak
 *.log
+.greeter-previous-dm

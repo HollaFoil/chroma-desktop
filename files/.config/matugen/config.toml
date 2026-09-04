@@ -140,3 +140,21 @@ post_hook = 'pkill -USR1 -x swayimg || true'
 # pushes the values into mpv's script-opts, which ModernZ applies live.
 input_path = '~/.config/matugen/templates/modernz.conf'
 output_path = '~/.config/mpv/script-opts/modernz.conf'
+
+[templates.qt6ct]
+# Qt apps: QT_QPA_PLATFORMTHEME=qt6ct (hypr/conf/env.lua) applies this palette
+# with the Breeze widget style (qt6ct/qt6ct.conf). Qt has no reload hook, so
+# open Qt windows keep their colours until relaunched; KDE apps (kate,
+# kdeconnect) additionally read kdeglobals -> Matugen.colors above.
+input_path = '~/.config/matugen/templates/qt6ct-colors.conf'
+output_path = '~/.config/qt6ct/colors/matugen.conf'
+
+[templates.wallgreet]
+# The login screen (system/greetd/wallgreet). The first line of the output
+# names the wallpaper (matugen's image keyword); greeter-sync copies the
+# stylesheet, that picture, monitors.lua and colors.lua into /etc/greetd/theme,
+# which ./greeter install made writable by you. Without that directory the
+# hook is a no-op.
+input_path = '~/.config/matugen/templates/wallgreet.css'
+output_path = '~/.config/matugen/generated/wallgreet.css'
+post_hook = '~/.local/bin/greeter-sync'

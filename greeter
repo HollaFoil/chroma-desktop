@@ -1,0 +1,165 @@
+#!/bin/bash
+# greeter — the login screen: greetd running wallgreet (files/.local/bin/wallgreet,
+# the same program that is the lock screen) inside Hyprland, themed from the wallpaper.
+#
+#   ./greeter check     what is installed, what is enabled, what is stale
+#   ./greeter install   packages, /etc/greetd/*, the theme directory; does NOT switch login managers
+#   ./greeter preview   run the greeter over this session in demo mode (Esc quits; --form starts in the login view)
+#                       the lock screen is tried with:  wallgreet --lock --demo  (Esc unlocks)
+#   ./greeter enable    make greetd the display manager from the next boot on
+#   ./greeter disable   go back to the previous display manager
+#
+# System side (needs sudo, asked for as it goes):
+#   /etc/greetd/config.toml   greetd: run Hyprland as `greeter` with /etc/greetd/hyprland.lua
+#   /etc/greetd/hyprland.lua  the greeter's compositor config; it runs wallgreet
+#   /usr/local/bin/wallgreet  a copy of files/.local/bin/wallgreet for the greeter user, who cannot read ~
+#   /etc/pam.d/wallgreet      PAM stack for `wallgreet --lock` (same as hyprlock's)
+#   /var/lib/wallgreet/       remembers the last user and session (owned by `greeter`)
+#   /etc/greetd/theme/        owned by you; greeter-sync (a matugen post_hook) drops the
+#                             rendered wallgreet.css, the wallpaper, monitors.lua and colors.lua here
+#
+# Getting back in if the greeter ever fails to start: Ctrl+Alt+F2 gives a text
+# login (greetd holds tty1), then  ./greeter disable  or  start-hyprland.
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SYS="$REPO/system/greetd"
+THEME=/etc/greetd/theme
+CSS="$HOME/.config/matugen/generated/wallgreet.css"
+PKGS=(greetd python-gobject python-cairo gtk3 gtk-layer-shell gtk-session-lock python-pam)
+FILES=(config.toml hyprland.lua)
+SRC="$REPO/files/.local/bin/wallgreet"
+BIN=/usr/local/bin/wallgreet
+
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+die()  { echo "greeter: $*" >&2; exit 1; }
+ask()  { local a; read -r -p "  $1 [y/N] " a; [[ "$a" =~ ^[Yy] ]]; }
+
+current_dm() {
+    local t; t="$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" || true
+    [[ -n "$t" ]] && basename "$t" .service
+}
+
+installed() { pacman -Qq "$1" >/dev/null 2>&1; }
+
+check() {
+    local all=1
+    for p in "${PKGS[@]}"; do installed "$p" && ok "$p installed" || { miss "$p not installed"; all=0; }; done
+    for f in "${FILES[@]}"; do
+        if [[ ! -f /etc/greetd/$f ]]; then miss "/etc/greetd/$f missing"; all=0
+        elif cmp -s "$SYS/$f" "/etc/greetd/$f"; then ok "/etc/greetd/$f matches system/greetd/$f"
+        else warn "/etc/greetd/$f differs from the repo (./greeter install rewrites it)"; all=0; fi
+    done
+    if [[ -x $BIN ]]; then
+        cmp -s "$SRC" "$BIN" && ok "$BIN matches files/.local/bin/wallgreet" || { warn "$BIN differs from the repo (./greeter install rewrites it)"; all=0; }
+    else miss "$BIN missing"; all=0; fi
+    [[ -f /etc/pam.d/wallgreet ]] && ok "/etc/pam.d/wallgreet present" || { warn "/etc/pam.d/wallgreet missing (the lock falls back to hyprlock's PAM stack)"; }
+    if [[ -d $THEME && -w $THEME ]]; then
+        ok "$THEME is writable by $USER"
+        for f in wallgreet.css background monitors.lua colors.lua; do
+            [[ -f $THEME/$f ]] && ok "$THEME/$f present" || warn "$THEME/$f not synced yet (setwall, or ./greeter install)"
+        done
+    else miss "$THEME missing or not writable by $USER"; all=0; fi
+    [[ -f "$CSS" ]] && ok "wallgreet.css rendered by matugen" || warn "no rendered wallgreet.css yet: run setwall <image>"
+    pacman -Qq greetd-regreet >/dev/null 2>&1 && warn "greetd-regreet is still installed and unused (./prune --remove)"
+    local dm; dm="$(current_dm)"
+    if [[ "$dm" == greetd ]]; then ok "display manager: greetd"
+    else warn "display manager: ${dm:-none} (./greeter enable switches to greetd at the next boot)"; fi
+    if [[ -f "$SYS/hyprland.lua" ]] && command -v Hyprland >/dev/null; then
+        Hyprland --verify-config -c "$SYS/hyprland.lua" 2>/dev/null | grep -q 'config ok' \
+            && ok "system/greetd/hyprland.lua parses" || miss "system/greetd/hyprland.lua has errors (Hyprland --verify-config -c $SYS/hyprland.lua)"
+    fi
+    return $(( all == 1 ? 0 : 1 ))
+}
+
+install_() {
+    echo "Packages"
+    sudo pacman -S --needed "${PKGS[@]}" || die "package install failed"
+
+    echo "System files"
+    for f in "${FILES[@]}"; do
+        sudo install -Dm644 "$SYS/$f" "/etc/greetd/$f" && ok "/etc/greetd/$f"
+    done
+    sudo install -Dm755 "$SRC" "$BIN" && ok "$BIN"
+    sudo install -Dm644 "$SYS/pam-wallgreet" /etc/pam.d/wallgreet && ok "/etc/pam.d/wallgreet"
+    # The greeter user comes from greetd's sysusers.d entry; run it now so the
+    # first boot does not have to, then give wallgreet somewhere to remember
+    # the last user and session.
+    sudo systemd-sysusers >/dev/null 2>&1 || true
+    sudo install -d -m750 -o greeter -g greeter /var/lib/wallgreet && ok "/var/lib/wallgreet (owned by greeter)"
+    # Leftovers of the ReGreet version of this setup, if any.
+    sudo rm -f /etc/greetd/regreet.toml "$THEME/regreet.css" 2>/dev/null || true
+    sudo install -d -m755 -o "$USER" -g "$(id -gn)" "$THEME" && ok "$THEME (owned by $USER)"
+
+    echo "Theme"
+    if [[ ! -f "$CSS" ]]; then
+        # Render it from the current wallpaper if we can tell what that is.
+        local wall
+        wall="$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -1)"
+        if [[ -n "$wall" && -f "$wall" && -x "$HOME/.local/bin/setwall" ]]; then
+            warn "no rendered wallgreet.css yet: running setwall on the current wallpaper"
+            "$HOME/.local/bin/setwall" "$wall" >/dev/null
+        else
+            warn "no rendered wallgreet.css yet: run  setwall <image>  and the login screen picks it up"
+        fi
+    fi
+    "$REPO/files/.local/bin/greeter-sync" && ok "greeter-sync ran"
+    echo
+    check || true
+    echo
+    echo "  Next:  ./greeter preview   to see it over this session (Esc quits)"
+    echo "         ./greeter enable    to make it the login screen (takes effect at the next boot)"
+}
+
+preview() {
+    # Demo mode: no greetd, Esc quits, Enter only reports what it would do.
+    # Reads /etc/greetd/theme like the real thing, or - before ./greeter
+    # install - the rendered stylesheet and the wallpaper it names.
+    [[ -f "$CSS" ]] || die "no rendered stylesheet at $CSS; run setwall <image>"
+    local theme="$THEME" tmp=""
+    if [[ ! -f $THEME/wallgreet.css ]]; then
+        tmp="$(mktemp -d)"; theme="$tmp"
+        cp "$CSS" "$tmp/wallgreet.css"
+        local wall; wall="$(sed -n '1s#^/\* wallpaper: \(.*\) \*/$#\1#p' "$CSS")"
+        [[ -n "$wall" && -f "$wall" ]] && cp "$wall" "$tmp/background"
+    fi
+    echo "  wallgreet in demo mode over this session (theme: $theme). Esc closes it."
+    WALLGREET_THEME="$theme" WALLGREET_STATE="${XDG_RUNTIME_DIR:-/tmp}/wallgreet-demo.json" \
+        python3 "$SRC" --demo "$@"
+    [[ -n "$tmp" ]] && rm -rf "$tmp"
+}
+
+enable_() {
+    installed greetd || die "greetd is not installed (./greeter install)"
+    [[ -f /etc/greetd/config.toml ]] || die "/etc/greetd/config.toml missing (./greeter install)"
+    local dm; dm="$(current_dm)"
+    if [[ "$dm" == greetd ]]; then ok "greetd is already the display manager"; return 0; fi
+    echo "  Current display manager: ${dm:-none}. Switching to greetd changes nothing until you reboot;"
+    echo "  this session keeps running. If the login screen does not come up: Ctrl+Alt+F2, log in,"
+    echo "  ./greeter disable${dm:+ (restores $dm)}."
+    ask "enable greetd from the next boot on?" || return 0
+    if [[ -n "$dm" ]]; then
+        sudo systemctl disable "$dm.service" && ok "$dm.service disabled (still running until reboot)"
+        printf '%s\n' "$dm" > "$REPO/.greeter-previous-dm"
+    fi
+    sudo systemctl enable greetd.service && ok "greetd.service enabled — reboot to use it"
+}
+
+disable_() {
+    local prev="${1:-}"
+    [[ -z "$prev" && -f "$REPO/.greeter-previous-dm" ]] && prev="$(cat "$REPO/.greeter-previous-dm")"
+    [[ -n "$prev" ]] || die "which display manager to restore? ./greeter disable <unit>  (e.g. sddm, plasmalogin)"
+    sudo systemctl disable greetd.service && ok "greetd.service disabled"
+    sudo systemctl enable "$prev.service" && ok "$prev.service enabled — reboot to use it"
+}
+
+case "${1:-check}" in
+    check)   check ;;
+    install) install_ ;;
+    preview) shift; preview "$@" ;;
+    enable)  enable_ ;;
+    disable) shift; disable_ "$@" ;;
+    *) sed -n '2,20p' "$0"; exit 1 ;;
+esac

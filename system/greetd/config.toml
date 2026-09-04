@@ -1,0 +1,10 @@
+# greetd: the login manager. Installed to /etc/greetd/config.toml by ./greeter.
+# The greeter is ReGreet (GTK4) drawn by a Hyprland instance running as the
+# `greeter` user, so the login screen sees the same monitors, drivers and
+# scaling as the session it starts. Its config: /etc/greetd/hyprland.lua.
+[terminal]
+vt = 1
+
+[default_session]
+command = "dbus-run-session start-hyprland -- -c /etc/greetd/hyprland.lua"
+user = "greeter"

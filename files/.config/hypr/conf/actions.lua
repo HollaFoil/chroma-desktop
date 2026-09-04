@@ -181,8 +181,15 @@ A.define({ id = "util.cheatsheet", name = "This cheatsheet", category = "Utiliti
 A.define({ id = "session.exit", name = "Exit Hyprland", category = "Session",
            keys = { mainMod .. " + M" },
            run = hl.dsp.exec_cmd("command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch 'hl.dsp.exit()'") })
+-- wallgreet is the lock screen (the login screen, in lock mode); hyprlock is
+-- the fallback if it cannot start. `locked` so the bind still works while the
+-- session is locked: with misc.allow_session_lock_restore (look.lua) that
+-- brings a fresh locker up should the running one ever die.
 A.define({ id = "session.lock", name = "Lock screen", category = "Session",
-           keys = { mainMod .. " + L" }, run = hl.dsp.exec_cmd("hyprlock") })
+           keys = { mainMod .. " + L" }, flags = { locked = true },
+           -- absolute path: Hyprland's PATH has no ~/.local/bin, and /usr/local/bin
+           -- holds the greeter user's copy, which may lag behind the repo
+           run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wallgreet --lock || hyprlock") })
 
 ---------------
 ----  MEDIA ----

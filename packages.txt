@@ -11,7 +11,9 @@
 [core]
 hyprland                     # compositor; must be >= 0.56 (reads hyprland.lua natively)
 hypridle                     # idle -> lock -> screen off
-hyprlock                     # lock screen (SUPER+L, powermenu)
+hyprlock                     # lock screen fallback; wallgreet --lock is the lock screen (SUPER+L, powermenu, hypridle)
+gtk-session-lock             # ext-session-lock for wallgreet --lock (GTK3)
+python-pam                   # wallgreet --lock checks the password through PAM (/etc/pam.d/wallgreet, from ./greeter install; hyprlock's otherwise)
 hyprpolkitagent              # polkit prompts; restarted by hyprland.lua at login
 xdg-desktop-portal           # portals: file pickers, screenshare
 xdg-desktop-portal-hyprland  # Hyprland portal backend (screenshare)
@@ -49,7 +51,8 @@ glib2                        # gsettings, used by that hook
 adwaita-icon-theme           # source SVGs for the Matugen icon theme (matugen-icons recolours its folders)
 breeze-icons                 # app icons the Matugen theme inherits; also named in rofi
 breeze                       # Qt widget style named in kdeglobals
-plasma-integration           # QT_QPA_PLATFORMTHEME=kde, so Qt apps (if any) pick up kdeglobals
+qt6ct                        # QT_QPA_PLATFORMTHEME=qt6ct: Breeze style + the matugen palette for Qt apps (qt6ct/qt6ct.conf)
+qqc2-breeze-style            # Breeze for QtQuick apps (kdeconnect etc.); qqc2-desktop-style comes with them
 nemo                         # file manager on SUPER+E; GTK3, so it recolours live with the wallpaper
 swayimg                      # image viewer: floats centred, colours from matugen (swayimg/init.lua), Enter = gallery
 mpv                          # video player; the ModernZ OSC (aur) draws the Jellyfin-style bar
@@ -79,6 +82,8 @@ nwg-displays                 # GUI to regenerate monitors.lua for your monitors
 fuzzel                       # still used by the powermenu script
 python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
+greetd                       # login manager; runs wallgreet as the greeter (python-gobject, gtk3, gtk-layer-shell from [core]). ./greeter installs and enables it
+xsettingsd                   # GTK theme/icons/cursor for Xwayland apps (Steam, JetBrains); xsettingsd.service is hooked into graphical-session.target by bootstrap
 
 [aur]
 mpv-modernz-git              # mpv OSC: title, rounded seekbar, centred play/skip, sub/audio buttons; colours via matugen (templates/modernz.conf)

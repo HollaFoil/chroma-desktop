@@ -114,3 +114,15 @@
 .config/matugen/templates/firefox-colors.css
 .local/bin/matugenfox-host
 .config/dusky_sites
+
+# qt6ct: Breeze style + matugen palette for Qt apps (QT_QPA_PLATFORMTHEME=qt6ct)
+.config/qt6ct/qt6ct.conf
+.config/matugen/templates/qt6ct-colors.conf
+
+# login + lock screen (wallgreet; ./greeter installs the greetd side)
+.local/bin/wallgreet
+.config/matugen/templates/wallgreet.css
+.local/bin/greeter-sync
+
+# XSETTINGS for Xwayland apps (xsettingsd.service, hooked in by bootstrap)
+.config/xsettingsd/xsettingsd.conf
