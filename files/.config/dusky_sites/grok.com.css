@@ -1,8 +1,0 @@
-@-moz-document domain("grok.com") {
-
-    /* Main Background */
-    .flex {
-        background-color: var(--surface) !important;
-    }
-
-}

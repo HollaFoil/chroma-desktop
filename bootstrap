@@ -4,6 +4,7 @@
 #   ./bootstrap --check            report missing packages and files, change nothing
 #   ./bootstrap                    install packages (asks first), link, wire up the session
 #   ./bootstrap --wallpaper IMG    ...and run setwall on IMG so the colours exist at first login
+#   ./bootstrap --monitors         (re)write the monitor and workspace config for this machine
 #
 # Everything here is idempotent; run it again after pulling changes. The
 # per-app integrations (Steam, Spotify, Discord, Firefox, oh-my-posh) are only
@@ -13,15 +14,22 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CHECK=0
 WALL=""
+MONITORS=0
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --check)     CHECK=1 ;;
         --wallpaper) WALL="${2:-}"; shift ;;
-        -h|--help)   sed -n '2,12p' "$0"; exit 0 ;;
+        --monitors)  MONITORS=1 ;;
+        -h|--help)   sed -n '2,11p' "$0"; exit 0 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
     shift
 done
+
+if [[ $MONITORS == 1 ]]; then
+    # The repo copy, so this works before ./link has run.
+    exec "$REPO/files/.local/bin/gen-monitors"
+fi
 
 bold() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
@@ -46,8 +54,26 @@ done < "$REPO/packages.txt"
 
 # A package counts as present if pacman has it, or if the command it provides
 # is on PATH (oh-my-posh and spicetify are often installed by hand).
-declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [waybar-git]=waybar)
+declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [waybar-git]=waybar [vscodium-bin]=codium)
 installed() { pacman -Qq "$1" >/dev/null 2>&1 || { [[ -n "${BIN_OF[$1]:-}" ]] && command -v "${BIN_OF[$1]}" >/dev/null 2>&1; }; }
+
+# pacman -S aborts the whole transaction on one unknown name ("target not
+# found"), which used to mean a single miscategorised package took its entire
+# section down with it and installed nothing. Names are checked against the
+# sync databases first, and anything unknown is reported and left out rather
+# than allowed to cancel the rest.
+pac_install() {
+    local avail=() unknown=() p
+    for p in "$@"; do
+        if pacman -Si "$p" >/dev/null 2>&1; then avail+=("$p"); else unknown+=("$p"); fi
+    done
+    if [[ ${#unknown[@]} -gt 0 ]]; then
+        warn "not in your repos, left out: ${unknown[*]}"
+        warn "  (in the AUR, or renamed upstream — check the entry in packages.txt)"
+    fi
+    [[ ${#avail[@]} -gt 0 ]] || return 0
+    sudo pacman -S --needed "${avail[@]}"
+}
 
 if ! command -v pacman >/dev/null 2>&1; then
     warn "no pacman: this is written for Arch/CachyOS. Skipping packages; see packages.txt for what to install."
@@ -74,14 +100,14 @@ if [[ $CHECK == 0 ]] && command -v pacman >/dev/null 2>&1; then
         [[ -n "${MISSING_BY[$s]:-}" ]] || continue
         if ask "install the missing [$s] packages with pacman?"; then
             # shellcheck disable=SC2086
-            sudo pacman -S --needed ${MISSING_BY[$s]}
+            pac_install ${MISSING_BY[$s]}
         fi
     done
     for s in theming optional; do
         [[ -n "${MISSING_BY[$s]:-}" ]] || continue
         if ask "install the missing [$s] packages too? (apps you may not want)"; then
             # shellcheck disable=SC2086
-            sudo pacman -S --needed ${MISSING_BY[$s]}
+            pac_install ${MISSING_BY[$s]}
         fi
     done
     if [[ -n "${MISSING_BY[aur]:-}" ]]; then
@@ -92,6 +118,54 @@ if [[ $CHECK == 0 ]] && command -v pacman >/dev/null 2>&1; then
             "$helper" -S --needed ${MISSING_BY[aur]}
         elif [[ -z "$helper" ]]; then
             warn "no AUR helper (paru/yay) found; install the [aur] entries you want by hand"
+        fi
+    fi
+fi
+
+# ---- hyprland version -----------------------------------------------
+# hyprland.lua and conf/*.lua are read natively, with no conversion step, and
+# only Hyprland >= 0.56 can do that. On anything older the config is not just
+# ignored per-line: it cannot be parsed at all, so the session comes up with
+# Hyprland's built-in defaults - no bar, no binds, no explanation. Worth
+# saying out loud rather than letting someone discover it after a reboot.
+MIN_HYPR="0.56.0"
+bold "Hyprland version"
+HV="$(hyprctl version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+[[ -n "$HV" ]] || HV="$(pacman -Q hyprland 2>/dev/null | awk '{print $2}')"
+HV="${HV#v}"; HV="${HV%%-*}"
+if [[ -z "$HV" ]]; then
+    warn "hyprland not installed yet; this config needs >= $MIN_HYPR (it is Lua, not hyprland.conf)"
+elif [[ "$(printf '%s\n%s\n' "$MIN_HYPR" "$HV" | sort -V | head -1)" != "$MIN_HYPR" ]]; then
+    miss "hyprland $HV is too old for this config: hyprland.lua needs >= $MIN_HYPR."
+    miss "  Older Hyprland cannot read a Lua config at all - you would log into an unconfigured session."
+else
+    ok "hyprland $HV (>= $MIN_HYPR, reads hyprland.lua natively)"
+fi
+
+# ---- monitors --------------------------------------------------------
+# monitors.lua is one machine's three outputs, and their names also decide the
+# workspace rules (hypr/state/monitors.json) and the bar's persistent
+# workspaces. Wrong names are not a crash, just workspaces pinned to monitors
+# that are not there, which is a confusing first hour. gen-monitors writes all
+# three from hyprctl.
+bold "Monitors"
+CONNECTED=""
+if command -v hyprctl >/dev/null 2>&1; then
+    CONNECTED="$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.disabled != true) | .name' 2>/dev/null | sort | tr '\n' ' ')"
+fi
+if [[ -z "$CONNECTED" ]]; then
+    warn "not in a Hyprland session; run  ./bootstrap --monitors  from inside one"
+else
+    DECLARED="$(sed -n 's/.*output *= *"\([^"]*\)".*/\1/p' "$REPO/files/.config/hypr/monitors.lua" 2>/dev/null | sort | tr '\n' ' ')"
+    if [[ "$CONNECTED" == "$DECLARED" ]]; then
+        ok "monitors.lua is this machine's: $CONNECTED"
+    else
+        miss "monitors.lua describes: ${DECLARED:-nothing}"
+        miss "this machine has:      $CONNECTED"
+        if [[ $CHECK == 1 ]]; then
+            miss "run  ./bootstrap --monitors  to write monitors.lua, the workspace map and the bar"
+        elif ask "write monitors.lua, the workspace map and the bar for this machine?"; then
+            "$REPO/files/.local/bin/gen-monitors"
         fi
     fi
 fi
@@ -142,6 +216,25 @@ else
     fi
     # hyprland-session.target is started by hyprland.lua at login; nothing to enable.
     ok "hyprland-session.target is linked (hyprland.lua starts it at login)"
+fi
+
+# ---- shell ----------------------------------------------------------
+# config.fish is linked either way, but nothing reads it unless fish is the
+# login shell: the wallpaper-coloured oh-my-posh prompt then simply never
+# appears, with no error anywhere to explain why.
+bold "Shell"
+FISH="$(command -v fish 2>/dev/null || true)"
+LOGIN_SHELL="$(getent passwd "$USER" | cut -d: -f7)"
+if [[ -z "$FISH" ]]; then
+    warn "fish is not installed; ~/.config/fish/config.fish and the matugen prompt go unused"
+# /bin/fish and /usr/bin/fish are the same file on Arch, so compare what they
+# resolve to rather than the strings.
+elif [[ "$(readlink -f "$LOGIN_SHELL" 2>/dev/null)" == "$(readlink -f "$FISH")" ]]; then
+    ok "fish is your login shell"
+elif [[ $CHECK == 1 ]]; then
+    miss "login shell is $LOGIN_SHELL, not $FISH (config.fish and the prompt go unused)"
+elif ask "make fish your login shell (chsh -s $FISH)?"; then
+    chsh -s "$FISH" && ok "login shell set to fish; log out and back in for it"
 fi
 
 # ---- optional integrations ------------------------------------------
@@ -280,8 +373,22 @@ fi
 # Only a first run (no colours yet) or an explicit --wallpaper picks a
 # wallpaper; re-running bootstrap on a configured machine must not swap it.
 if [[ $CHECK == 0 && ( -n "$WALL" || ! -f "$HOME/.config/waybar/colors.css" ) ]]; then
+    # SUPER+W browses this directory, so it has to exist before the first login
+    # even if the wallpaper came from somewhere else.
+    mkdir -p "$HOME/Pictures/Wallpapers"
     if [[ -z "$WALL" ]]; then
         WALL="$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | head -1)"
+    fi
+    # No wallpapers of your own yet: the repo ships one, purely so that a fresh
+    # clone has colours. Every generated file the desktop @imports (waybar,
+    # swaync, rofi, hyprlock, kitty, GTK) only exists after a setwall run, and
+    # hyprlock refuses to start without its colours - so "clone it and log in"
+    # has to end somewhere other than an unstyled bar and a lock screen that
+    # will not come up. Replace it with your own and run setwall again.
+    if [[ -z "$WALL" && -f "$REPO/wallpapers/default.jpg" ]]; then
+        cp -n "$REPO/wallpapers/default.jpg" "$HOME/Pictures/Wallpapers/default.jpg"
+        WALL="$HOME/Pictures/Wallpapers/default.jpg"
+        ok "no wallpapers found: copied the repo's default to ~/Pictures/Wallpapers"
     fi
     if [[ -n "$WALL" && -f "$WALL" ]] && command -v matugen >/dev/null 2>&1; then
         "$HOME/.local/bin/setwall" "$WALL" && ok "colours generated from $WALL"
@@ -292,10 +399,10 @@ fi
 
 # ---- what is still yours to edit ------------------------------------
 bold "Make it yours (see README.md, 'Make it yours')"
-echo "  files/.config/hypr/monitors.lua        your monitors (nwg-displays writes this)"
-echo "  files/.config/hypr/conf/rules.lua      ws_home fallback (workspace -> monitor)"
+echo "  ./bootstrap --monitors                 your monitors, workspace map and bar workspaces, from hyprctl"
 echo "  files/.config/hypr/conf/actions.lua    apps on SUPER+E/Q and every other action; rebind in Settings > Keybinds"
 echo "  files/.config/hypr/conf/input.lua      kb_layout (or Settings > Input)"
-echo "  files/.config/waybar/config.jsonc      persistent-workspaces per monitor, temperature hwmon path"
-echo "  ~/.config/relayout/config.sh           dashboard monitors and apps (examples/relayout.config.sh)"
+echo "  files/.config/waybar/config.jsonc      temperature hwmon path (an AMD k10temp one by default)"
+echo "  ~/.config/relayout/config.sh           opt into the dashboard layout (examples/relayout.config.sh)"
+echo "  ~/.config/hypr/user/init.lua           machine-local Hyprland extras (examples/hypr-user.lua)"
 echo

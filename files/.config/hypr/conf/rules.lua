@@ -8,15 +8,60 @@
 local LP = { dash_ws = 1, work_ws = 2, stash_ws = "special:magic",
              used_re = "^(Spotify|slack|vesktop|layout-sysmon|homelab-dash)$",
              guard_re = "negative:^(Spotify|slack|vesktop|layout-sysmon|homelab-dash|cheatsheet|hyprland-run)$",
-             -- bootstrap fallback only; relayout owns the real map
+             -- last-resort fallback only: one machine's monitors. state/monitors.json
+             -- (written by `gen-monitors`) replaces it, and relayout overrides both.
              ws_home = { [1] = "HDMI-A-1", [2] = "HDMI-A-1", [3] = "HDMI-A-1",
                          [4] = "HDMI-A-1", [5] = "HDMI-A-1",
                          [6] = "DP-2",     [7] = "DP-2",     [8] = "DP-2",
                          [9] = "HDMI-A-2", [10] = "HDMI-A-2" } }
+
+-- Which monitor owns which workspace, most specific source first:
+--
+--   1. ~/.cache/relayout-state.lua   relayout, for machines that opted into it
+--   2. state/monitors.json           this machine's monitors (`gen-monitors`)
+--   3. the table above               the reference machine's three
+--
+-- Whatever wins, a rule naming a monitor that is not connected is dropped: on
+-- a laptop that has run none of the above, workspaces 6-10 would otherwise be
+-- pinned to monitors that do not exist. hl.get_monitors() is empty during the
+-- very first config load (outputs come up after the config is read), and then
+-- nothing is filtered - the same rules as before, corrected on the first
+-- reload.
 do
+    local json = require("lib.json")
+    local f = io.open(os.getenv("HOME") .. "/.config/hypr/state/monitors.json", "r")
+    if f then
+        local raw = f:read("a")
+        f:close()
+        local ok, data = pcall(json.decode, raw)
+        if ok and type(data) == "table" and type(data.ws_home) == "table" then
+            local map = {}
+            for ws, mon in pairs(data.ws_home) do map[tonumber(ws)] = mon end
+            LP.ws_home = map
+        end
+    end
+
     local ok, res = pcall(dofile, os.getenv("HOME") .. "/.cache/relayout-state.lua")
-    if ok and type(res) == "table" and res.dash_ws then LP = res end
+    if ok and type(res) == "table" and res.dash_ws then
+        res.ws_home = res.ws_home or LP.ws_home
+        LP = res
+    end
 end
+
+--- Connected monitor names, or nil when the compositor has not enumerated them
+--- yet (first load), which means "do not filter".
+local function connected()
+    local ok, mons = pcall(hl.get_monitors)
+    if not ok or type(mons) ~= "table" or #mons == 0 then return nil end
+    local set = {}
+    for _, m in ipairs(mons) do
+        local got, name = pcall(function() return m.name end)
+        if got and name then set[name] = true end
+    end
+    if next(set) == nil then return nil end
+    return set
+end
+local LIVE = connected()
 
 -- Ref https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
 -- "Smart gaps" / "No gaps when only"
@@ -88,18 +133,30 @@ hl.window_rule({
 -- on HDMI-A-2 under the range rule, and on HDMI-A-1 once ws2 was named
 -- explicitly. So enumerate them.
 --
+-- On the reference machine that comes out as
+--
 --   HDMI-A-1  1 = dashboard slot, 2 = work, 3-5 spare
 --   DP-2      6 = dashboard slot, 7 = work, 8 spare
 --   HDMI-A-2  9, 10
+--
+-- and on a one-monitor machine (after `gen-monitors`) as all ten on it.
+local function known(mon) return mon and (LIVE == nil or LIVE[mon]) end
+
 for ws = 1, 10 do
     local mon = LP.ws_home and LP.ws_home[ws]
-    if mon then hl.workspace_rule({ workspace = tostring(ws), monitor = mon }) end
+    if known(mon) then hl.workspace_rule({ workspace = tostring(ws), monitor = mon }) end
 end
 
--- which workspace each monitor shows when it first appears
-hl.workspace_rule({ workspace = "1", monitor = "HDMI-A-1", default = true })
-hl.workspace_rule({ workspace = "6", monitor = "DP-2",     default = true })
-hl.workspace_rule({ workspace = "9", monitor = "HDMI-A-2", default = true })
+-- Which workspace each monitor shows when it first appears: its lowest one,
+-- derived from the same map so the two can never disagree.
+local seen = {}
+for ws = 1, 10 do
+    local mon = LP.ws_home and LP.ws_home[ws]
+    if known(mon) and not seen[mon] then
+        seen[mon] = true
+        hl.workspace_rule({ workspace = tostring(ws), monitor = mon, default = true })
+    end
+end
 
 -- Example window rules that are useful
 

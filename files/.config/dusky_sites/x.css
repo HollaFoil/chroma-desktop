@@ -1,4 +1,8 @@
-@-moz-document url-prefix("https://x.com/"), url-prefix("https://twitter.com/") {
+/* matugenfox-host reads the domain out of the @-moz-document line and only
+   understands domain(); with url-prefix() it fell back to the file name, so
+   this file was being served for the domain "twitter" and never applied to
+   anything. twitter.com redirects to x.com, so one domain covers it. */
+@-moz-document domain("x.com") {
   
   body.LightsOut {
       --border-color: var(--outline) !important;

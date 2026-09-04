@@ -67,11 +67,9 @@ noto-fonts                   # GTK default UI font (settings.ini)
 
 [theming]
 btop                         # matugen theme + live reload on SIGUSR2 (btop >= 1.4.7)
-vesktop                      # Discord client; quickCss.css is generated (needs useQuickCss on)
 spotify-launcher             # Spotify; theme applied through spicetify (see README)
 steam                        # skin via Adwaita-for-Steam (bootstrap clones it) + live push
 firefox                      # site colours via the MatugenFox extension (see README)
-vscodium                     # editor theme via the haikalllp.matugen-theme extension (watches ~/.cache/matugen)
 capitaine-cursors            # cursor theme named in gtk settings.ini
 
 [optional]
@@ -89,3 +87,5 @@ waybar-git                   # the reference machine runs this instead of waybar
 slack-desktop                # dashboard app in relayout; dropped from the layout when absent
 google-chrome                # chrome-flags.conf; harmless without it (links follow mimeapps.list, firefox)
 oh-my-posh-bin               # prompt; fish config skips it when missing (see README for the theme file)
+vesktop                      # Discord client; quickCss.css is generated (needs useQuickCss on). In CachyOS's own repo, AUR everywhere else
+vscodium-bin                 # editor theme via the haikalllp.matugen-theme extension (watches ~/.cache/matugen). CachyOS ships `vscodium`; either is fine

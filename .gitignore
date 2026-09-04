@@ -1,6 +1,13 @@
 # ./link moves displaced originals here
 backup-*/
 
+# ~/.config/dusky_sites is a directory symlink into this repo, so anything you
+# drop in there lands in this working tree. Per-site styles for your own
+# services belong to you, not to the desktop: keep them in a private overlay
+# repo (mine is dotfiles-private, whose install symlinks them in) and they stay
+# out of git status here.
+files/.config/dusky_sites/*.hollafoil.com.css
+
 # tool caches and editor droppings
 .ruff_cache/
 __pycache__/
