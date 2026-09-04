@@ -8,6 +8,12 @@ backup-*/
 # out of git status here.
 files/.config/dusky_sites/*.hollafoil.com.css
 
+# This machine's monitors, written by gen-monitors. Deliberately not committed:
+# hypr/lib/workspaces.lua derives the same map from hl.get_monitors() when the
+# file is absent, so a clone lays its own monitors out instead of inheriting
+# mine and then having to be told otherwise.
+files/.config/hypr/state/monitors.json
+
 # tool caches and editor droppings
 .ruff_cache/
 __pycache__/

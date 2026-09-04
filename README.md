@@ -64,17 +64,31 @@ Start with your monitors:
 ```
 
 Monitor names appear in three places that have to agree, and `gen-monitors`
-writes all three from `hyprctl monitors`: the output list
+writes all of them from `hyprctl monitors`: the output list
 (`hypr/monitors.lua`), the workspace → monitor map
-(`hypr/state/monitors.json`, read by `conf/rules.lua`) and the bar's
-`persistent-workspaces`. The biggest monitor takes workspaces 1–5 and the rest
-are dealt out left to right; one monitor gets all ten. Edit
-`state/monitors.json` afterwards for a different split, or keep using
-`nwg-displays` for the geometry and run `gen-monitors` after it.
+(`hypr/state/monitors.json`, read by `hypr/lib/workspaces.lua`) and the bar's
+`persistent-workspaces` and workspace labels. Or keep using `nwg-displays` for
+the geometry and run `gen-monitors` after it.
 
-Until you do, a workspace rule naming a monitor you do not have is dropped
-rather than pinning that workspace to nothing — so the desktop is usable on one
-screen out of the box.
+You do not have to run it at all, though: with no state file the same map is
+derived live from `hl.get_monitors()`, and a workspace rule naming a monitor
+you do not have is dropped rather than pinning that workspace to nothing. One
+screen works out of the box; running `gen-monitors` is what teaches the *bar*
+about your monitors, which it cannot work out for itself.
+
+### Workspaces are per monitor
+
+Each monitor owns five workspaces, and `SUPER+1`…`5` means *the Nth workspace
+of the monitor the pointer is over* — point somewhere else and the same five
+keys drive that screen. `SUPER+SHIFT+1`…`5` throws the focused window there,
+which is also how a window crosses monitors. Nothing is bound past 5.
+
+Underneath, ids are banked — the primary monitor owns 1–5, the next 11–15, the
+third 21–25 — because Hyprland has a single global set of workspaces and only
+one of them can be "1". Nobody types those: `hypr/lib/workspaces.lua` maps the
+keys onto the pointed monitor's bank, and waybar's `format-icons` relabels each
+bank `1`–`5`. Changing `PER_MON` there (and in `gen-monitors`) changes how many
+each monitor gets.
 
 The rest are one machine's values:
 
@@ -101,7 +115,7 @@ but they have no keys and nothing launches uninvited.
 
 | Piece | Role |
 |---|---|
-| **Hyprland** (`hypr/hyprland.lua` + `hypr/conf/*.lua`) | Compositor config, one topic per file: `look` (gaps, blur, animations), `input`, `rules`, `autostart`, `actions` (every keybind as a named action). `lib/` holds the palette (matugen's `colors.lua`), the action registry and the settings-override loader; `state/*.json` is what the Settings window wrote. |
+| **Hyprland** (`hypr/hyprland.lua` + `hypr/conf/*.lua`) | Compositor config, one topic per file: `look` (gaps, blur, animations), `input`, `rules`, `autostart`, `actions` (every keybind as a named action). `lib/` holds the palette (matugen's `colors.lua`), the action registry, the settings-override loader and the workspace → monitor map; `state/*.json` is what the Settings window wrote. |
 | **waybar** | Bar; runs as a `systemd --user` unit so a crash restarts it. Custom modules feed from `waybar-widget` (media, GPU). |
 | **swaync** | Notifications and control centre. |
 | **rofi** | Launcher (`SUPER+R`) and clipboard history (`SUPER+SHIFT+C`, via cliphist). Styles paint crops of the current wallpaper. |
@@ -112,7 +126,7 @@ but they have no keys and nothing launches uninvited.
 | Layer-shell overlays (Python + GTK3) | `barpop` (the bar's menus and the **Settings** window), `cheatsheet` (`SUPER+/`), `wallstrip` (`SUPER+W`, wallpaper picker). |
 | `relayout` | Puts a fixed "dashboard" of apps — Spotify, Slack, Discord, btop — on one monitor (`SUPER+SHIFT+R`), or on the other (`SUPER+ALT+R`), parking the rest in a scratchpad. Opt-in: unbound until `~/.config/relayout/config.sh` exists. |
 | `setwall` | `awww` → `matugen` → rofi thumbnails → prompt colours. Everything downstream is a matugen `post_hook`. |
-| `gen-monitors` | Writes this machine's monitors, its workspace → monitor map and the bar's persistent workspaces from `hyprctl monitors`. |
+| `gen-monitors` | Writes this machine's monitors, its per-monitor workspace banks and the bar's workspace buttons and labels, from `hyprctl monitors`. |
 
 ## Settings
 
@@ -206,6 +220,10 @@ only once configured. `bootstrap` prints which of these still need a step.
 ## Day to day
 
 - `setwall <image>` or `SUPER+W` — new wallpaper and palette everywhere.
+- `SUPER+RMB` drag resizes; `SUPER+SHIFT+RMB` drag resizes *keeping the
+  window's aspect ratio*, and `SUPER+SHIFT+T` snaps the window to 16:9 first
+  (video). Both are exact on floating windows; a tiled window's size belongs to
+  the layout, which no ratio can be held against.
 - Edit a file in `files/`; it is live immediately (symlinks). Templates take effect on the next `setwall`.
 - Added a new config? Append its path to `manifest.txt`, `./adopt` (copies it in), `./link` (replaces it with a symlink).
 - KDE's `kde-gtk-config` occasionally rewrites `~/.config/gtk-{3,4}.0/gtk.css` as regular files; `./link` puts the symlinks back.

@@ -34,8 +34,14 @@ case "${1:-}" in
     *) echo "unknown option: $1" >&2; exit 2 ;;
 esac
 
-WS_COUNT=10
-PRIMARY_WS=5            # how many the largest monitor takes when there are others
+# Workspaces are banked per monitor: the primary gets 1-5, the next 11-15,
+# then 21-25. Nobody types the tens digit - SUPER+1..5 means "the Nth
+# workspace of the monitor under the pointer" (hypr/lib/workspaces.lua) and the
+# bar relabels each bank 1-5 - but Hyprland has one global set of workspaces,
+# so the ids have to differ. Keep PER_MON in step with
+# hypr/lib/workspaces.lua's PER_MON.
+PER_MON=5
+BANK=10
 
 HYPR_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 MONITORS_LUA="$HYPR_DIR/monitors.lua"
@@ -59,38 +65,24 @@ PRIMARY="$(jq -r '[.[] | select(.disabled != true)]
     | .[0].name' <<<"$MONS")"
 
 # ---- workspace -> monitor -------------------------------------------
-declare -A WS_OF
-OTHERS=()
-for m in "${BY_X[@]}"; do [[ "$m" == "$PRIMARY" ]] || OTHERS+=("$m"); done
+# The primary takes bank 0 (1-5), then the others left to right. Same order
+# lib/workspaces.lua derives when this file does not exist yet, so running
+# this later renumbers nothing.
+MON_ORDER=("$PRIMARY")
+for m in "${BY_X[@]}"; do [[ "$m" == "$PRIMARY" ]] || MON_ORDER+=("$m"); done
 
-if [[ ${#OTHERS[@]} -eq 0 ]]; then
-    for ((ws = 1; ws <= WS_COUNT; ws++)); do WS_OF[$ws]="$PRIMARY"; done
-else
-    for ((ws = 1; ws <= PRIMARY_WS; ws++)); do WS_OF[$ws]="$PRIMARY"; done
-    rest=(); for ((ws = PRIMARY_WS + 1; ws <= WS_COUNT; ws++)); do rest+=("$ws"); done
-    i=0; left=${#rest[@]}; n=${#OTHERS[@]}
-    for ((k = 0; k < n; k++)); do
-        (( left > 0 )) || break
-        take=$(( (left + (n - k - 1)) / (n - k) ))      # ceil: earlier monitors take the extra
-        for ((j = 0; j < take; j++)); do
-            WS_OF[${rest[$i]}]="${OTHERS[$k]}"; i=$((i + 1))
-        done
-        left=$((left - take))
+declare -A WS_OF WS_LIST WS_LABEL
+ALL_WS=()
+slot=0
+for m in "${MON_ORDER[@]}"; do
+    for ((n = 1; n <= PER_MON; n++)); do
+        ws=$(( slot * BANK + n ))
+        WS_OF[$ws]="$m"
+        WS_LABEL[$ws]="$n"                              # what the bar shows
+        WS_LIST[$m]="${WS_LIST[$m]:+${WS_LIST[$m]}, }$ws"
+        ALL_WS+=("$ws")
     done
-fi
-
-# Per monitor, in workspace order: the list waybar draws as always-there
-# buttons. Monitor order follows the lowest workspace, not the x position, so
-# the bar reads 1-5, 6-8, 9-10.
-declare -A WS_LIST
-MON_ORDER=()
-for ((ws = 1; ws <= WS_COUNT; ws++)); do
-    m="${WS_OF[$ws]:-}"; [[ -n "$m" ]] || continue
-    if [[ -z "${WS_LIST[$m]:-}" ]]; then
-        WS_LIST[$m]="$ws"; MON_ORDER+=("$m")
-    else
-        WS_LIST[$m]="${WS_LIST[$m]}, $ws"
-    fi
+    slot=$((slot + 1))
 done
 
 # ---- what to write --------------------------------------------------
@@ -112,16 +104,16 @@ monitors_lua() {
 # step with itself.
 state_json() {
     local pairs=""
-    for ((ws = 1; ws <= WS_COUNT; ws++)); do
-        m="${WS_OF[$ws]:-}"; [[ -n "$m" ]] || continue
-        pairs+="${pairs:+,}$(jq -nc --arg k "$ws" --arg v "$m" '{($k): $v}' | sed 's/^{//;s/}$//')"
+    for ws in "${ALL_WS[@]}"; do
+        pairs+="${pairs:+,}$(jq -nc --arg k "$ws" --arg v "${WS_OF[$ws]}" '{($k): $v}' | sed 's/^{//;s/}$//')"
     done
     jq -n --argjson ws_home "{$pairs}" \
-        '{_comment: "Written by gen-monitors, read by hypr/conf/rules.lua: which monitor owns each workspace.",
+        '{_comment: "Written by gen-monitors, read by hypr/lib/workspaces.lua: which monitor owns each workspace.",
           ws_home: $ws_home}'
 }
 
-waybar_body() {
+# The always-drawn buttons on each monitor's bar.
+waybar_persistent() {
     local out=""
     for m in "${MON_ORDER[@]}"; do
         out+="\"$m\": [${WS_LIST[$m]}]"
@@ -130,19 +122,34 @@ waybar_body() {
     printf '%s\n' "$out"
 }
 
-# config.jsonc has comments, so jq cannot touch it: the persistent-workspaces
-# object is replaced in place and the rest of the file is passed through
-# byte for byte, keeping the surrounding comments and formatting.
-patch_waybar() {
-    local target body tmp
+# ...and their labels, which is what makes the banks invisible: workspace 11 is
+# monitor two's first, so it is drawn "1". Anything outside the map (a stray
+# workspace from an older session, or one reached by SUPER+scroll) has no
+# label and falls back to a dot.
+waybar_icons() {
+    local out=""
+    for ws in "${ALL_WS[@]}"; do
+        out+="\"$ws\": \"${WS_LABEL[$ws]}\""$',\n'
+    done
+    out+='"default": "•"'                            # last entry, so no comma
+    printf '%s\n' "$out"
+}
+
+# config.jsonc has comments, so jq cannot touch it: one object is replaced in
+# place and the rest of the file is passed through byte for byte, keeping the
+# surrounding comments and formatting. Only inside the hyprland/workspaces
+# module - "format-icons" is a key in half the modules in the file.
+patch_waybar_block() {
+    local key="$1" body="$2" target tmp
     target="$(readlink -f "$WAYBAR_CONF")"          # write through the dotfiles symlink
     [[ -f "$target" ]] || { echo "  ! no waybar config at $WAYBAR_CONF, skipped"; return 1; }
-    body="$(waybar_body)"
     tmp="$(mktemp)"
-    awk -v body="$body" '
-        !done && /"persistent-workspaces"[[:space:]]*:[[:space:]]*\{/ {
+    awk -v key="$key" -v body="$body" '
+        # the module itself, not its mention in modules-center (no colon there)
+        !armed && $0 ~ ("\"hyprland/workspaces\"[[:space:]]*:") { armed = 1 }
+        armed && !done && $0 ~ ("\"" key "\"[[:space:]]*:[[:space:]]*\\{") {
             match($0, /^[ \t]*/); ind = substr($0, RSTART, RLENGTH)
-            print ind "\"persistent-workspaces\": {"
+            print ind "\"" key "\": {"
             nl = split(body, lines, "\n")
             for (i = 1; i <= nl; i++) if (lines[i] != "") print ind "  " lines[i]
             depth = 1; skip = 1; done = 1
@@ -161,21 +168,24 @@ patch_waybar() {
         END { if (!done) exit 3 }
     ' "$target" > "$tmp"
     case $? in
-        0) cat "$tmp" > "$target"; rm -f "$tmp" ;;
-        3) rm -f "$tmp"; echo "  ! no \"persistent-workspaces\" block in $WAYBAR_CONF, left alone"; return 1 ;;
+        0) cat "$tmp" > "$target"; rm -f "$tmp"; echo "  patched $WAYBAR_CONF ($key)" ;;
+        3) rm -f "$tmp"; echo "  ! no \"$key\" block in hyprland/workspaces, left alone"; return 1 ;;
         *) rm -f "$tmp"; echo "  ! could not patch $WAYBAR_CONF"; return 1 ;;
     esac
 }
 
 # ---- report / write -------------------------------------------------
-echo "monitors (primary first workspace): $PRIMARY"
-for m in "${MON_ORDER[@]}"; do printf '  %-12s workspaces %s\n' "$m" "${WS_LIST[$m]}"; done
+echo "primary (owns workspace 1): $PRIMARY"
+for m in "${MON_ORDER[@]}"; do
+    printf '  %-12s SUPER+1..%d -> workspaces %s\n' "$m" "$PER_MON" "${WS_LIST[$m]}"
+done
 
 if [[ $CHECK == 1 ]]; then
     echo
     echo "--- $MONITORS_LUA"; monitors_lua
     echo "--- $STATE_JSON"; state_json
-    echo "--- $WAYBAR_CONF (persistent-workspaces)"; waybar_body
+    echo "--- $WAYBAR_CONF (persistent-workspaces)"; waybar_persistent
+    echo "--- $WAYBAR_CONF (format-icons)"; waybar_icons
     exit 0
 fi
 
@@ -189,7 +199,8 @@ write_through() {                                   # keep the dotfiles symlink,
 
 monitors_lua | write_through "$MONITORS_LUA"
 state_json   | write_through "$STATE_JSON"
-patch_waybar && echo "  patched $WAYBAR_CONF (persistent-workspaces)"
+patch_waybar_block persistent-workspaces "$(waybar_persistent)"
+patch_waybar_block format-icons "$(waybar_icons)"
 
 if [[ -f "$HOME/.config/relayout/config.sh" ]]; then
     echo "  ! relayout is opted in here: its WS_HOME overrides this map at runtime"

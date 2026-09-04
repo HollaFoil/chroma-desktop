@@ -81,6 +81,37 @@ A.define({ id = "win.resize_drag", name = "Resize window (drag)", category = "Wi
            keys = { mainMod .. " + mouse:273" }, keys_label = mainMod .. " + RMB drag",
            run = hl.dsp.window.resize(), flags = { mouse = true } })
 
+-- Same drag, with the ratio pinned. keep_aspect_ratio holds whatever ratio the
+-- window already has, so for video it is worth snapping to 16:9 once
+-- (SUPER+SHIFT+T) and then this drag can only ever scale it. The dispatcher is
+-- bound directly rather than wrapped in a function: a mouse bind has to hand
+-- the drag session the held button, and going through a Lua handler is not
+-- worth risking that for.
+A.define({ id = "win.resize_ratio", name = "Resize window keeping its aspect ratio (drag)", category = "Windows",
+           keys = { mainMod .. " + SHIFT + mouse:273" }, keys_label = mainMod .. " + SHIFT + RMB drag",
+           run = hl.dsp.window.resize({ keep_aspect_ratio = true }), flags = { mouse = true } })
+
+-- Snap the focused window to an aspect ratio, keeping its area, so it neither
+-- grows off the screen nor collapses. Exact for floating windows; a tiled
+-- window is resized as far as its splits allow, since the layout owns tiled
+-- geometry - there is no way to hold a ratio against it.
+local function snap_ratio(num, den)
+    return function()
+        local ok, win = pcall(hl.get_active_window)
+        if not ok or not win then return end
+        local got, size = pcall(function() return win.size end)
+        if not got or type(size) ~= "table" then return end
+        local w, h = tonumber(size.x), tonumber(size.y)
+        if not w or not h or w <= 0 or h <= 0 then return end
+        local nw = math.floor(math.sqrt(w * h * num / den) + 0.5)
+        local nh = math.floor(nw * den / num + 0.5)
+        hl.dispatch(hl.dsp.window.resize({ x = nw, y = nh, exact = true }))
+    end
+end
+
+A.define({ id = "win.ratio_169", name = "Snap window to 16:9", category = "Windows",
+           keys = { mainMod .. " + SHIFT + T" }, run = snap_ratio(16, 9) })
+
 -- lock: without it the translucent-all rule is re-applied on every focus
 -- change and fights the prop (visible as flicker while hovering)
 A.define({ id = "win.opaque", name = "Toggle window opaque (for video)", category = "Windows",
@@ -91,16 +122,38 @@ A.define({ id = "win.opaque", name = "Toggle window opaque (for video)", categor
 ----  WORKSPACES ----
 --------------------
 
--- Switch workspaces with mainMod + [0-9]; move the active window with SHIFT.
--- 10 maps to key 0.
-local WS = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }
-local function ws_key(i) return tostring(i % 10) end
-A.define({ id = "ws.focus", name = "Switch to workspace", category = "Workspaces",
-           params = WS, key_of = ws_key, params_label = "1-0", keys = { mainMod },
-           run = function(i) return hl.dsp.focus({ workspace = i }) end })
-A.define({ id = "ws.move", name = "Move window to workspace", category = "Workspaces",
-           params = WS, key_of = ws_key, params_label = "1-0", keys = { mainMod .. " + SHIFT" },
-           run = function(i) return hl.dsp.window.move({ workspace = i }) end })
+-- Workspaces are per monitor: SUPER+1..5 is the 1st..5th workspace of the
+-- monitor the pointer is over, so both hands stay home and no key past 5 is
+-- needed. The actual ids behind them are banked (1-5, 11-15, 21-25) because
+-- Hyprland has one global set of workspaces; lib/workspaces.lua owns that map
+-- and the bar relabels each bank 1-5. Point at another monitor and the same
+-- five keys drive it.
+--
+-- SHIFT throws the focused window at that workspace, which means dropping it
+-- on another monitor is SUPER+SHIFT+N with the pointer over that monitor.
+local WSlib = require("lib.workspaces")
+local WS = {}
+for n = 1, WSlib.PER_MON do WS[n] = n end
+
+--- nil when the pointed monitor has fewer than n workspaces: better to do
+--- nothing than to jump to some other monitor's.
+local function on_pointed(n, dispatch)
+    return function()
+        local ws = WSlib.nth_pointed(n)
+        if ws then hl.dispatch(dispatch(ws)) end
+    end
+end
+
+A.define({ id = "ws.focus", name = "Switch to workspace (pointed monitor)", category = "Workspaces",
+           params = WS, key_of = tostring, params_label = "1-5", keys = { mainMod },
+           run = function(n)
+               return on_pointed(n, function(ws) return hl.dsp.focus({ workspace = tostring(ws) }) end)
+           end })
+A.define({ id = "ws.move", name = "Move window to workspace (pointed monitor)", category = "Workspaces",
+           params = WS, key_of = tostring, params_label = "1-5", keys = { mainMod .. " + SHIFT" },
+           run = function(n)
+               return on_pointed(n, function(ws) return hl.dsp.window.move({ workspace = tostring(ws) }) end)
+           end })
 
 -- Scroll through existing workspaces with mainMod + scroll
 A.define({ id = "ws.scroll", name = "Cycle workspaces", category = "Workspaces",

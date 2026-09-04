@@ -35,8 +35,8 @@ MAIN_LAYOUT=(
 )
 
 ALT_MON="DP-2"
-ALT_DASH_WS=6
-ALT_WORK_WS=7
+ALT_DASH_WS=11
+ALT_WORK_WS=12
 ALT_LAYOUT=(
     "slack           0   0  55  44"
     "vesktop         0  44  55  56"
@@ -58,9 +58,9 @@ ALL_APPS=(Spotify slack vesktop layout-sysmon homelab-dash)
 # workspace rules. (hyprland.lua keeps an identical inline copy purely as a
 # bootstrap fallback for the first run, before this file exists.)
 WS_HOME=(
-    "1 HDMI-A-1" "2 HDMI-A-1" "3 HDMI-A-1" "4 HDMI-A-1" "5 HDMI-A-1"
-    "6 DP-2"     "7 DP-2"     "8 DP-2"
-    "9 HDMI-A-2" "10 HDMI-A-2"
+    "1 HDMI-A-1"  "2 HDMI-A-1"  "3 HDMI-A-1"  "4 HDMI-A-1"  "5 HDMI-A-1"
+    "11 DP-2"     "12 DP-2"     "13 DP-2"     "14 DP-2"     "15 DP-2"
+    "21 HDMI-A-2" "22 HDMI-A-2" "23 HDMI-A-2" "24 HDMI-A-2" "25 HDMI-A-2"
 )
 # How each dashboard app is started (--boot, or when a keybind finds one
 # missing). An app whose command is not installed is left out of the layout

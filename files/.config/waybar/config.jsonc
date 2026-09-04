@@ -88,8 +88,31 @@
   // ── workspaces ──────────────────────────────────────────────────────────
   // Each monitor's bar shows its own workspaces; the ones bound to it in
   // hyprland.lua are always drawn so they work as buttons while empty.
+  //
+  // Workspace ids are banked per monitor (1-5, 11-15, 21-25) because Hyprland
+  // has one global set of them, but nobody wants to read "21": format-icons
+  // relabels each bank 1-5, which is also what SUPER+1..5 types. Both this and
+  // persistent-workspaces below are written by `gen-monitors`.
   "hyprland/workspaces": {
-    "format": "{name}",
+    "format": "{icon}",
+    "format-icons": {
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "11": "1",
+      "12": "2",
+      "13": "3",
+      "14": "4",
+      "15": "5",
+      "21": "1",
+      "22": "2",
+      "23": "3",
+      "24": "4",
+      "25": "5",
+      "default": "•"
+    },
     "on-click": "activate",
     // explicit cursor: waybar's automatic hand resets when the pointer enters a
     // child button, so the buttons themselves would show an arrow
@@ -100,8 +123,8 @@
     "sort-by-number": true,
     "persistent-workspaces": {
       "HDMI-A-1": [1, 2, 3, 4, 5],
-      "DP-2":     [6, 7, 8],
-      "HDMI-A-2": [9, 10]
+      "DP-2": [11, 12, 13, 14, 15],
+      "HDMI-A-2": [21, 22, 23, 24, 25]
     }
   },
 
