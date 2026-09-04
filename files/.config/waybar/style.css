@@ -1,6 +1,7 @@
 /* Port of the "slanted-bubbles" theme from github.com/Abhra00/Matuprland.
  * Every colour is a matugen @define-color from colors.css, which setwall
- * regenerates and then SIGUSR2s waybar, so the bar retints with the wallpaper.
+ * regenerates; reload_style_on_change picks the write up live (no SIGUSR2 —
+ * a full reload remaps the bar and resizes every window under it).
  * Bubbles are @surface on a half-transparent @surface bar; accents are
  * @primary / @tertiary, critical states @error. */
 @import "colors.css";

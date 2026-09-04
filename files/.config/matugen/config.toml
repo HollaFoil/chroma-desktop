@@ -2,7 +2,10 @@
 [templates.waybar]
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/waybar/colors.css'
-post_hook = 'systemctl --user reload waybar 2>/dev/null || pkill -SIGUSR2 waybar || true'  # unit if supervised, bare process if hand-started, never fails
+# No post_hook: waybar has "reload_style_on_change": true and its CssReloadHelper
+# follows the @import of colors.css, so the style retints on write. A SIGUSR2
+# reload would recreate the bar; its exclusive zone blinks and every window
+# under it gets resized (a scroll-snap page like YouTube Shorts jumps a slide).
 
 [templates.swaync]
 input_path = '~/.config/matugen/templates/colors.css'
