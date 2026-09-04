@@ -72,6 +72,9 @@ hl.config({
         -- If the lock screen (wallgreet --lock) ever dies while locked, let a
         -- new one take over (SUPER+L, or hypridle) instead of staying stuck.
         allow_session_lock_restore = true,
+        -- The first frames, before the wallpaper daemon has drawn: the palette's
+        -- surface colour rather than black.
+        background_color = "rgb(" .. C.surface .. ")",
     },
 })
 

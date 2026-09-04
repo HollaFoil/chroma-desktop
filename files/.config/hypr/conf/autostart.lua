@@ -1,6 +1,14 @@
 -- What starts with the session. Fires once at launch, not on reload.
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 hl.on("hyprland.start", function()
+    -- Booted straight into this session by greetd's autologin
+    -- (system/greetd/config.toml.in sets the variable): nobody has typed a
+    -- password yet, so the lock screen goes up first, in front of the desktop
+    -- assembling behind it. Unlocking is then instant. Logging in through the
+    -- greeter (after a logout) does not set the variable and does not lock.
+    if os.getenv("WALLGREET_LOCK_AT_START") == "1" then
+        hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallgreet --lock || hyprlock")
+    end
     -- Chained with && inside ONE exec_cmd on purpose: exec_cmd is async, so as
     -- separate lines the environment import races the services that need it.
     --

@@ -1,0 +1,21 @@
+# greetd: the login manager. ./greeter install renders this to
+# /etc/greetd/config.toml (@USER@ becomes the user running it).
+[terminal]
+vt = 1
+
+# At boot: straight into @USER@'s Hyprland, locked by wallgreet from its first
+# frame (WALLGREET_LOCK_AT_START is read by hypr/conf/autostart.lua). The
+# password is asked in front of the finished desktop, so unlocking is
+# instant: no second compositor to start, no black screen in between.
+# Logging out lands on the greeter below, where another user or session can
+# be chosen. ./greeter install --no-autologin leaves this block out.
+[initial_session]
+command = "env WALLGREET_LOCK_AT_START=1 start-hyprland"
+user = "@USER@"
+
+# The greeter: ReGreet-free. A Hyprland instance running as `greeter` draws
+# wallgreet, so the login screen sees the same monitors, drivers and scaling
+# as the session it starts. Its config: /etc/greetd/hyprland.lua.
+[default_session]
+command = "dbus-run-session start-hyprland -- -c /etc/greetd/hyprland.lua"
+user = "greeter"

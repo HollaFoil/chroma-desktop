@@ -4,6 +4,8 @@
 #
 #   ./greeter check     what is installed, what is enabled, what is stale
 #   ./greeter install   packages, /etc/greetd/*, the theme directory; does NOT switch login managers
+#                       --no-autologin: ask for the password on the greeter instead of booting
+#                       straight into your locked desktop (see system/greetd/config.toml.in)
 #   ./greeter preview   run the greeter over this session in demo mode (Esc quits; --form starts in the login view)
 #                       the lock screen is tried with:  wallgreet --lock --demo  (Esc unlocks)
 #   ./greeter enable    make greetd the display manager from the next boot on
@@ -27,7 +29,9 @@ SYS="$REPO/system/greetd"
 THEME=/etc/greetd/theme
 CSS="$HOME/.config/matugen/generated/wallgreet.css"
 PKGS=(greetd python-gobject python-cairo gtk3 gtk-layer-shell gtk-session-lock python-pam)
-FILES=(config.toml hyprland.lua)
+FILES=(hyprland.lua)          # copied as they are; config.toml is rendered from config.toml.in
+AUTOLOGIN=1
+for a in "$@"; do [[ "$a" == --no-autologin ]] && AUTOLOGIN=0; done
 SRC="$REPO/files/.local/bin/wallgreet"
 BIN=/usr/local/bin/wallgreet
 
@@ -44,8 +48,22 @@ current_dm() {
 
 installed() { pacman -Qq "$1" >/dev/null 2>&1; }
 
+# /etc/greetd/config.toml as it should be for this user (and this autologin choice).
+render_config() {
+    if [[ $AUTOLOGIN == 1 ]]; then
+        sed "s|@USER@|$USER|g" "$SYS/config.toml.in"
+    else
+        # drop the [initial_session] block: from its header to the blank line after it
+        sed "s|@USER@|$USER|g" "$SYS/config.toml.in" | sed '/^\[initial_session\]/,/^$/d'
+    fi
+}
+
 check() {
     local all=1
+    if [[ ! -f /etc/greetd/config.toml ]]; then miss "/etc/greetd/config.toml missing"; all=0
+    elif render_config | cmp -s - /etc/greetd/config.toml; then
+        grep -q '^\[initial_session\]' /etc/greetd/config.toml && ok "/etc/greetd/config.toml current (boots into $USER's locked desktop)" || ok "/etc/greetd/config.toml current (greeter asks for the password)"
+    else warn "/etc/greetd/config.toml differs from what config.toml.in renders (./greeter install rewrites it)"; all=0; fi
     for p in "${PKGS[@]}"; do installed "$p" && ok "$p installed" || { miss "$p not installed"; all=0; }; done
     for f in "${FILES[@]}"; do
         if [[ ! -f /etc/greetd/$f ]]; then miss "/etc/greetd/$f missing"; all=0
@@ -82,6 +100,9 @@ install_() {
     for f in "${FILES[@]}"; do
         sudo install -Dm644 "$SYS/$f" "/etc/greetd/$f" && ok "/etc/greetd/$f"
     done
+    local tmp; tmp="$(mktemp)"; render_config > "$tmp"
+    sudo install -Dm644 "$tmp" /etc/greetd/config.toml && ok "/etc/greetd/config.toml$([[ $AUTOLOGIN == 1 ]] && echo " (autologin into $USER's locked desktop)")"
+    rm -f "$tmp"
     sudo install -Dm755 "$SRC" "$BIN" && ok "$BIN"
     sudo install -Dm644 "$SYS/pam-wallgreet" /etc/pam.d/wallgreet && ok "/etc/pam.d/wallgreet"
     # The greeter user comes from greetd's sysusers.d entry; run it now so the
@@ -157,7 +178,7 @@ disable_() {
 
 case "${1:-check}" in
     check)   check ;;
-    install) install_ ;;
+    install) install_ ;;   # --no-autologin is picked up above
     preview) shift; preview "$@" ;;
     enable)  enable_ ;;
     disable) shift; disable_ "$@" ;;

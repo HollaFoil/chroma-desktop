@@ -205,12 +205,19 @@ under the pointer.
   SUPER+L (a `locked` bind) start a fresh one. `wallgreet --lock --demo` locks
   with Esc as the unlock, for looking at it.
 - **Login**: optional, and the last piece that replaces KDE on a machine that
-  started as a Plasma install. `greetd` runs a Hyprland instance as the
-  `greeter` user (`system/greetd/hyprland.lua`: the same monitors as the
-  session, no gaps, no animations) and that runs `wallgreet` as the greeter:
-  layer-shell surfaces on every monitor, the UI on the largest, plus a small
-  drop-up list bottom-left for the session (Wayland sessions only). It
-  remembers the last user and session in `/var/lib/wallgreet`.
+  started as a Plasma install. By default the machine boots straight into
+  your Hyprland session with the lock screen up from the first frame
+  (greetd's `initial_session` sets `WALLGREET_LOCK_AT_START`, which
+  `hypr/conf/autostart.lua` honours). You type the password in front of the
+  finished desktop and unlocking is instant — no second compositor to start,
+  no black screen between login and desktop. The trade-off is that the
+  session exists before the password: fine for a desktop at home, not for a
+  laptop you want encrypted-at-rest semantics from (`./greeter install
+  --no-autologin` then asks on the greeter instead). Logging out lands on
+  the greeter proper: a Hyprland instance running as the `greeter` user
+  (`system/greetd/hyprland.lua`) draws `wallgreet` with a small drop-up list
+  bottom-left for the session (Wayland sessions only) and remembers the last
+  user and session in `/var/lib/wallgreet`.
 
 What changes with the wallpaper is not in `/etc`: on every `setwall`, matugen
 renders `templates/wallgreet.css` (its first line names the wallpaper; the lock
@@ -223,6 +230,7 @@ screen itself. Until that directory exists the hook is a no-op.
 
 ```sh
 ./greeter install    # greetd, gtk-session-lock, python-pam, /etc/greetd/*, /usr/local/bin/wallgreet, PAM file, theme dir
+                     #   --no-autologin: ask on the greeter at boot instead of booting into the locked desktop
 ./greeter preview    # the greeter over this session in demo mode (Esc quits; add --form for the login view)
 ./greeter enable     # greetd becomes the display manager from the next boot
 ./greeter check      # what is installed, enabled and synced
