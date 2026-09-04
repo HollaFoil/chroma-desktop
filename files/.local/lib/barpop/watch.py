@@ -1,15 +1,22 @@
-"""`barpop watch` - announce network changes that did not come from the menu.
+"""`barpop watch` - the bits of barpop that run all session long.
 
-Runs as a user service. Follows NetworkManager's active connections and posts
-a desktop notification when a Wi-Fi, wired or hotspot connection comes or
-goes - unless barpop itself asked for it moments ago (the panel appends
-"<epoch> <uuid>" to $XDG_RUNTIME_DIR/barpop.intent before every activate /
-deactivate). This replaces kded's networkmanagement popups, which fire for
-everything and cannot tell who did it.
+Runs as a user service (barpop-watch.service). Two jobs:
+
+Network: follows NetworkManager's active connections and posts a desktop
+notification when a Wi-Fi, wired or hotspot connection comes or goes - unless
+barpop itself asked for it moments ago (the panel appends "<epoch> <uuid>" to
+$XDG_RUNTIME_DIR/barpop.intent before every activate / deactivate). This
+replaces kded's networkmanagement popups, which fire for everything and cannot
+tell who did it.
+
+Audio: applies the per-app output rules (see routing.py) - moves a new stream
+to its app's device as it appears, re-applies when a device shows up, and
+re-applies when either rule file changes.
 """
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -18,6 +25,8 @@ import gi
 
 gi.require_version("NM", "1.0")
 from gi.repository import Gio, GLib, NM  # noqa: E402
+
+from . import routing  # noqa: E402
 
 INTENT_FILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "barpop.intent"
 INTENT_TTL = 20            # seconds an intent stays valid
@@ -126,7 +135,71 @@ class Watcher:
             print(f"barpop watch: notify failed: {e.message}", file=sys.stderr)
 
 
+class AudioRouter:
+    """Follows `pactl subscribe`; keeps every stream on the device its app's
+    rule names. Restarts the subscription if pipewire-pulse goes away."""
+
+    def __init__(self):
+        self.sub = None
+        self._retry = None
+        self.monitors = []
+        for path in (routing.SESSION_RULES, routing.PERSISTENT_RULES):
+            m = Gio.File.new_for_path(str(path)).monitor_file(Gio.FileMonitorFlags.NONE, None)
+            m.connect("changed", self._rules_changed)
+            self.monitors.append(m)
+        self._apply_all = None
+        self._subscribe()
+        routing.apply()
+
+    def _subscribe(self):
+        try:
+            self.sub = subprocess.Popen(["pactl", "subscribe"], stdout=subprocess.PIPE, text=True)
+        except OSError as e:
+            print(f"barpop watch: pactl subscribe: {e}", file=sys.stderr)
+            self._retry = GLib.timeout_add_seconds(10, self._resubscribe)
+            return
+        GLib.io_add_watch(self.sub.stdout, GLib.IO_IN | GLib.IO_HUP, self._event)
+
+    def _resubscribe(self):
+        self._retry = None
+        self._subscribe()
+        if self.sub:
+            routing.apply()
+        return False
+
+    def _event(self, stream, cond):
+        if cond & GLib.IO_HUP:
+            self.sub = None
+            self._retry = GLib.timeout_add_seconds(3, self._resubscribe)
+            return False
+        line = stream.readline()
+        # "Event 'new' on sink-input #4353"  /  "Event 'new' on sink #73"
+        if "'new' on sink-input #" in line:
+            try:
+                idx = int(line.rsplit("#", 1)[1])
+            except ValueError:
+                return True
+            # the stream's properties are not all there on the first tick
+            GLib.timeout_add(150, lambda: routing.apply(only=idx) and False)
+        elif "'new' on sink #" in line:
+            self.apply_soon()
+        return True
+
+    def _rules_changed(self, *_):
+        self.apply_soon()
+
+    def apply_soon(self):
+        if self._apply_all is None:
+            self._apply_all = GLib.timeout_add(300, self._apply)
+
+    def _apply(self):
+        self._apply_all = None
+        routing.apply()
+        return False
+
+
 def main() -> int:
     Watcher()
+    AudioRouter()
     GLib.MainLoop().run()
     return 0

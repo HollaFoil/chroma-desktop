@@ -46,10 +46,13 @@ imagemagick                  # rofi-wallthumbs (needs the IM7 `magick` command)
 brightnessctl                # brightness keys
 adw-gtk-theme                # GTK theme matugen's gtk3 hook selects (adw-gtk3-dark)
 glib2                        # gsettings, used by that hook
-breeze-icons                 # icon theme named in rofi and kdeglobals
+adwaita-icon-theme           # source SVGs for the Matugen icon theme (matugen-icons recolours its folders)
+breeze-icons                 # app icons the Matugen theme inherits; also named in rofi
 breeze                       # Qt widget style named in kdeglobals
 plasma-integration           # QT_QPA_PLATFORMTHEME=kde, so Qt apps (if any) pick up kdeglobals
 nemo                         # file manager on SUPER+E; GTK3, so it recolours live with the wallpaper
+swayimg                      # image viewer: floats centred, colours from matugen (swayimg/init.lua), Enter = gallery
+mpv                          # video player; the ModernZ OSC (aur) draws the Jellyfin-style bar
 nemo-fileroller              # compress/extract in Nemo's context menu
 nemo-terminal                # embedded terminal pane in Nemo (F4)
 file-roller                  # archive manager nemo-fileroller drives
@@ -72,6 +75,7 @@ vscodium                     # editor theme via the haikalllp.matugen-theme exte
 capitaine-cursors            # cursor theme named in gtk settings.ini
 
 [optional]
+fastfetch                    # Settings > About PC reads its JSON (board, BIOS, GPU drivers, disks, displays); shorter list without it
 webp-pixbuf-loader           # only if your wallpapers are .webp
 nwg-displays                 # GUI to regenerate monitors.lua for your monitors
 fuzzel                       # still used by the powermenu script
@@ -79,7 +83,9 @@ python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
 
 [aur]
+mpv-modernz-git              # mpv OSC: title, rounded seekbar, centred play/skip, sub/audio buttons; colours via matugen (templates/modernz.conf)
+mpv-thumbfast-git            # seekbar hover thumbnails for ModernZ
 waybar-git                   # the reference machine runs this instead of waybar (mpris crash fix); either works
 slack-desktop                # dashboard app in relayout; dropped from the layout when absent
-google-chrome                # chrome-flags.conf and kdeglobals' default browser; harmless without it
+google-chrome                # chrome-flags.conf; harmless without it (links follow mimeapps.list, firefox)
 oh-my-posh-bin               # prompt; fish config skips it when missing (see README for the theme file)

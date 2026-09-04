@@ -16,9 +16,12 @@ PLUGIN_DIR = Path.home() / ".config/barpop/plugins"
 
 class Panel(Gtk.Box):
     """Base for everything shown in the overlay. Subclasses set `name`, build
-    their widgets in __init__ and release watches/subprocesses in close()."""
+    their widgets in __init__ and release watches/subprocesses in close().
+    `placement` is "bar" (a menu hanging under the bar) or "center" (a window
+    in the middle of the screen); the shell styles the card as `.popup-<name>`."""
 
     name = ""
+    placement = "bar"
 
     def __init__(self, shell):
         super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=6)
@@ -80,4 +83,4 @@ def get(name: str) -> type[Panel]:
     return _REGISTRY[name]
 
 
-from . import audio, launcher, network  # noqa: E402,F401  (register built-ins)
+from . import audio, launcher, network, settings  # noqa: E402,F401  (register built-ins)

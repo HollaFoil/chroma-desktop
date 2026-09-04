@@ -1,5 +1,5 @@
 [Unit]
-Description=barpop network watcher (notifies on connection changes not made from the menu)
+Description=barpop watcher (network change notifications, per-app audio routing)
 Documentation=file:%h/.local/lib/barpop/watch.py
 PartOf=graphical-session.target
 After=graphical-session.target

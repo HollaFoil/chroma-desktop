@@ -96,6 +96,10 @@ if [[ $CHECK == 0 ]] && command -v pacman >/dev/null 2>&1; then
     fi
 fi
 
+# ---- redundant packages ---------------------------------------------
+bold "Redundant packages (replaced by this setup)"
+"$REPO/prune"
+
 # ---- link -----------------------------------------------------------
 bold "Symlinks"
 if [[ $CHECK == 1 ]]; then
@@ -158,18 +162,74 @@ else
     warn "steam not installed: skipping Steam skin"
 fi
 
-# Nemo: default directory handler, kitty as its terminal, no desktop drawing.
-# These are dconf/xdg state rather than files, so they cannot be symlinked.
-if command -v nemo >/dev/null 2>&1; then
+# Default applications (~/.config/mimeapps.list is xdg state, not a dotfile):
+# nemo for folders, swayimg for images, mpv for video, firefox for the web.
+# Without these, xdg-open falls back to whatever is first in mimeinfo.cache
+# (for images that was Firefox, then gwenview complaining about Dolphin).
+declare -A DEFAULT_APPS=(
+    [nemo.desktop]="inode/directory"
+    [swayimg.desktop]="image/jpeg image/png image/gif image/webp image/bmp image/tiff image/svg+xml image/avif image/heif image/heic image/jxl image/x-exr image/x-portable-pixmap image/x-tga image/vnd.microsoft.icon image/x-xcf"
+    [mpv.desktop]="video/mp4 video/x-matroska video/webm video/quicktime video/x-msvideo video/mpeg video/x-flv video/3gpp video/ogg video/x-ms-wmv video/mp2t application/x-matroska audio/x-matroska"
+    [firefox.desktop]="x-scheme-handler/http x-scheme-handler/https text/html application/pdf"
+)
+bold "Default applications"
+for app in "${!DEFAULT_APPS[@]}"; do
+    desktop="/usr/share/applications/$app"
+    [[ -f "$desktop" || -f "$HOME/.local/share/applications/$app" ]] || { warn "${app%.desktop} not installed: its file types stay unassigned"; continue; }
     if [[ $CHECK == 1 ]]; then
-        [[ "$(xdg-mime query default inode/directory)" == nemo.desktop ]] && ok "nemo is the default file manager" || miss "nemo is not the default for inode/directory"
+        wrong=""
+        for m in ${DEFAULT_APPS[$app]}; do [[ "$(xdg-mime query default "$m")" == "$app" ]] || wrong+=" $m"; done
+        [[ -z "$wrong" ]] && ok "${app%.desktop} owns its file types" || miss "${app%.desktop} is not the default for:$wrong"
     else
-        xdg-mime default nemo.desktop inode/directory
-        gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty 2>/dev/null
-        gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg '' 2>/dev/null
-        gsettings set org.nemo.desktop show-desktop-icons false 2>/dev/null
-        ok "nemo: default file manager, opens kitty, draws no desktop"
+        # shellcheck disable=SC2086
+        xdg-mime default "$app" ${DEFAULT_APPS[$app]}
+        ok "${app%.desktop}: $(echo ${DEFAULT_APPS[$app]} | wc -w) types"
     fi
+done
+
+# Nemo: kitty as its terminal, no desktop drawing (dconf state).
+if command -v nemo >/dev/null 2>&1 && [[ $CHECK == 0 ]]; then
+    gsettings set org.cinnamon.desktop.default-applications.terminal exec kitty 2>/dev/null
+    gsettings set org.cinnamon.desktop.default-applications.terminal exec-arg '' 2>/dev/null
+    gsettings set org.nemo.desktop show-desktop-icons false 2>/dev/null
+    ok "nemo: opens kitty, draws no desktop"
+fi
+
+# Hyprland: hyprland.lua writes ~/.cache/hypr/binds.json (the action table the
+# cheatsheet and Settings > Keybinds read) at the end of every load.
+if [[ $CHECK == 1 ]]; then
+    [[ -f "${XDG_CACHE_HOME:-$HOME/.cache}/hypr/binds.json" ]] && ok "hyprland.lua exported its actions (binds.json)" || miss "no ~/.cache/hypr/binds.json yet: log into Hyprland (or hyprctl reload) and the config writes it"
+fi
+
+# Audio: per-app output rules (Settings > Audio, routing.py) need WirePlumber
+# to stop remembering stream targets itself, or a one-off move of a stream
+# would come back as a permanent per-app rule. Saved in WirePlumber's state.
+if command -v wpctl >/dev/null 2>&1; then
+    if [[ $CHECK == 1 ]]; then
+        [[ "$(wpctl settings node.stream.restore-target 2>/dev/null)" == *false* ]] && ok "WirePlumber does not restore stream targets (barpop routes them)" || miss "WirePlumber still restores stream targets: wpctl settings -s node.stream.restore-target false"
+    else
+        wpctl settings node.stream.restore-target false >/dev/null 2>&1 && wpctl settings -s node.stream.restore-target >/dev/null 2>&1
+        ok "WirePlumber stream-target memory off (barpop watch routes streams)"
+    fi
+fi
+
+# Icons: setwall builds ~/.local/share/icons/Matugen (Adwaita, folders
+# recoloured); GTK on Wayland reads the icon theme from gsettings, kdeglobals
+# is linked from the repo, and kde-gtk-config mirrors it into settings.ini
+# when present. Nothing here draws the icons until setwall has run once.
+ICON_INI=("$HOME/.config/gtk-3.0/settings.ini" "$HOME/.config/gtk-4.0/settings.ini")
+if [[ $CHECK == 1 ]]; then
+    [[ "$(gsettings get org.gnome.desktop.interface icon-theme 2>/dev/null)" == "'Matugen'" ]] && ok "icon theme is Matugen (gsettings)" || miss "icon theme is not Matugen in gsettings"
+    for ini in "${ICON_INI[@]}"; do
+        [[ -f "$ini" ]] && ! grep -q '^gtk-icon-theme-name=Matugen$' "$ini" && miss "$ini names another icon theme"
+    done
+    [[ -f "$HOME/.local/share/icons/Matugen/index.theme" ]] && ok "Matugen icon theme built" || miss "Matugen icon theme not built yet (setwall builds it)"
+else
+    gsettings set org.gnome.desktop.interface icon-theme Matugen 2>/dev/null
+    for ini in "${ICON_INI[@]}"; do
+        [[ -f "$ini" ]] && sed -i 's/^gtk-icon-theme-name=.*/gtk-icon-theme-name=Matugen/' "$ini"
+    done
+    ok "icon theme set to Matugen (gsettings, gtk settings.ini)"
 fi
 
 # Spotify: spicetify is not packaged
@@ -217,7 +277,9 @@ if [[ -f "$HOME/.config/waybar/colors.css" ]]; then
 elif [[ $CHECK == 1 ]]; then
     miss "no colours yet: waybar/rofi/hyprlock will not start until setwall has run once"
 fi
-if [[ $CHECK == 0 ]]; then
+# Only a first run (no colours yet) or an explicit --wallpaper picks a
+# wallpaper; re-running bootstrap on a configured machine must not swap it.
+if [[ $CHECK == 0 && ( -n "$WALL" || ! -f "$HOME/.config/waybar/colors.css" ) ]]; then
     if [[ -z "$WALL" ]]; then
         WALL="$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | head -1)"
     fi
@@ -231,7 +293,9 @@ fi
 # ---- what is still yours to edit ------------------------------------
 bold "Make it yours (see README.md, 'Make it yours')"
 echo "  files/.config/hypr/monitors.lua        your monitors (nwg-displays writes this)"
-echo "  files/.config/hypr/hyprland.lua        ws_home fallback, kb_layout, apps on SUPER+E/Q"
+echo "  files/.config/hypr/conf/rules.lua      ws_home fallback (workspace -> monitor)"
+echo "  files/.config/hypr/conf/actions.lua    apps on SUPER+E/Q and every other action; rebind in Settings > Keybinds"
+echo "  files/.config/hypr/conf/input.lua      kb_layout (or Settings > Input)"
 echo "  files/.config/waybar/config.jsonc      persistent-workspaces per monitor, temperature hwmon path"
 echo "  ~/.config/relayout/config.sh           dashboard monitors and apps (examples/relayout.config.sh)"
 echo

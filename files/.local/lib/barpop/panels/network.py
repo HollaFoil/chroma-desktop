@@ -2,7 +2,9 @@
 
 Each block is a `Section`; a section whose `available()` is False is simply
 not shown (no Bluetooth adapter, no tailscale binary...). Plugins can add
-their own via NETWORK_SECTIONS in ~/.config/barpop/plugins/*.py.
+their own via NETWORK_SECTIONS in ~/.config/barpop/plugins/*.py. The sections
+are hosted by a NetworkHost: here all of them in the bar's popup, and one or
+two at a time on the settings pages (Wi-Fi, Bluetooth, Connections).
 
 Wi-Fi and the hotspot go through libnm (GObject introspection, live signals);
 Bluetooth talks to BlueZ over the system bus; Tailscale is its CLI.
@@ -160,12 +162,15 @@ class Wifi(Section):
 
     def refresh(self):
         w.switch_set(self.switch, self.nm.wireless_get_enabled())
-        w.clear(self.list)
         self.list_scroll.hide()
         if not self.dev or not self.nm.wireless_get_enabled():
+            w.clear(self.list)
+            self._sig = None
             w.set_status(self.notice, "Wi-Fi is off")
             return
         if self.dev.get_mode() == Mode.AP:
+            w.clear(self.list)
+            self._sig = None
             w.set_status(self.notice, "hotspot is using the radio — turn it off to join a network")
             return
         w.set_status(self.notice, "")
@@ -186,6 +191,14 @@ class Wifi(Section):
                 best[ssid] = ap
         aps = sorted(best.values(), key=lambda a: (ssid_of(a) != active_ssid,
                                                    ssid_of(a) not in saved, -a.get_strength()))
+        # Rebuild only when something visible changed (strength in 5-step
+        # buckets): recreating the rows under the pointer flickers the hover.
+        sig = tuple((ssid_of(a), ssid_of(a) == active_ssid, ssid_of(a) in saved, a.get_strength() // 5)
+                    for a in aps)
+        if sig == getattr(self, "_sig", None) and self.list.get_children():
+            return
+        self._sig = sig
+        w.clear(self.list)
         if not aps:
             self.list.pack_start(w.label("scanning…", "empty"), False, False, 0)
         for ap in aps:
@@ -433,10 +446,12 @@ class Bluetooth(Section):
         w.set_class(self.scan_btn, "busy", self.discovering)   # pulses while scanning
         self.scan_btn.set_sensitive(powered)
 
-        w.clear(self.list)
         if not powered:
-            self.list.pack_start(w.label("Bluetooth is off", "empty"), False, False, 0)
-            self.list.show_all()
+            if getattr(self, "_sig", None) != "off":
+                self._sig = "off"
+                w.clear(self.list)
+                self.list.pack_start(w.label("Bluetooth is off", "empty"), False, False, 0)
+                self.list.show_all()
             return
         devices = [(p, i["org.bluez.Device1"]) for p, i in objs.items() if "org.bluez.Device1" in i]
         # Paired devices always (connected on top). Strangers only while a scan
@@ -447,6 +462,14 @@ class Bluetooth(Section):
                    if d.get("Paired") or (self.discovering and d.get("Name"))]
         devices.sort(key=lambda pd: (not pd[1].get("Connected"), not pd[1].get("Paired"),
                                      -(pd[1].get("RSSI") or -100), pd[1].get("Alias", "")))
+        # RSSI ticks in every second during discovery; only a change in what
+        # the rows show (not their order by signal) is worth rebuilding for.
+        sig = tuple((p, bool(d.get("Connected")), bool(d.get("Paired")), d.get("Alias"),
+                     d.get("Battery Percentage")) for p, d in devices)
+        if sig == getattr(self, "_sig", None):
+            return
+        self._sig = sig
+        w.clear(self.list)
         if not devices:
             self.list.pack_start(w.label("no paired devices — Scan to find one", "empty"), False, False, 0)
         for path, d in devices:
@@ -598,21 +621,28 @@ class Tailscale(Section):
 BUILTIN_SECTIONS = [Wired, Wifi, Hotspot, Bluetooth, Tailscale]
 
 
-@register
-class Network(Panel):
-    name = "network"
+class NetworkHost:
+    """What the sections need from their surroundings: the shared NM.Client,
+    the system bus, and a debounced refresh() over the sections it holds. The
+    bar's Network panel hosts all of them in one card; the settings pages host
+    one or two each (Wi-Fi, Bluetooth, Connections)."""
 
-    def __init__(self, shell):
-        super().__init__(shell)
+    def __init__(self):
         self.nm = NM.Client.new(None)
         try:
             self.bus = Gio.bus_get_sync(Gio.BusType.SYSTEM, None)
         except GLib.Error:
             self.bus = None
         self._debounce = w.Debounce(self.refresh, 150)
-
         self.sections: list[Section] = []
-        for cls in BUILTIN_SECTIONS + plugin_network_sections():
+        self._nm_sigs = [self.nm.connect(sig, self.refresh_soon) for sig in (
+            "notify::wireless-enabled", "notify::active-connections", "device-added", "device-removed",
+            "connection-added", "connection-removed", "notify::connectivity", "notify::state")]
+
+    def build(self, classes) -> list[Section]:
+        """Instantiate the available ones of `classes`, in order."""
+        out = []
+        for cls in classes:
             try:
                 if not cls.available(self):
                     continue
@@ -620,19 +650,9 @@ class Network(Panel):
             except Exception as e:  # one broken section must not hide the rest
                 print(f"barpop: network section {cls.__name__} failed: {e}", flush=True)
                 continue
-            if self.sections:
-                self.pack_start(w.divider(), False, False, 0)
-            self.pack_start(sec, False, False, 0)
             self.sections.append(sec)
-
-        self.pack_start(w.divider(), False, False, 0)
-        adv = w.pill_button("󰒓  All connections…", self._advanced, "apps-toggle")
-        adv.set_halign(Gtk.Align.START)
-        self.pack_start(adv, False, False, 0)
-
-        self._nm_sigs = [self.nm.connect(sig, self.refresh_soon) for sig in (
-            "notify::wireless-enabled", "notify::active-connections", "device-added", "device-removed",
-            "connection-added", "connection-removed", "notify::connectivity", "notify::state")]
+            out.append(sec)
+        return out
 
     def refresh_soon(self, *_):
         self._debounce()
@@ -644,16 +664,41 @@ class Network(Panel):
             except Exception as e:
                 print(f"barpop: refresh {type(sec).__name__}: {e}", flush=True)
 
-    def _advanced(self):
-        if shutil.which("nm-connection-editor"):
-            w.run_detached("nm-connection-editor")
-        else:
-            w.run_detached("kitty --title nmtui sh -c 'sleep 0.1; nmtui'")
-        self.shell.quit()
-
     def close(self):
         self._debounce.cancel()
         for s in self._nm_sigs:
             self.nm.disconnect(s)
+        self._nm_sigs = []
         for sec in self.sections:
             sec.close()
+        self.sections = []
+
+
+def advanced_editor(shell) -> None:
+    """nm-connection-editor, or nmtui in a terminal; closes the popup."""
+    if shutil.which("nm-connection-editor"):
+        w.run_detached("nm-connection-editor")
+    else:
+        w.run_detached("kitty --title nmtui sh -c 'sleep 0.1; nmtui'")
+    shell.quit()
+
+
+@register
+class Network(Panel):
+    name = "network"
+
+    def __init__(self, shell):
+        super().__init__(shell)
+        self.host = NetworkHost()
+        for sec in self.host.build(BUILTIN_SECTIONS + plugin_network_sections()):
+            if self.get_children():
+                self.pack_start(w.divider(), False, False, 0)
+            self.pack_start(sec, False, False, 0)
+
+        self.pack_start(w.divider(), False, False, 0)
+        adv = w.pill_button("󰒓  All connections…", lambda: advanced_editor(self.shell), "apps-toggle")
+        adv.set_halign(Gtk.Align.START)
+        self.pack_start(adv, False, False, 0)
+
+    def close(self):
+        self.host.close()

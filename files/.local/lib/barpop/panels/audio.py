@@ -2,17 +2,23 @@
 
     [speaker] ─────●──── 75%   HyperX Cloud III ▾
     [mic]     ───●────── 60%   HyperX Cloud III ▾
-    Apps ▸   (per-stream rows: icon, name, slider, mute)
+    Apps ▸   (per-stream rows: icon, name, slider, mute, device ▾)
 
 Reads and writes PulseAudio/PipeWire through pactl's JSON output, and follows
 `pactl subscribe` so a volume key or a new stream updates the sliders live.
 Device choice is an inline list under the row, not a combo box.
+
+Each app row's `device ▾` routes that stream somewhere other than the default
+sink, for one of three lifetimes (this stream / this app until logout / this
+app always) - see routing.py; the `barpop watch` daemon applies the app rules
+to streams as they appear.
 """
 from __future__ import annotations
 
 import json
 import subprocess
 
+from .. import routing
 from .. import widgets as w
 from . import Panel, register
 from gi.repository import Gdk, GLib, Gtk  # noqa: E402
@@ -101,7 +107,7 @@ class VolumeRow(Gtk.Box):
         self.scale.set_value(pct)
         self._updating = False
         self.pct.set_text(f"{pct}%")
-        self.mute_btn.set_label(self.icon_for(pct, muted))
+        w.relabel(self.mute_btn, self.icon_for(pct, muted))
         w.set_class(self, "muted", muted)
         w.set_class(self.mute_btn, "muted", muted)
 
@@ -132,6 +138,38 @@ class VolumeRow(Gtk.Box):
         return False
 
 
+def rebuild_list(box: Gtk.Box, rows: dict, choices: list[tuple], current, on_pick) -> None:
+    """Keep `box` showing `choices` [(key, label)] with `current` ticked.
+    Widgets are reused when the keys are unchanged (only the tick moves),
+    recreated otherwise."""
+    # Compare against what was last built, not the dict's keys: PipeWire can
+    # list one sink name twice (stale HDMI nodes), which would make the two
+    # never match and rebuild - and flicker - on every refresh.
+    keys = [k for k, _ in choices]
+    if getattr(box, "_built_keys", None) != keys:
+        box._built_keys = keys
+        w.clear(box)
+        rows.clear()
+        for key, text in choices:
+            if key in rows:
+                continue   # a duplicate name: one row is enough, pactl addresses by name
+            row = Gtk.Button()
+            w.klass(row, "device-row")
+            inner = w.hbox(8)
+            check = w.label(" ", "device-check")
+            inner.pack_start(check, False, False, 0)
+            inner.pack_start(w.label(text, "device-name", ellipsize=True), True, True, 0)
+            row.add(inner)
+            row.connect("clicked", lambda _b, k=key: on_pick(k))
+            box.pack_start(row, False, False, 0)
+            rows[key] = (row, check)
+        box.show_all()
+    for key, (row, check) in rows.items():
+        here = key == current
+        w.set_class(row, "current", here)
+        check.set_text("󰄬" if here else " ")
+
+
 class DevicePicker:
     """A `Name ▾` button on the row plus an inline list of devices revealed
     under it. `on_pick(name)` is called with the pactl device name."""
@@ -143,32 +181,78 @@ class DevicePicker:
         self.revealer = w.revealer(self.list)
         self.devices: list[dict] = []
         self.current = ""
+        self.rows: dict[str, tuple[Gtk.Button, Gtk.Label]] = {}
 
     def toggle(self):
         self.revealer.set_reveal_child(not self.revealer.get_reveal_child())
 
     def update(self, devices: list[dict], current: str):
+        """Refreshes arrive on every pactl event; the list is only rebuilt when
+        the set of devices changed. Rebuilding under the pointer would destroy
+        the hovered button and make it flicker."""
         self.devices, self.current = devices, current
         cur = next((d for d in devices if d["name"] == current), None)
-        self.button.set_label((short_name(cur.get("description", cur["name"])) if cur else "—") + "  ▾")
-        w.clear(self.list)
-        for d in devices:
-            row = Gtk.Button()
-            w.klass(row, "device-row")
-            w.set_class(row, "current", d["name"] == current)
-            box = w.hbox(8)
-            box.pack_start(w.label("󰄬" if d["name"] == current else " ", "device-check"), False, False, 0)
-            box.pack_start(w.label(short_name(d.get("description", d["name"])), "device-name",
-                                   ellipsize=True), True, True, 0)
-            row.add(box)
-            row.connect("clicked", lambda _b, n=d["name"]: self._pick(n))
-            self.list.pack_start(row, False, False, 0)
-        self.list.show_all()
+        w.relabel(self.button, (short_name(cur.get("description", cur["name"])) if cur else "—") + "  ▾")
+        choices = [(d["name"], short_name(d.get("description", d["name"]))) for d in devices]
+        rebuild_list(self.list, self.rows, choices, current, self._pick)
 
     def _pick(self, name: str):
         self.revealer.set_reveal_child(False)
         if name != self.current:
             self.on_pick(name)
+
+
+class RoutePicker:
+    """`Device ▾` on an app row, revealing: how long the choice should hold,
+    then where to send the stream. on_pick(sink_or_None, scope)."""
+
+    SCOPES = [("This stream", "stream"), ("This app, until logout", "session"), ("This app, always", "always")]
+    GLYPH = {"session": "󰔛", "always": "󰐃"}
+
+    def __init__(self, on_pick):
+        self.on_pick = on_pick
+        self.scope = "stream"
+        self.button = w.pill_button("", self.toggle, "device-btn", "route-btn")
+        body = w.vbox(4, "route-body")
+        self.seg = w.Segmented(self.SCOPES, self.scope, self._set_scope)
+        body.pack_start(self.seg, False, False, 0)
+        self.list = w.vbox(2, "device-list")
+        body.pack_start(self.list, False, False, 0)
+        self.revealer = w.revealer(body)
+        self.current: str | None = None
+        self.rows: dict = {}
+
+    def toggle(self):
+        self.revealer.set_reveal_child(not self.revealer.get_reveal_child())
+
+    def _set_scope(self, scope: str):
+        self.scope = scope
+        self.seg.set_current(scope)
+
+    def update(self, devices: list[dict], sink_name: str, default_name: str, rule, pinned: bool):
+        """rule is (sink, scope) from routing.rules() or None."""
+        if rule:
+            self.current = rule[0]
+            dev = next((d for d in devices if d["name"] == rule[0]), None)
+            text = f"{self.GLYPH[rule[1]]} " + (short_name(dev.get("description", dev["name"])) if dev
+                                                 else "(device off)")
+            if rule[1] != self.scope:
+                self._set_scope(rule[1])
+        elif pinned and sink_name != default_name:
+            self.current = sink_name
+            dev = next((d for d in devices if d["name"] == sink_name), None)
+            text = short_name(dev.get("description", dev["name"])) if dev else sink_name
+        else:
+            self.current = None
+            text = "Default"
+        w.relabel(self.button, text + "  ▾")
+        choices = [(None, "Default (follows the output above)")] + [
+            (d["name"], short_name(d.get("description", d["name"]))) for d in devices]
+        rebuild_list(self.list, self.rows, choices, self.current, self._pick)
+
+    def _pick(self, name):
+        self.revealer.set_reveal_child(False)
+        self.on_pick(name, self.scope)
 
 
 # ── panel ────────────────────────────────────────────────────────────────────
@@ -203,7 +287,7 @@ class Audio(Panel):
         self.apps_revealer = w.revealer(self.apps_box, 180)
         self.pack_start(self.apps_revealer, False, False, 0)
 
-        self.app_rows: dict[int, VolumeRow] = {}
+        self.app_rows: dict[int, Gtk.Box] = {}   # idx -> box(row, route revealer)
         self.refresh()
         self._subscribe()
 
@@ -228,25 +312,31 @@ class Audio(Panel):
 
     def _refresh_apps(self):
         inputs = pactl_json("sink-inputs")
+        sinks = pactl_json("sinks")
+        by_index = {s["index"]: s["name"] for s in sinks}
+        default_name = pactl("get-default-sink").strip()
+        rules = routing.rules()
+        pinned = routing.pinned_ids()
         seen = set()
         for si in inputs:
             idx = si["index"]
             seen.add(idx)
             props = si.get("properties", {})
-            row = self.app_rows.get(idx)
-            if row is None:
+            box = self.app_rows.get(idx)
+            if box is None:
                 icon, name = self._identify(props)
-                row = self._app_row(idx, name or f"stream {idx}", icon)
-                self.app_rows[idx] = row
-                self.apps_box.pack_start(row, False, False, 0)
-                row.show_all()
-            row.set_state(volume_pct(si), si.get("mute", False))
+                box = self._app_row(idx, name or f"stream {idx}", icon, routing.app_key(props))
+                self.app_rows[idx] = box
+                self.apps_box.pack_start(box, False, False, 0)
+                box.show_all()
+            box.row.set_state(volume_pct(si), si.get("mute", False))
+            box.route.update(sinks, by_index.get(si.get("sink"), ""), default_name,
+                             rules.get(routing.app_key(props)), idx in pinned)
         for idx in list(self.app_rows):
             if idx not in seen:
                 self.apps_box.remove(self.app_rows.pop(idx))
         n = len(self.app_rows)
-        self.apps_toggle.set_label(("󰅀" if self.apps_revealer.get_reveal_child() else "󰅂")
-                                   + f"  Apps ({n})")
+        w.relabel(self.apps_toggle, ("󰅀" if self.apps_revealer.get_reveal_child() else "󰅂") + f"  Apps ({n})")
 
     @staticmethod
     def _identify(props: dict) -> tuple[str | None, str | None]:
@@ -259,7 +349,7 @@ class Audio(Panel):
         return (props.get("application.icon_name") or props.get("application.process.binary"),
                 props.get("application.name") or props.get("media.name"))
 
-    def _app_row(self, idx: int, name: str, icon_name: str | None) -> VolumeRow:
+    def _app_row(self, idx: int, name: str, icon_name: str | None, key: str) -> Gtk.Box:
         row = VolumeRow(lambda: self._toggle_input_mute(idx),
                         lambda v: pactl("set-sink-input-volume", str(idx), f"{v}%"),
                         speaker_icon)
@@ -275,13 +365,38 @@ class Audio(Panel):
         row.reorder_child(img, 1)
         row.pack_start(lbl, False, False, 0)
         row.reorder_child(lbl, 2)
-        return row
+        route = RoutePicker(lambda sink, scope: self._route(idx, key, sink, scope))
+        row.pack_end(route.button, False, False, 0)
+        box = w.vbox(0, "app-entry")
+        box.pack_start(row, False, False, 0)
+        box.pack_start(route.revealer, False, False, 0)
+        box.row, box.route = row, route
+        return box
+
+    def _route(self, idx: int, key: str, sink: str | None, scope: str):
+        """Send stream idx (and, for app scopes, its siblings) to `sink`;
+        None means back to the default output."""
+        siblings = [si["index"] for si in pactl_json("sink-inputs")
+                    if routing.app_key(si.get("properties", {})) == key] if scope != "stream" else [idx]
+        if sink is None:
+            if scope != "stream":
+                routing.clear_rule(key)
+            for i in siblings:
+                routing.unpin(i)
+        else:
+            if scope != "stream":
+                routing.set_rule(key, sink, scope)
+            for i in siblings:
+                routing.move(i, sink)
+        self.refresh()
 
     # ── actions ──
     def _set_sink(self, name: str):
+        # Streams without an explicit target follow the default and are moved
+        # by WirePlumber; the routed ones (app rule or pinned stream) stay put
+        # on purpose. Moving them by hand here would pin every stream, which
+        # is what used to make later default changes fail to carry them.
         pactl("set-default-sink", name)
-        for idx in self.app_rows:  # move live streams so the change is audible now
-            pactl("move-sink-input", str(idx), name)
         self.refresh()
 
     def _set_source(self, name: str):

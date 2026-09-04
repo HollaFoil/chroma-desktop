@@ -11,13 +11,14 @@ HOME = Path.home()
 
 # (glyph, label, action). An action is a shell command string, or a panel name
 # prefixed with "panel:" to swap the popup's content instead of closing it.
+# Audio and network are not listed: they open from their own bar modules and
+# live as pages inside Settings.
 ITEMS = [
     ("󰀻", "Applications",  f"{HOME}/.local/bin/rofi-launcher"),
     ("󰅌", "Clipboard",     f"{HOME}/.local/bin/rofi-cliphist"),
     ("󰹑", "Screenshot",    'grim -g "$(slurp)" - | wl-copy'),
     ("󰂚", "Notifications", "swaync-client -t -sw"),
-    ("󰕾", "Audio",         "panel:audio"),
-    ("󰖩", "Network",       "panel:network"),
+    ("󰒓", "Settings",      "panel:settings"),
 ]
 
 POWER = [

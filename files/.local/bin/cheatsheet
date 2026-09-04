@@ -2,18 +2,22 @@
 """Keybind cheatsheet for SUPER+slash.
 
 A layer-shell overlay (not a window): a frosted card in the middle of the
-screen with ~/.config/hypr/keybinds.txt laid out in two columns, sections kept
-whole and split where the column heights are closest. It holds keyboard focus
-no matter where the pointer wanders; any key, or a click outside the card,
-closes it - the click is swallowed rather than passed to what is underneath.
-Running it again while open closes it, so the bind toggles.
+screen with the current keybinds laid out in two columns, sections kept whole
+and dealt to the side that makes the columns closest in height (the split is
+part of the export, see lib/actions.lua). It holds keyboard focus no
+matter where the pointer wanders; any key, or a click outside the card, closes
+it - the click is swallowed rather than passed to what is underneath. Running
+it again while open closes it, so the bind toggles.
 
-keybinds.txt: "# Section" starts a section, "KEYS | description" is a row,
-blank lines are ignored. Colours are matugen's via ~/.config/waybar/colors.css;
-blur comes from Hyprland (frosted-cheatsheet layer rule).
+The rows come from ~/.cache/hypr/binds.json, which hyprland.lua writes on
+every (re)load from the action table in conf/actions.lua merged with the
+rebinding done in the settings UI - so the sheet always shows what the keys
+actually do. Colours are matugen's via ~/.config/waybar/colors.css; blur comes
+from Hyprland (frosted-cheatsheet layer rule).
 """
 from __future__ import annotations
 
+import json
 import os
 import signal
 import sys
@@ -26,7 +30,7 @@ gi.require_version("Gdk", "3.0")
 gi.require_version("GtkLayerShell", "0.1")
 from gi.repository import Gdk, Gtk, GtkLayerShell  # noqa: E402
 
-DATA = Path.home() / ".config/hypr/keybinds.txt"
+DATA = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "hypr/binds.json"
 COLORS = Path.home() / ".config/waybar/colors.css"
 PIDFILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "cheatsheet.pid"
 
@@ -45,23 +49,42 @@ window { background: transparent; }
 """
 
 
-def sections():
-    out, cur = [], None
-    for raw in DATA.read_text().splitlines():
-        line = raw.strip()
-        if not line:
+def key_text(action) -> str:
+    if action.get("keys_label"):
+        return action["keys_label"]
+    keys = action.get("keys") or []
+    if action.get("parametrised"):
+        suffix = action.get("params_label", "")
+        return " / ".join(f"{k} + {suffix}" if k else suffix for k in keys)
+    return " / ".join(keys)
+
+
+def columns():
+    """Two lists of (category, [(keys, name), ...]): only the actions that are
+    bound and marked for the cheatsheet. The split between the columns comes
+    with the export (`columns`, chosen by lib/actions.lua for the closest
+    heights, recomputed whenever the config loads); an export without it is
+    cut in two here."""
+    try:
+        data = json.loads(DATA.read_text())
+    except (OSError, ValueError):
+        return [("Cheatsheet", [("hyprctl reload", f"{DATA} is missing; the config writes it")])], []
+    rows = {}
+    for a in data.get("actions", []):
+        if not a.get("cheatsheet", True) or not a.get("keys"):
             continue
-        if line.startswith("#"):
-            cur = (line.lstrip("# ").strip(), [])
-            out.append(cur)
-        elif cur is not None and "|" in line:
-            key, desc = (p.strip() for p in line.split("|", 1))
-            cur[1].append((key, desc))
-    return out
+        rows.setdefault(a["category"], []).append((key_text(a), a["name"]))
+    cols = data.get("columns")
+    if cols and len(cols) == 2 and all(c in rows for col in cols for c in col):
+        return [[(c, rows[c]) for c in col] for col in cols]
+    order = [c for c in data.get("categories", []) if c in rows]
+    order += [c for c in rows if c not in order]
+    return split_balanced([(c, rows[c]) for c in order])
 
 
 def split_balanced(blocks):
-    """Two columns of whole sections with the closest total row counts."""
+    """Fallback: cut the list of whole sections where the two halves' row
+    counts are closest, without reordering."""
     heights = [len(rows) + 2 for _, rows in blocks]      # title + spacing
     total = sum(heights)
     best, best_diff, running = 1, None, 0
@@ -82,7 +105,7 @@ def label(text, cls, xalign=0.0):
 
 def column(blocks) -> Gtk.Grid:
     grid = Gtk.Grid(row_spacing=4, column_spacing=0)
-    grid.set_valign(Gtk.Align.START)
+    grid.set_valign(Gtk.Align.CENTER)   # the shorter column floats mid-card
     row = 0
     for i, (title, rows) in enumerate(blocks):
         t = label(title, "title")
@@ -128,7 +151,7 @@ class Overlay(Gtk.Window):
         body.get_style_context().add_class("card")
         card.add(body)
 
-        left, right = split_balanced(sections())
+        left, right = columns()
         body.pack_start(column(left), False, False, 0)
         body.pack_start(column(right), False, False, 0)
 

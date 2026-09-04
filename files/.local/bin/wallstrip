@@ -9,22 +9,24 @@ the centre image.
     ←/→  h/l  scroll   move        Enter / Space / click centre   apply (setwall)
     click a side image             jump to it                      Esc / click away   close
 
-Wallpapers are every image under WALL_DIR (recursively). Previews are scaled
-once with GdkPixbuf and cached under ~/.cache/wallstrip, so reopening is
-instant. The strip starts on the wallpaper currently shown (awww query).
+Wallpapers and their cached previews come from ~/.local/lib/wallthumbs.py
+(shared with the settings panel's Wallpapers page). The strip starts on the
+wallpaper currently shown (awww query).
 
 Blur comes from Hyprland (frosted-wallstrip layer rule); the backdrop is drawn
 at a low alpha so the whole screen behind frosts over. Stdlib + PyGObject.
 """
 from __future__ import annotations
 
-import hashlib
 import math
 import os
 import signal
-import subprocess
 import sys
 from pathlib import Path
+
+# ~/.local/bin/wallstrip -> ~/dotfiles/files/.local/bin/wallstrip; the shared
+# module sits beside it in ../lib, whichever of the two paths this runs through.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "lib"))
 
 import gi
 
@@ -35,13 +37,11 @@ gi.require_version("GtkLayerShell", "0.1")
 gi.require_version("PangoCairo", "1.0")
 from gi.repository import Gdk, GdkPixbuf, GLib, Gtk, GtkLayerShell, Pango, PangoCairo  # noqa: E402
 
-WALL_DIR = Path(os.environ.get("WALLSTRIP_DIR", Path.home() / "Pictures/Wallpapers"))
-CACHE = Path.home() / ".cache/wallstrip"
+from wallthumbs import WALL_DIR, THUMB_H, THUMB_W, current_wallpaper, list_wallpapers, thumb_for  # noqa: E402
+import wallthumbs  # noqa: E402
+
 COLORS = Path.home() / ".config/waybar/colors.css"
 PIDFILE = Path(os.environ.get("XDG_RUNTIME_DIR", "/tmp")) / "wallstrip.pid"
-SETWALL = Path.home() / ".local/bin/setwall"
-
-THUMB_W, THUMB_H = 640, 360        # cached preview size (16:9 letterboxed)
 CENTER_W = 560                     # on-screen width of the centre preview
 SIDE_SCALE = 0.55                  # each step away from centre shrinks by this
 SIDE_COUNT = 3                     # previews shown on each side
@@ -70,46 +70,6 @@ def matugen_colors() -> dict[str, tuple[float, float, float]]:
     out.setdefault("on_surface", (0.9, 0.9, 0.9))
     out.setdefault("surface", (0.06, 0.08, 0.09))
     return out
-
-
-# ── wallpapers & thumbnails ──────────────────────────────────────────────────
-
-def list_wallpapers() -> list[Path]:
-    files = [p for p in sorted(WALL_DIR.rglob("*")) if p.is_file() and not p.name.startswith(".")]
-    return files
-
-
-def thumb_for(path: Path) -> GdkPixbuf.Pixbuf | None:
-    CACHE.mkdir(parents=True, exist_ok=True)
-    key = hashlib.sha1(f"{path}:{path.stat().st_mtime_ns}".encode()).hexdigest()
-    cached = CACHE / f"{key}.png"
-    if cached.exists():
-        try:
-            return GdkPixbuf.Pixbuf.new_from_file(str(cached))
-        except GLib.Error:
-            cached.unlink(missing_ok=True)
-    try:
-        src = GdkPixbuf.Pixbuf.new_from_file(str(path))
-    except GLib.Error:
-        return None  # not an image
-    # scale to cover THUMB_W x THUMB_H, then centre-crop
-    scale = max(THUMB_W / src.get_width(), THUMB_H / src.get_height())
-    w, h = max(THUMB_W, round(src.get_width() * scale)), max(THUMB_H, round(src.get_height() * scale))
-    scaled = src.scale_simple(w, h, GdkPixbuf.InterpType.BILINEAR)
-    thumb = scaled.new_subpixbuf((w - THUMB_W) // 2, (h - THUMB_H) // 2, THUMB_W, THUMB_H).copy()
-    thumb.savev(str(cached), "png", [], [])
-    return thumb
-
-
-def current_wallpaper() -> Path | None:
-    try:
-        out = subprocess.run(["awww", "query"], capture_output=True, text=True, timeout=2).stdout
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    for line in out.splitlines():
-        if "image: " in line:
-            return Path(line.split("image: ", 1)[1].strip())
-    return None
 
 
 # ── the strip ────────────────────────────────────────────────────────────────
@@ -312,8 +272,7 @@ class Overlay(Gtk.Window):
         self.connect("key-release-event", lambda w, e: self.strip.released(w, e))
 
     def pick(self, path: Path):
-        subprocess.Popen([str(SETWALL), str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True)
+        wallthumbs.apply(path)
 
     def quit(self):
         Gtk.main_quit()

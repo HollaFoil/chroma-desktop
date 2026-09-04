@@ -1,0 +1,58 @@
+#!/bin/bash
+# Packages this desktop makes redundant: apps whose job another part of the
+# setup now does. `./prune` lists the ones installed; `./prune --remove`
+# uninstalls them (asks first) and sweeps the orphans they leave behind.
+# bootstrap --check calls the listing.
+#
+# Format: package<space>#<space>what replaces it. Only exact package names;
+# vlc-plugins-all pulls the ~80 vlc-plugin-* with it as dependencies.
+set -uo pipefail
+
+REDUNDANT='
+haruna                  # video: mpv + ModernZ
+mpvqt                   # only haruna used it
+gwenview                # images: swayimg
+kdegraphics-thumbnailers # gwenview'"'"'s thumbnails; nemo has its own
+kdegraphics-mobipocket  # dependency of the thumbnailers
+vlc                     # video: mpv
+vlc-plugins-all         # video: mpv (drags every vlc-plugin-* out with it)
+mpv-uosc                # OSC: replaced by mpv-modernz-git
+dolphin                 # files: nemo
+loupe                   # images: swayimg
+eog                     # images: swayimg
+celluloid               # video: mpv + ModernZ
+totem                   # video: mpv + ModernZ
+'
+
+REMOVE=0
+[[ "${1:-}" == "--remove" ]] && REMOVE=1
+
+present=()
+while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    name="${line%%[[:space:]]*}"
+    why="${line#*#}"
+    if pacman -Qq "$name" >/dev/null 2>&1; then
+        present+=("$name")
+        printf '  %-26s %s\n' "$name" "${why# }"
+    fi
+done <<< "$REDUNDANT"
+
+if [[ ${#present[@]} -eq 0 ]]; then
+    echo "  nothing redundant installed"
+    exit 0
+fi
+
+[[ $REMOVE == 1 ]] || { echo; echo "  ./prune --remove  uninstalls these and their orphans"; exit 0; }
+
+echo
+read -r -p "  remove ${#present[@]} package(s) and their orphaned dependencies? [y/N] " a
+[[ "$a" =~ ^[Yy] ]] || exit 0
+sudo pacman -Rns "${present[@]}"
+orphans="$(pacman -Qdtq 2>/dev/null)"
+if [[ -n "$orphans" ]]; then
+    echo; echo "  orphans left behind:"; echo "$orphans" | sed 's/^/    /'
+    read -r -p "  remove them too? [y/N] " a
+    # shellcheck disable=SC2086
+    [[ "$a" =~ ^[Yy] ]] && sudo pacman -Rns $orphans
+fi

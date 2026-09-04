@@ -1,7 +1,9 @@
 # Hyprland
 .config/hypr/hyprland.lua
 .config/hypr/monitors.lua
-.config/hypr/keybinds.txt
+.config/hypr/conf
+.config/hypr/lib
+.config/hypr/state
 .config/hypr/hypridle.conf
 .config/hypr/hyprlock.conf
 
@@ -12,6 +14,7 @@
 .local/lib/barpop
 .config/networkmanagement.notifyrc
 .local/bin/waybar-widget
+.config/barpop/audio.json
 
 # swaync
 .config/swaync/style.css
@@ -30,6 +33,7 @@
 .local/bin/rofi-cliphist
 .local/bin/rofi-wallthumbs
 .local/bin/wallstrip
+.local/lib/wallthumbs.py
 
 # fuzzel
 .config/fuzzel/fuzzel.ini
@@ -62,6 +66,18 @@
 .config/gtk-3.0/gtk.css
 .config/gtk-4.0/gtk.css
 .config/matugen/templates/gtk-colors.css
+
+# viewers: swayimg (images) and mpv (video), colours from matugen
+.config/swayimg/init.lua
+.config/matugen/templates/swayimg-colors.lua
+.config/mpv/mpv.conf
+.config/mpv/input.conf
+.config/mpv/scripts/matugen-reload.lua
+.config/matugen/templates/modernz.conf
+
+# icons (Adwaita recoloured into ~/.local/share/icons/Matugen)
+.config/matugen/templates/icon-colors.sh
+.local/bin/matugen-icons
 
 # kde / qt
 .config/kdeglobals
