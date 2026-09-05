@@ -8,5 +8,7 @@ import Quickshell
 Singleton {
     signal settingsRequested(string page)
     signal settingsToggle()
+    signal notifsToggle()
     function openSettings(page) { settingsRequested(page ?? "") }
+    function toggleNotifs() { notifsToggle() }
 }

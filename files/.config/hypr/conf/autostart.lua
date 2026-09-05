@@ -57,7 +57,6 @@ hl.on("hyprland.start", function()
     -- installed, a failed restart there would otherwise leave the session
     -- target (and so waybar) never started at all.
     hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal waybar.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
-    hl.exec_cmd("swaync")
     -- waybar runs as a systemd user unit rather than a bare exec_cmd: it
     -- segfaults in its mpris module when a player (Chrome) goes away, and
     -- Restart=on-failure brings it straight back instead of leaving no bar.

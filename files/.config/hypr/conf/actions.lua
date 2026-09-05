@@ -144,7 +144,7 @@ A.define({ id = "ws.to_special", name = "Send window to scratchpad", category = 
 A.define({ id = "util.screenshot", name = "Screenshot region to clipboard", category = "Utilities",
            keys = { mainMod .. " + SHIFT + S" }, run = hl.dsp.exec_cmd('grim -g "$(slurp)" - | wl-copy') })
 A.define({ id = "util.notifications", name = "Toggle notification panel", category = "Utilities",
-           keys = { mainMod .. " + SHIFT + N" }, run = hl.dsp.exec_cmd("swaync-client -t -sw") })
+           keys = { mainMod .. " + SHIFT + N" }, run = hl.dsp.exec_cmd("qs ipc call notifs toggle") })
 A.define({ id = "util.clipboard", name = "Clipboard history", category = "Utilities",
            keys = { mainMod .. " + SHIFT + C" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/rofi-cliphist") })
 -- relayout places a fixed dashboard of apps on a fixed monitor: it only means

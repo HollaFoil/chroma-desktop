@@ -13,7 +13,7 @@ ColumnLayout {
         { glyph: "󰀻", text: "Applications",  run: home + "/.local/bin/rofi-launcher" },
         { glyph: "󰅌", text: "Clipboard",     run: home + "/.local/bin/rofi-cliphist" },
         { glyph: "󰹑", text: "Screenshot",    run: 'grim -g "$(slurp)" - | wl-copy' },
-        { glyph: "󰂚", text: "Notifications", run: "swaync-client -t -sw" },
+        { glyph: "󰂚", text: "Notifications", notifs: true },
         { glyph: "󰒓", text: "Settings",      settings: true }
     ]
     readonly property var power: [
@@ -26,6 +26,7 @@ ColumnLayout {
     function act(item) {
         Popups.close()
         if (item.settings) Overlays.openSettings("")
+        else if (item.notifs) Overlays.toggleNotifs()
         else Proc.detach(item.run)
     }
 

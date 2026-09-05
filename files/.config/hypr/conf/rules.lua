@@ -148,13 +148,11 @@ hl.window_rule({
     no_focus = true,
 })
 
--- Frosted surfaces: blur the wallpaper behind the shell's bar and popups and
--- the swaync panels. They paint translucent surface colour so the blur shows
--- through; ignore_alpha keeps the fully transparent parts (swaync's
--- screen-wide window, the shell's click-away backdrops) from being blurred.
+-- Frosted surfaces: blur the wallpaper behind the shell's bar, popups and
+-- notifications. They paint translucent surface colour so the blur shows
+-- through; ignore_alpha keeps the fully transparent parts (the click-away
+-- backdrops) from being blurred.
 for _, r in ipairs({
-    { name = "frosted-swaync",  ns = "^swaync-control-center$" },
-    { name = "frosted-notifs",  ns = "^swaync-notification-window$" },
     { name = "frosted-wallstrip", ns = "^wallstrip$" },
     { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
     -- Quickshell surfaces (the bar blurs its own popups too)

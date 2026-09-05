@@ -4,6 +4,7 @@ import Quickshell.Io
 import qs.Bar
 import qs.Popups
 import qs.Settings
+import qs.Notifications
 import qs.Services
 import qs.Theme
 
@@ -20,14 +21,24 @@ ShellRoot {
             required property var modelData
             Bar { screen: perScreen.modelData }
             PopupHost { modelData: perScreen.modelData }
+            Toasts { modelData: perScreen.modelData }
         }
     }
 
     LazyLoader { id: settingsLoader; loading: true; SettingsWindow { allowedScreens: shell.screens } }
+    LazyLoader { id: notifsLoader; loading: true; ControlCenter { allowedScreens: shell.screens } }
     Connections {
         target: Overlays
         function onSettingsRequested(page) { settingsLoader.item.show(page) }
         function onSettingsToggle() { settingsLoader.item.toggle() }
+        function onNotifsToggle() { notifsLoader.item.toggle() }
+    }
+    IpcHandler {
+        target: "notifs"
+        function toggle(): void { notifsLoader.item.toggle() }
+        function dnd(on: bool): void { Notifs.dnd = on }
+        function clear(): void { Notifs.clearAll() }
+        function count(): int { return Notifs.count }
     }
     IpcHandler {
         target: "settings"
