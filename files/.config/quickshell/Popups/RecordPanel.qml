@@ -143,7 +143,7 @@ ColumnLayout {
             text: Recorder.recording ? "󰓛  Stop" : Recorder.starting ? "picking…" : "󰑊  Start recording"
             on: !Recorder.recording
             enabled: !Recorder.starting
-            onClicked: { if (Recorder.recording) Recorder.stop(); else { Popups.close(); Recorder.start() } }
+            onClicked: { Popups.close(); if (Recorder.recording) Recorder.stop(); else Recorder.start() }
         }
     }
 }

@@ -95,10 +95,15 @@ Singleton {
             recording = true; starting = false
         })
     }
+    // Stop, then open the folder once the file is written. SIGINT lets the
+    // recorder finish the file; a recorder still alive after 3 s gets SIGTERM.
+    property bool openAfter: false
     function stop() {
         if (!recording) return
-        if (rec.processId) Proc.detach(["kill", "-INT", String(rec.processId)])
+        openAfter = true
+        if (rec.processId) { Proc.detach(["kill", "-INT", String(rec.processId)]); stopHard.restart() }
     }
+    Timer { id: stopHard; interval: 3000; onTriggered: if (root.recording && rec.processId) Proc.detach(["kill", "-TERM", String(rec.processId)]) }
     Process {
         id: rec
         property string err: ""
@@ -106,9 +111,14 @@ Singleton {
         onExited: (code, st) => {
             const was = root.recording
             root.recording = false; root.starting = false
+            const wanted = root.openAfter; root.openAfter = false
             if (!was) return
-            if (code === 0 || code === 130 || code === 2) Notify.send("Recording saved", root.outFile, "camera-video-symbolic")
-            else { root.status = root.backend + " failed (" + code + "): " + (rec.err.trim().split("\n").pop() || "see journal"); Notify.send("Recording failed", root.status, "dialog-error") }
+            stopHard.stop()
+            const ok = code === 0 || code === 130 || code === 2 || code === 143
+            if (ok) {
+                Notify.send("Recording saved", root.outFile, "camera-video-symbolic")
+                if (wanted) Proc.detach(["xdg-open", root.dir])
+            } else { root.status = root.backend + " failed (" + code + "): " + (rec.err.trim().split("\n").pop() || "see journal"); Notify.send("Recording failed", root.status, "dialog-error") }
         }
     }
     Component.onCompleted: Proc.sh("command -v gpu-screen-recorder", (c) => { haveGsr = c === 0 })
