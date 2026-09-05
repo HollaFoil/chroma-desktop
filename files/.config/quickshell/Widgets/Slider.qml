@@ -50,14 +50,14 @@ Item {
     Rectangle {
         anchors.verticalCenter: parent.verticalCenter
         width: root.frac() * parent.width; height: 6; radius: Tokens.rPill
-        color: root.muted ? Colors.onSurfaceVariant : Colors.primary
+        color: root.muted ? Colors.surfaceVariantFg : Colors.primary
         Behavior on color { ColorAnimation { duration: Tokens.durFast } }
     }
     Rectangle {
         width: 14; height: 14; radius: 7
         anchors.verticalCenter: parent.verticalCenter
         x: Math.max(0, Math.min(parent.width - width, root.frac() * parent.width - width / 2))
-        color: root.muted ? Colors.onSurfaceVariant
+        color: root.muted ? Colors.surfaceVariantFg
              : (ma.containsMouse || ma.pressed) ? Colors.primaryFixed : Colors.primary
         Behavior on color { ColorAnimation { duration: Tokens.durFast } }
     }

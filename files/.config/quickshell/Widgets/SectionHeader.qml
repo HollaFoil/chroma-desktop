@@ -13,7 +13,7 @@ RowLayout {
 
     Glyph {
         text: root.glyph
-        color: root.inactive ? Colors.onSurfaceVariant : Colors.primary
+        color: root.inactive ? Colors.surfaceVariantFg : Colors.primary
         Layout.preferredWidth: 24
     }
     Label {

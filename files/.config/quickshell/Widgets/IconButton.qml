@@ -27,11 +27,11 @@ Rectangle {
         anchors.centerIn: parent
         text: root.glyph
         size: root.small ? Tokens.fontSizeIconSmall : Tokens.fontSizeIcon
-        color: !root.enabled ? Colors.onSurfaceVariant
+        color: !root.enabled ? Colors.surfaceVariantFg
              : root.busy || root.kind === "default" ? Colors.primary
-             : root.kind === "muted" ? Colors.onSurfaceVariant
-             : root.kind === "action" ? (root.hovered ? Colors.primary : Colors.onSurfaceVariant)
-             : (root.hovered ? Colors.error : Colors.onSurfaceVariant)
+             : root.kind === "muted" ? Colors.surfaceVariantFg
+             : root.kind === "action" ? (root.hovered ? Colors.primary : Colors.surfaceVariantFg)
+             : (root.hovered ? Colors.error : Colors.surfaceVariantFg)
         SequentialAnimation on opacity {
             running: root.busy
             loops: Animation.Infinite

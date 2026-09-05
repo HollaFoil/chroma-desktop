@@ -170,7 +170,7 @@ A.define({ id = "util.relayout_toggle", name = "Move dashboard to the other moni
 A.define({ id = "util.wallpaper", name = "Wallpaper picker", category = "Utilities",
            keys = { mainMod .. " + W" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wallstrip") })
 A.define({ id = "util.settings", name = "Settings", category = "Utilities",
-           keys = { mainMod .. " + comma" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/barpop settings") })
+           keys = { mainMod .. " + comma" }, run = hl.dsp.exec_cmd("qs ipc call settings toggle") })
 A.define({ id = "util.cheatsheet", name = "This cheatsheet", category = "Utilities",
            keys = { mainMod .. " + slash" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/cheatsheet") })
 

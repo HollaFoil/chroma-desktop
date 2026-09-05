@@ -18,7 +18,7 @@ Rectangle {
     Rectangle {
         width: 16; height: 16; radius: 8; y: 2
         x: root.checked ? root.width - 18 : 2
-        color: root.checked ? Colors.onPrimary : Colors.onSurfaceVariant
+        color: root.checked ? Colors.primaryFg : Colors.surfaceVariantFg
         Behavior on x { NumberAnimation { duration: Tokens.durFast; easing.type: Tokens.easing } }
         Behavior on color { ColorAnimation { duration: Tokens.durFast } }
     }

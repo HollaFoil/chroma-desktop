@@ -29,9 +29,9 @@ Rectangle {
         font.family: Tokens.fontFamily
         font.bold: true
         font.pixelSize: Tokens.fontSizeSmall
-        color: Colors.onSurface
+        color: Colors.surfaceFg
         selectionColor: Tokens.alpha(Colors.primary, Tokens.aSelection)
-        selectedTextColor: Colors.onSurface
+        selectedTextColor: Colors.surfaceFg
         echoMode: root.password ? TextInput.Password : TextInput.Normal
         clip: true
         cursorDelegate: Rectangle { width: 1; color: Colors.primary; visible: input.cursorVisible }

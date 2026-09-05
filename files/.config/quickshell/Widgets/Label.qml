@@ -9,7 +9,7 @@ Text {
     font.family: Tokens.fontFamily
     font.bold: !regular
     font.pixelSize: size
-    color: dim ? Colors.onSurfaceVariant : Colors.onSurface
+    color: dim ? Colors.surfaceVariantFg : Colors.surfaceFg
     elide: Text.ElideRight
     verticalAlignment: Text.AlignVCenter
     Behavior on color { ColorAnimation { duration: Tokens.durSlow } }

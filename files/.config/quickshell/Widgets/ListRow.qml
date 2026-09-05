@@ -23,7 +23,7 @@ Rectangle {
     implicitWidth: row.implicitWidth + padX * 2
     color: active ? Tokens.alpha(Colors.primary, Tokens.aActive)
          : (hovered && clickable) ? (accent ? Tokens.alpha(Colors.primary, Tokens.aHover)
-                                            : Tokens.alpha(Colors.onSurface, Tokens.aSubtle))
+                                            : Tokens.alpha(Colors.surfaceFg, Tokens.aSubtle))
          : "transparent"
     Behavior on color { ColorAnimation { duration: Tokens.durFast } }
 

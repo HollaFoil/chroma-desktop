@@ -24,7 +24,7 @@ Rectangle {
         anchors.centerIn: parent
         text: root.text
         size: Tokens.fontSizeSmall
-        color: !root.enabled ? Colors.onSurfaceVariant : root.on ? Colors.onPrimary : Colors.onSurface
+        color: !root.enabled ? Colors.surfaceVariantFg : root.on ? Colors.primaryFg : Colors.surfaceFg
     }
     MouseArea {
         id: ma

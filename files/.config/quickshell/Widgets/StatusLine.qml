@@ -7,7 +7,7 @@ Label {
     property bool error: false
     visible: text.length > 0
     size: Tokens.fontSizeSmall
-    color: error ? Colors.error : Colors.onSurfaceVariant
+    color: error ? Colors.error : Colors.surfaceVariantFg
     wrapMode: Text.Wrap
     leftPadding: 4
     rightPadding: 4

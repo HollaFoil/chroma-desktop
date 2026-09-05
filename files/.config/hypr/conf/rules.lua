@@ -148,16 +148,13 @@ hl.window_rule({
     no_focus = true,
 })
 
--- Frosted popups: blur the wallpaper behind the bar, the swaync panels and
--- the barpop menus. Their stylesheets paint translucent @surface so the blur
--- shows through; ignore_alpha keeps the fully transparent parts of the
--- surfaces (swaync's screen-wide window, barpop's click-away backdrop) from
--- being blurred as well.
+-- Frosted surfaces: blur the wallpaper behind the shell's bar and popups and
+-- the swaync panels. They paint translucent surface colour so the blur shows
+-- through; ignore_alpha keeps the fully transparent parts (swaync's
+-- screen-wide window, the shell's click-away backdrops) from being blurred.
 for _, r in ipairs({
-    { name = "frosted-waybar",  ns = "^waybar$",                      popups = true },
     { name = "frosted-swaync",  ns = "^swaync-control-center$" },
     { name = "frosted-notifs",  ns = "^swaync-notification-window$" },
-    { name = "frosted-barpop",  ns = "^barpop$" },
     { name = "frosted-wallstrip", ns = "^wallstrip$" },
     { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
     -- Quickshell surfaces (the bar blurs its own popups too)

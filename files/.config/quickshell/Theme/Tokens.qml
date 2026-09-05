@@ -18,6 +18,7 @@ Singleton {
     readonly property int fontSizeHeading: 16
     readonly property int fontSizeIcon: 18
     readonly property int fontSizeIconSmall: 14
+    readonly property int fontSizeBar: 12
 
     // the bar
     readonly property int barHeight: 37

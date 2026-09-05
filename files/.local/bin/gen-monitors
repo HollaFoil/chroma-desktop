@@ -10,7 +10,6 @@
 #
 #   ~/.config/hypr/monitors.lua          one hl.monitor{} per output
 #   ~/.config/hypr/state/monitors.json   workspace -> monitor map, read by conf/rules.lua
-#   ~/.config/waybar/config.jsonc        persistent-workspaces, keyed by monitor name
 #
 # Workspaces 1-10 are split by size: the largest monitor takes 1-5 and the
 # rest are dealt out left to right, which is the layout the config assumes
@@ -46,7 +45,6 @@ BANK=10
 HYPR_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/hypr"
 MONITORS_LUA="$HYPR_DIR/monitors.lua"
 STATE_JSON="$HYPR_DIR/state/monitors.json"
-WAYBAR_CONF="${XDG_CONFIG_HOME:-$HOME/.config}/waybar/config.jsonc"
 
 die() { echo "gen-monitors: $*" >&2; exit 1; }
 
@@ -112,67 +110,8 @@ state_json() {
           ws_home: $ws_home}'
 }
 
-# The always-drawn buttons on each monitor's bar.
-waybar_persistent() {
-    local out=""
-    for m in "${MON_ORDER[@]}"; do
-        out+="\"$m\": [${WS_LIST[$m]}]"
-        [[ "$m" == "${MON_ORDER[-1]}" ]] || out+=$',\n'
-    done
-    printf '%s\n' "$out"
-}
-
-# ...and their labels, which is what makes the banks invisible: workspace 11 is
-# monitor two's first, so it is drawn "1". Anything outside the map (a stray
-# workspace from an older session, or one reached by SUPER+scroll) has no
-# label and falls back to a dot.
-waybar_icons() {
-    local out=""
-    for ws in "${ALL_WS[@]}"; do
-        out+="\"$ws\": \"${WS_LABEL[$ws]}\""$',\n'
-    done
-    out+='"default": "•"'                            # last entry, so no comma
-    printf '%s\n' "$out"
-}
-
-# config.jsonc has comments, so jq cannot touch it: one object is replaced in
-# place and the rest of the file is passed through byte for byte, keeping the
-# surrounding comments and formatting. Only inside the hyprland/workspaces
-# module - "format-icons" is a key in half the modules in the file.
-patch_waybar_block() {
-    local key="$1" body="$2" target tmp
-    target="$(readlink -f "$WAYBAR_CONF")"          # write through the dotfiles symlink
-    [[ -f "$target" ]] || { echo "  ! no waybar config at $WAYBAR_CONF, skipped"; return 1; }
-    tmp="$(mktemp)"
-    awk -v key="$key" -v body="$body" '
-        # the module itself, not its mention in modules-center (no colon there)
-        !armed && $0 ~ ("\"hyprland/workspaces\"[[:space:]]*:") { armed = 1 }
-        armed && !done && $0 ~ ("\"" key "\"[[:space:]]*:[[:space:]]*\\{") {
-            match($0, /^[ \t]*/); ind = substr($0, RSTART, RLENGTH)
-            print ind "\"" key "\": {"
-            nl = split(body, lines, "\n")
-            for (i = 1; i <= nl; i++) if (lines[i] != "") print ind "  " lines[i]
-            depth = 1; skip = 1; done = 1
-            next
-        }
-        skip {
-            line = $0
-            depth += gsub(/\{/, "{", line) - gsub(/\}/, "}", line)
-            if (depth <= 0) {
-                skip = 0
-                print (line ~ /,[[:space:]]*$/) ? ind "}," : ind "}"
-            }
-            next
-        }
-        { print }
-        END { if (!done) exit 3 }
-    ' "$target" > "$tmp"
-    case $? in
-        0) cat "$tmp" > "$target"; rm -f "$tmp"; echo "  patched $WAYBAR_CONF ($key)" ;;
-        3) rm -f "$tmp"; echo "  ! no \"$key\" block in hyprland/workspaces, left alone"; return 1 ;;
-        *) rm -f "$tmp"; echo "  ! could not patch $WAYBAR_CONF"; return 1 ;;
-    esac
-}
+# The bar (quickshell, Bar/WorkspacesModule.qml) watches state/monitors.json
+# itself, so there is no bar config to patch and nothing to restart.
 
 # ---- report / write -------------------------------------------------
 echo "primary (owns workspace 1): $PRIMARY"
@@ -184,8 +123,6 @@ if [[ $CHECK == 1 ]]; then
     echo
     echo "--- $MONITORS_LUA"; monitors_lua
     echo "--- $STATE_JSON"; state_json
-    echo "--- $WAYBAR_CONF (persistent-workspaces)"; waybar_persistent
-    echo "--- $WAYBAR_CONF (format-icons)"; waybar_icons
     exit 0
 fi
 
@@ -199,8 +136,6 @@ write_through() {                                   # keep the dotfiles symlink,
 
 monitors_lua | write_through "$MONITORS_LUA"
 state_json   | write_through "$STATE_JSON"
-patch_waybar_block persistent-workspaces "$(waybar_persistent)"
-patch_waybar_block format-icons "$(waybar_icons)"
 
 if [[ -f "$HOME/.config/relayout/config.sh" ]]; then
     echo "  ! relayout is opted in here: its WS_HOME overrides this map at runtime"
@@ -208,4 +143,3 @@ if [[ -f "$HOME/.config/relayout/config.sh" ]]; then
 fi
 
 hyprctl reload >/dev/null 2>&1 && echo "  reloaded hyprland"
-systemctl --user try-restart waybar.service 2>/dev/null && echo "  restarted waybar"
