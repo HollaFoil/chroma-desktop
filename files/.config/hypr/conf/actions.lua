@@ -8,7 +8,7 @@ local A = require("lib.actions")
 local HOME = os.getenv("HOME")
 local terminal    = "kitty"
 local fileManager = "nemo"
-local menu        = HOME .. "/.local/bin/rofi-launcher"
+local menu        = "qs ipc call launcher toggle"
 
 local mainMod = "SUPER" -- Sets "Windows" key as main modifier
 
@@ -146,7 +146,7 @@ A.define({ id = "util.screenshot", name = "Screenshot region to clipboard", cate
 A.define({ id = "util.notifications", name = "Toggle notification panel", category = "Utilities",
            keys = { mainMod .. " + SHIFT + N" }, run = hl.dsp.exec_cmd("qs ipc call notifs toggle") })
 A.define({ id = "util.clipboard", name = "Clipboard history", category = "Utilities",
-           keys = { mainMod .. " + SHIFT + C" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/rofi-cliphist") })
+           keys = { mainMod .. " + SHIFT + C" }, run = hl.dsp.exec_cmd("qs ipc call clip toggle") })
 -- relayout places a fixed dashboard of apps on a fixed monitor: it only means
 -- anything once you have said which monitors and which apps, so it is an
 -- offering rather than a default. Both actions are always listed in Settings >

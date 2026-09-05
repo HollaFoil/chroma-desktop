@@ -22,7 +22,6 @@ if command -v awww >/dev/null 2>&1; then
     awww img "$WALL" || echo "setwall: awww failed (is awww-daemon running?)" >&2
 fi
 matugen image "$WALL" -m dark --source-color-index 0
-~/.local/bin/rofi-wallthumbs "$WALL"   # crops the rofi launcher paints behind itself
 
 # Prompt colours, only for oh-my-posh users who have the source theme in place.
 if command -v oh-my-posh >/dev/null 2>&1 && [[ -f ~/.config/oh-my-posh/themes/agnoster.omp.json ]]; then

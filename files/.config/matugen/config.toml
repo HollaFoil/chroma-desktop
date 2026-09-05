@@ -28,14 +28,6 @@ post_hook = 'pkill -SIGUSR1 kitty || true'  # pkill is non-zero with no kitty op
 input_path = '~/.config/matugen/templates/hyprlock-colors.conf'
 output_path = '~/.config/hypr/hyprlock-colors.conf'
 
-[templates.rofi]
-input_path = '~/.config/matugen/templates/rofi-colors.rasi'
-output_path = '~/.config/rofi/colors.rasi'
-
-[templates.fuzzel]
-input_path = '~/.config/matugen/templates/fuzzel-colors.ini'
-output_path = '~/.config/fuzzel/colors.ini'
-
 [templates.homelab-dash]
 # Same palette the waybar template emits (86 @define-color rules, which is
 # valid GTK CSS). No post_hook: homelab-dash watches this file itself, so it

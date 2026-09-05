@@ -9,6 +9,10 @@ Singleton {
     signal settingsRequested(string page)
     signal settingsToggle()
     signal notifsToggle()
+    signal launcherToggle()
+    signal clipToggle()
     function openSettings(page) { settingsRequested(page ?? "") }
     function toggleNotifs() { notifsToggle() }
+    function toggleLauncher() { launcherToggle() }
+    function toggleClip() { clipToggle() }
 }

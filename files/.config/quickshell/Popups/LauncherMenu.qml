@@ -10,8 +10,8 @@ ColumnLayout {
     spacing: 2
     readonly property string home: Hypr.home
     readonly property var items: [
-        { glyph: "󰀻", text: "Applications",  run: home + "/.local/bin/rofi-launcher" },
-        { glyph: "󰅌", text: "Clipboard",     run: home + "/.local/bin/rofi-cliphist" },
+        { glyph: "󰀻", text: "Applications",  launcher: true },
+        { glyph: "󰅌", text: "Clipboard",     clip: true },
         { glyph: "󰹑", text: "Screenshot",    run: 'grim -g "$(slurp)" - | wl-copy' },
         { glyph: "󰂚", text: "Notifications", notifs: true },
         { glyph: "󰒓", text: "Settings",      settings: true }
@@ -27,6 +27,8 @@ ColumnLayout {
         Popups.close()
         if (item.settings) Overlays.openSettings("")
         else if (item.notifs) Overlays.toggleNotifs()
+        else if (item.launcher) Overlays.toggleLauncher()
+        else if (item.clip) Overlays.toggleClip()
         else Proc.detach(item.run)
     }
 

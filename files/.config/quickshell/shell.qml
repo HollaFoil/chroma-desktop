@@ -5,6 +5,7 @@ import qs.Bar
 import qs.Popups
 import qs.Settings
 import qs.Notifications
+import qs.Launcher
 import qs.Services
 import qs.Theme
 
@@ -27,12 +28,18 @@ ShellRoot {
 
     LazyLoader { id: settingsLoader; loading: true; SettingsWindow { allowedScreens: shell.screens } }
     LazyLoader { id: notifsLoader; loading: true; ControlCenter { allowedScreens: shell.screens } }
+    LazyLoader { id: launcherLoader; loading: true; AppLauncher { allowedScreens: shell.screens } }
+    LazyLoader { id: clipLoader; loading: true; ClipPicker { allowedScreens: shell.screens } }
     Connections {
         target: Overlays
         function onSettingsRequested(page) { settingsLoader.item.show(page) }
         function onSettingsToggle() { settingsLoader.item.toggle() }
         function onNotifsToggle() { notifsLoader.item.toggle() }
+        function onLauncherToggle() { launcherLoader.item.toggle() }
+        function onClipToggle() { clipLoader.item.toggle() }
     }
+    IpcHandler { target: "launcher"; function toggle(): void { launcherLoader.item.toggle() } }
+    IpcHandler { target: "clip"; function toggle(): void { clipLoader.item.toggle() } }
     IpcHandler {
         target: "notifs"
         function toggle(): void { notifsLoader.item.toggle() }
