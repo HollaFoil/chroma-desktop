@@ -187,9 +187,7 @@ A.define({ id = "session.exit", name = "Exit Hyprland", category = "Session",
 -- brings a fresh locker up should the running one ever die.
 A.define({ id = "session.lock", name = "Lock screen", category = "Session",
            keys = { mainMod .. " + L" }, flags = { locked = true },
-           -- absolute path: Hyprland's PATH has no ~/.local/bin, and /usr/local/bin
-           -- holds the greeter user's copy, which may lag behind the repo
-           run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wallgreet --lock || hyprlock") })
+           run = hl.dsp.exec_cmd("qs ipc call lock lock || hyprlock") })
 
 ---------------
 ----  MEDIA ----

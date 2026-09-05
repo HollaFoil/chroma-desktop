@@ -7,6 +7,7 @@ import qs.Settings
 import qs.Notifications
 import qs.Launcher
 import qs.Overlays
+import qs.Lock
 import qs.Services
 import qs.Theme
 
@@ -34,6 +35,8 @@ ShellRoot {
     LazyLoader { id: clipLoader; loading: true; ClipPicker { allowedScreens: shell.screens } }
     LazyLoader { id: cheatLoader; loading: true; Cheatsheet { allowedScreens: shell.screens } }
     LazyLoader { id: stripLoader; loading: true; WallStrip { allowedScreens: shell.screens } }
+    LockSession {}
+    LazyLoader { id: lockPreviewLoader; LockPreview { screen: shell.screens[0] } }
     Connections {
         target: Overlays
         function onSettingsRequested(page) { settingsLoader.item.show(page) }
@@ -46,6 +49,13 @@ ShellRoot {
     }
     IpcHandler { target: "cheatsheet"; function toggle(): void { cheatLoader.item.toggle() } }
     IpcHandler { target: "wallstrip"; function toggle(): void { stripLoader.item.toggle() } }
+    IpcHandler {
+        target: "lock"
+        function lock(): void { Lock.lock() }
+        function locked(): bool { return Lock.locked }
+        // a look at the screen on the shell's first output, no lock involved
+        function preview(greeter: bool): void { lockPreviewLoader.active = true; lockPreviewLoader.item.greeterLook = greeter; lockPreviewLoader.item.isOpen = !lockPreviewLoader.item.isOpen }
+    }
     IpcHandler {
         target: "osd"
         function volume(): void { const s = Audio.defaultSink; Osd.armed = true; Osd.show("volume", Audio.speakerIcon(Audio.pct(s), s && s.audio && s.audio.muted), Math.min(1, s && s.audio ? s.audio.volume : 0), s && s.audio ? s.audio.muted : false) }
@@ -67,7 +77,10 @@ ShellRoot {
 
     // Session-long duties (the audio router, network notifications) live in
     // these singletons; touching them here brings them up with the shell.
-    Component.onCompleted: { Audio.applySoon(); Net.refreshHotspot(); Osd.armed = false }
+    Component.onCompleted: {
+        Audio.applySoon(); Net.refreshHotspot(); Osd.armed = false
+        Proc.sh('f="${XDG_RUNTIME_DIR:-/tmp}/qs-lock-at-start"; if [ -e "$f" ]; then rm -f "$f"; echo lock; fi', (c, out) => { if (out.trim() === "lock") Lock.lock() })
+    }
 
     IpcHandler {
         target: "popup"

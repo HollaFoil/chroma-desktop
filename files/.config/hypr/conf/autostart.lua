@@ -2,12 +2,15 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Autostart/
 hl.on("hyprland.start", function()
     -- Booted straight into this session by greetd's autologin
-    -- (system/greetd/config.toml.in sets the variable): nobody has typed a
-    -- password yet, so the lock screen goes up first, in front of the desktop
-    -- assembling behind it. Unlocking is then instant. Logging in through the
-    -- greeter (after a logout) does not set the variable and does not lock.
-    if os.getenv("WALLGREET_LOCK_AT_START") == "1" then
-        hl.exec_cmd(os.getenv("HOME") .. "/.local/bin/wallgreet --lock || hyprlock")
+    -- (system/greetd/config.toml.in sets QS_LOCK_AT_START): nobody has typed a
+    -- password yet, so the shell locks the screen as soon as it is up, in
+    -- front of the desktop assembling behind it. The flag file is how the
+    -- shell (started below by systemd) learns about it; it deletes the flag.
+    -- Logging in through the greeter (after a logout) sets nothing and does
+    -- not lock.
+    local lock_flag = ""
+    if os.getenv("QS_LOCK_AT_START") == "1" or os.getenv("WALLGREET_LOCK_AT_START") == "1" then
+        lock_flag = "touch \"${XDG_RUNTIME_DIR:-/tmp}/qs-lock-at-start\"; "
     end
     -- Chained with && inside ONE exec_cmd on purpose: exec_cmd is async, so as
     -- separate lines the environment import races the services that need it.
@@ -18,16 +21,15 @@ hl.on("hyprland.start", function()
     -- only the gtk backend, which provides no ScreenCast on Hyprland — so
     -- screen sharing silently has no interface to call. Restarting it here
     -- makes it pick up xdg-desktop-portal-hyprland.
-    -- HYPRLAND_INSTANCE_SIGNATURE is imported for waybar: its hyprland/*
-    -- modules find the compositor's IPC socket at
+    -- HYPRLAND_INSTANCE_SIGNATURE is imported for the shell (quickshell): its
+    -- Hyprland module finds the compositor's IPC socket at
     -- $XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock. Launched
-    -- by Hyprland it inherited that; started by systemd it does not, and the
-    -- workspace and submap modules come up empty without it.
+    -- by Hyprland it would inherit that; started by systemd it does not.
     --
-    -- waybar.service hangs off graphical-session.target (Requisite= and
+    -- quickshell.service hangs off graphical-session.target (Requisite= and
     -- WantedBy=), but that target sets RefuseManualStart and can only be
     -- reached as a dependency - hence hyprland-session.target, which BindsTo it.
-    -- Starting ours pulls graphical-session.target up and waybar with it, and
+    -- Starting ours pulls graphical-session.target up and the shell with it, and
     -- brings both down when the session ends. Nothing else is enabled there.
     --
     -- `restart`, not `start`, and this is load-bearing. Nothing tears the
@@ -35,7 +37,7 @@ hl.on("hyprland.start", function()
     -- or crashes - there is no exit hook that survives all three) and the
     -- target is simply left active. On the next login `start` then sees an
     -- already-active target, does nothing, and never re-runs its dependencies,
-    -- so a waybar left in failed/start-limit-hit by the previous teardown stays
+    -- so a shell left in failed/start-limit-hit by the previous teardown stays
     -- down for the whole session with no bar and no error. `restart` stops the
     -- target first, which pulls graphical-session.target down through BindsTo
     -- and every PartOf unit with it, then brings the lot back against the
@@ -55,13 +57,11 @@ hl.on("hyprland.start", function()
     -- The agent and portal restarts are deliberately not && -chained into the
     -- target start: on a machine without hyprpolkitagent or the portal
     -- installed, a failed restart there would otherwise leave the session
-    -- target (and so waybar) never started at all.
-    hl.exec_cmd("systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal waybar.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
-    -- waybar runs as a systemd user unit rather than a bare exec_cmd: it
-    -- segfaults in its mpris module when a player (Chrome) goes away, and
-    -- Restart=on-failure brings it straight back instead of leaving no bar.
-    -- Started above via graphical-session.target; `journalctl --user -u waybar`
-    -- now has its output, which a fire-and-forget exec_cmd threw away.
+    -- target (and so the shell) never started at all.
+    hl.exec_cmd(lock_flag .. "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal quickshell.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
+    -- The shell runs as a systemd user unit rather than a bare exec_cmd so a
+    -- crash brings it straight back (Restart=on-failure) and its output lands
+    -- in `journalctl --user -u quickshell`. Started above via the target.
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")

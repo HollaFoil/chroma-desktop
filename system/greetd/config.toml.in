@@ -3,14 +3,14 @@
 [terminal]
 vt = 1
 
-# At boot: straight into @USER@'s Hyprland, locked by wallgreet from its first
-# frame (WALLGREET_LOCK_AT_START is read by hypr/conf/autostart.lua). The
+# At boot: straight into @USER@'s Hyprland, locked by the shell as soon as it
+# is up (QS_LOCK_AT_START is read by hypr/conf/autostart.lua). The
 # password is asked in front of the finished desktop, so unlocking is
 # instant: no second compositor to start, no black screen in between.
 # Logging out lands on the greeter below, where another user or session can
 # be chosen. ./greeter install --no-autologin leaves this block out.
 [initial_session]
-command = "env WALLGREET_LOCK_AT_START=1 start-hyprland"
+command = "env QS_LOCK_AT_START=1 start-hyprland"
 user = "@USER@"
 
 # The greeter: ReGreet-free. A Hyprland instance running as `greeter` draws

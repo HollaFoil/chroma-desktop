@@ -78,7 +78,7 @@ OverlayWindow {
                                 { glyph: "󰝟", on: win.sink && win.sink.audio ? win.sink.audio.muted : false, run: () => Audio.toggleMute(win.sink) },
                                 { glyph: "󰍭", on: win.source && win.source.audio ? win.source.audio.muted : false, run: () => Audio.toggleMute(win.source) },
                                 { glyph: "󰹑", on: false, run: () => { win.isOpen = false; Proc.detach('grim -g "$(slurp)" - | wl-copy') } },
-                                { glyph: "󰌾", on: false, run: () => { win.isOpen = false; Proc.detach(Hypr.home + "/.local/bin/wallgreet --lock || hyprlock") } },
+                                { glyph: "󰌾", on: false, run: () => { win.isOpen = false; Lock.lock() } },
                                 { glyph: "󰐥", on: false, danger: true, run: () => Proc.detach("systemctl poweroff") }
                             ]
                             Rectangle {

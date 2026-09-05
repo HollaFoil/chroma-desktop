@@ -17,7 +17,7 @@ ColumnLayout {
         { glyph: "󰒓", text: "Settings",      settings: true }
     ]
     readonly property var power: [
-        { glyph: "󰌾", text: "Lock",      run: home + "/.local/bin/wallgreet --lock || hyprlock" },
+        { glyph: "󰌾", text: "Lock",      lock: true },
         { glyph: "󰤄", text: "Suspend",   run: "systemctl suspend" },
         { glyph: "󰍃", text: "Log out",   run: "hyprctl dispatch 'hl.dsp.exit()'" },
         { glyph: "󰜉", text: "Reboot",    run: "systemctl reboot" },
@@ -29,6 +29,7 @@ ColumnLayout {
         else if (item.notifs) Overlays.toggleNotifs()
         else if (item.launcher) Overlays.toggleLauncher()
         else if (item.clip) Overlays.toggleClip()
+        else if (item.lock) Lock.lock()
         else Proc.detach(item.run)
     }
 
