@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import qs.Theme
+import qs.Widgets
 import qs.Services
 
 // One island on the bar. `corners` picks the slant: "mirror" (10/24/10/24,
@@ -53,17 +54,18 @@ Item {
         Popups.toggle(name, bar.screen, a.x, a.right, side ?? "right", extra ?? null)
     }
 
-    Rectangle {
+    RoundedRect {
         id: rect
         x: root.marginL
         y: root.fullHeight ? 0 : Tokens.barBubbleMargin
         height: root.height - (root.fullHeight ? 0 : Tokens.barBubbleMargin * 2)
+        width: implicitWidth
         implicitWidth: row.implicitWidth + root.padL + root.padR
         color: Colors.surface
-        topLeftRadius: root.r[0]
-        topRightRadius: root.r[1]
-        bottomRightRadius: root.r[2]
-        bottomLeftRadius: root.r[3]
+        topLeft: root.r[0]
+        topRight: root.r[1]
+        bottomRight: root.r[2]
+        bottomLeft: root.r[3]
         Behavior on color { ColorAnimation { duration: Tokens.durSlow } }
 
         MouseArea {
