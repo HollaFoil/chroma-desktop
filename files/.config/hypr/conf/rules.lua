@@ -153,9 +153,6 @@ hl.window_rule({
 -- through; ignore_alpha keeps the fully transparent parts (the click-away
 -- backdrops) from being blurred.
 for _, r in ipairs({
-    { name = "frosted-wallstrip", ns = "^wallstrip$" },
-    { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
-    -- Quickshell surfaces (the bar blurs its own popups too)
     { name = "frosted-qs-bar",     ns = "^qs-bar$", popups = true },
     { name = "frosted-qs-overlay", ns = "^qs-overlay$" },
     { name = "frosted-qs-notif",   ns = "^qs-notif$" },

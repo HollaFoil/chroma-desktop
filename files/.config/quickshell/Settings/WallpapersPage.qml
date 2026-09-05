@@ -10,7 +10,7 @@ PageBody {
     title: "Wallpapers"
     readonly property var stripKeys: Binds.keysOf("util.wallpaper")
     headerItems: [ Pill { text: "Open strip" + (root.stripKeys.length ? "  (" + Binds.prettyCombo(root.stripKeys[0]) + ")" : ""); small: true
-                          onClicked: { Overlays.settingsToggle(); Proc.detach([Hypr.home + "/.local/bin/wallstrip"]) } } ]
+                          onClicked: { Overlays.settingsToggle(); Overlays.toggleWallStrip() } } ]
     Component.onCompleted: Wallpapers.refresh()
     status: Wallpapers.files.length === 0 ? "no images in " + Wallpapers.dir : ""
 

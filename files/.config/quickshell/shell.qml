@@ -6,6 +6,7 @@ import qs.Popups
 import qs.Settings
 import qs.Notifications
 import qs.Launcher
+import qs.Overlays
 import qs.Services
 import qs.Theme
 
@@ -22,7 +23,8 @@ ShellRoot {
             required property var modelData
             Bar { screen: perScreen.modelData }
             PopupHost { modelData: perScreen.modelData }
-            Toasts { modelData: perScreen.modelData }
+            Toasts { modelData: perScreen.modelData; allScreens: shell.screens }
+            OsdWindow { modelData: perScreen.modelData; allScreens: shell.screens }
         }
     }
 
@@ -30,6 +32,8 @@ ShellRoot {
     LazyLoader { id: notifsLoader; loading: true; ControlCenter { allowedScreens: shell.screens } }
     LazyLoader { id: launcherLoader; loading: true; AppLauncher { allowedScreens: shell.screens } }
     LazyLoader { id: clipLoader; loading: true; ClipPicker { allowedScreens: shell.screens } }
+    LazyLoader { id: cheatLoader; loading: true; Cheatsheet { allowedScreens: shell.screens } }
+    LazyLoader { id: stripLoader; loading: true; WallStrip { allowedScreens: shell.screens } }
     Connections {
         target: Overlays
         function onSettingsRequested(page) { settingsLoader.item.show(page) }
@@ -37,6 +41,14 @@ ShellRoot {
         function onNotifsToggle() { notifsLoader.item.toggle() }
         function onLauncherToggle() { launcherLoader.item.toggle() }
         function onClipToggle() { clipLoader.item.toggle() }
+        function onCheatsheetToggle() { cheatLoader.item.toggle() }
+        function onWallStripToggle() { stripLoader.item.toggle() }
+    }
+    IpcHandler { target: "cheatsheet"; function toggle(): void { cheatLoader.item.toggle() } }
+    IpcHandler { target: "wallstrip"; function toggle(): void { stripLoader.item.toggle() } }
+    IpcHandler {
+        target: "osd"
+        function volume(): void { const s = Audio.defaultSink; Osd.armed = true; Osd.show("volume", Audio.speakerIcon(Audio.pct(s), s && s.audio && s.audio.muted), Math.min(1, s && s.audio ? s.audio.volume : 0), s && s.audio ? s.audio.muted : false) }
     }
     IpcHandler { target: "launcher"; function toggle(): void { launcherLoader.item.toggle() } }
     IpcHandler { target: "clip"; function toggle(): void { clipLoader.item.toggle() } }
@@ -55,7 +67,7 @@ ShellRoot {
 
     // Session-long duties (the audio router, network notifications) live in
     // these singletons; touching them here brings them up with the shell.
-    Component.onCompleted: { Audio.applySoon(); Net.refreshHotspot() }
+    Component.onCompleted: { Audio.applySoon(); Net.refreshHotspot(); Osd.armed = false }
 
     IpcHandler {
         target: "popup"

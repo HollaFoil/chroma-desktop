@@ -12,7 +12,9 @@ PanelWindow {
     id: win
     required property var modelData
     screen: modelData
-    readonly property var mine: Notifs.popups.map(k => Notifs.entry(k)).filter(e => e && (e.screen === modelData.name || e.screen === "" ))
+    property var allScreens: Quickshell.screens
+    readonly property bool isFallback: allScreens.length > 0 && allScreens[0].name === modelData.name
+    readonly property var mine: Notifs.popups.map(k => Notifs.entry(k)).filter(e => e && (e.screen === modelData.name || (isFallback && !allScreens.some(s => s.name === e.screen))))
     visible: mine.length > 0
     color: "transparent"
     anchors { top: true; right: true }

@@ -168,11 +168,11 @@ A.define({ id = "util.relayout", name = "Re-apply the dashboard layout", categor
 A.define({ id = "util.relayout_toggle", name = "Move dashboard to the other monitor", category = "Utilities",
            keys = relayout_keys[2], run = hl.dsp.exec_cmd(HOME .. "/.local/bin/relayout toggle") })
 A.define({ id = "util.wallpaper", name = "Wallpaper picker", category = "Utilities",
-           keys = { mainMod .. " + W" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/wallstrip") })
+           keys = { mainMod .. " + W" }, run = hl.dsp.exec_cmd("qs ipc call wallstrip toggle") })
 A.define({ id = "util.settings", name = "Settings", category = "Utilities",
            keys = { mainMod .. " + comma" }, run = hl.dsp.exec_cmd("qs ipc call settings toggle") })
 A.define({ id = "util.cheatsheet", name = "This cheatsheet", category = "Utilities",
-           keys = { mainMod .. " + slash" }, run = hl.dsp.exec_cmd(HOME .. "/.local/bin/cheatsheet") })
+           keys = { mainMod .. " + slash" }, run = hl.dsp.exec_cmd("qs ipc call cheatsheet toggle") })
 
 -----------------
 ----  SESSION ----

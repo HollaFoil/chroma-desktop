@@ -20,6 +20,7 @@ PanelWindow {
     // set, every key press goes to it and nothing else (Escape cancels the
     // recording instead of closing the window).
     property var keyGrab: null
+    property bool anyKeyCloses: false        // the cheatsheet: any key (on release) closes
     property alias card: cardSlot
     default property alias content: cardSlot.data
     signal dismissed()
@@ -48,11 +49,11 @@ PanelWindow {
         property bool escDown: false
         Keys.onPressed: event => {
             if (root.keyGrab) { event.accepted = !!root.keyGrab(event); return }
-            if (event.key === Qt.Key_Escape) { escDown = true; event.accepted = true }
+            if (event.key === Qt.Key_Escape || root.anyKeyCloses) { escDown = true; event.accepted = true }
         }
         Keys.onReleased: event => {
             if (root.keyGrab) { event.accepted = true; return }
-            if (event.key === Qt.Key_Escape && escDown) { escDown = false; root.close(); event.accepted = true }
+            if ((event.key === Qt.Key_Escape || root.anyKeyCloses) && escDown) { escDown = false; root.close(); event.accepted = true }
         }
 
         // swallows clicks inside the card so the backdrop never sees them

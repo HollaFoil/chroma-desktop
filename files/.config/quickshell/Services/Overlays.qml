@@ -11,8 +11,12 @@ Singleton {
     signal notifsToggle()
     signal launcherToggle()
     signal clipToggle()
+    signal cheatsheetToggle()
+    signal wallStripToggle()
     function openSettings(page) { settingsRequested(page ?? "") }
     function toggleNotifs() { notifsToggle() }
     function toggleLauncher() { launcherToggle() }
     function toggleClip() { clipToggle() }
+    function toggleCheatsheet() { cheatsheetToggle() }
+    function toggleWallStrip() { wallStripToggle() }
 }
