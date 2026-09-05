@@ -150,6 +150,15 @@ tiled. Pages:
   (the value from `conf/*.lua` returns).
 - **All options** — everything `hyprctl descriptions` knows, typed from its
   schema, with a filter box.
+- **Widgets** — desktop widgets: what sits on which screen, each one's
+  options, and *Arrange on the desktop*, which lets you drag, resize and
+  remove them in place. The library: Clock, Calendar, Now playing, System
+  monitor, Weather (wttr.in), Notes (a sticky, saved as you type), Shortcuts
+  (a row of app icons). Widgets sit over the wallpaper and under your windows,
+  frosted like the rest; the layout is `quickshell/Desktop/layout.json` in
+  the repo, hand-editable and picked up live. A new widget is one file in
+  `quickshell/Desktop/widgets/` plus a line in `Services/Desktop.qml`'s
+  catalogue.
 - **Wallpapers** — thumbnail grid → `setwall`. **Monitors** — what is connected
   and a button to `nwg-displays` (which writes `monitors.lua`; `gen-monitors`
   writes the workspace map to match).

@@ -13,6 +13,11 @@ Singleton {
     property bool gpuAvailable: true
     property int temp: 0
     readonly property int critical: 85
+    property real memUsed: 0        // bytes
+    property real memTotal: 1
+    property real diskUsed: 0
+    property real diskTotal: 1
+    property string diskMount: "/"
 
     property var lastCpu: null
     FileView {
@@ -28,7 +33,19 @@ Singleton {
             root.lastCpu = { idle, total }
         }
     }
-    Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: { stat.reload(); root.pollGpu() } }
+    Timer { interval: 3000; running: true; repeat: true; triggeredOnStart: true; onTriggered: { stat.reload(); root.pollGpu(); mem.reload() } }
+    FileView {
+        id: mem
+        path: "/proc/meminfo"
+        onLoaded: {
+            const kv = {}
+            for (const l of text().split("\n")) { const m = l.match(/^(\w+):\s+(\d+)/); if (m) kv[m[1]] = parseInt(m[2]) * 1024 }
+            if (kv.MemTotal) { root.memTotal = kv.MemTotal; root.memUsed = kv.MemTotal - (kv.MemAvailable || 0) }
+        }
+    }
+    Timer { interval: 60000; running: true; repeat: true; triggeredOnStart: true
+        onTriggered: Proc.run(["df", "-PB1", root.diskMount], (c, out) => { const f = out.trim().split("\n").pop().split(/\s+/); if (f.length >= 4) { root.diskTotal = parseFloat(f[1]) || 1; root.diskUsed = parseFloat(f[2]) || 0 } }) }
+    function gib(b) { return (b / Math.pow(2, 30)).toFixed(1) }
 
     function pollGpu() {
         if (!gpuAvailable) return

@@ -1,5 +1,7 @@
 {
   "options": {
-    "decoration:rounding": 20
+    "decoration:rounding": 20,
+    "input:rotation": 0,
+    "input:touchpad:drag_lock": 0
   }
 }

@@ -8,6 +8,7 @@ import qs.Notifications
 import qs.Launcher
 import qs.Overlays
 import qs.Lock
+import qs.Desktop
 import qs.Services
 import qs.Theme
 
@@ -26,6 +27,7 @@ ShellRoot {
             PopupHost { modelData: perScreen.modelData }
             Toasts { modelData: perScreen.modelData; allScreens: shell.screens }
             OsdWindow { modelData: perScreen.modelData; allScreens: shell.screens }
+            DesktopLayer { modelData: perScreen.modelData }
         }
     }
 
@@ -49,6 +51,7 @@ ShellRoot {
     }
     IpcHandler { target: "cheatsheet"; function toggle(): void { cheatLoader.item.toggle() } }
     IpcHandler { target: "wallstrip"; function toggle(): void { stripLoader.item.toggle() } }
+    IpcHandler { target: "desktop"; function edit(): void { Desktop.editMode = !Desktop.editMode } function editing(): bool { return Desktop.editMode } }
     IpcHandler {
         target: "record"
         function toggle(): void { Recorder.toggle() }

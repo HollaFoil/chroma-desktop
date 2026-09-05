@@ -157,6 +157,7 @@ for _, r in ipairs({
     { name = "frosted-qs-overlay", ns = "^qs-overlay$" },
     { name = "frosted-qs-notif",   ns = "^qs-notif$" },
     { name = "frosted-qs-osd",     ns = "^qs-osd$" },
+    { name = "frosted-qs-desktop", ns = "^qs-desktop$" },
 }) do
     hl.layer_rule({
         name         = r.name,

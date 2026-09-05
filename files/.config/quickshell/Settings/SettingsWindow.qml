@@ -30,6 +30,7 @@ OverlayWindow {
         { title: "Look",        glyph: "󰏘", group: "Desktop",  comp: lookComp },
         { title: "Input",       glyph: "󰌌", group: "Desktop",  comp: inputComp },
         { title: "Wallpapers",  glyph: "󰸉", group: "Desktop",  comp: wallpapersComp },
+        { title: "Widgets",     glyph: "󰘔", group: "Desktop",  comp: widgetsComp },
         { title: "Monitors",    glyph: "󰍹", group: "Hardware", comp: monitorsComp },
         { title: "Audio",       glyph: "󰕾", group: "Hardware", comp: audioComp },
         { title: "Wi-Fi",       glyph: "󰖩", group: "Network",  comp: wifiComp },
@@ -44,6 +45,7 @@ OverlayWindow {
     Component { id: lookComp; LookPage {} }
     Component { id: inputComp; InputPage {} }
     Component { id: wallpapersComp; WallpapersPage {} }
+    Component { id: widgetsComp; WidgetsPage {} }
     Component { id: monitorsComp; MonitorsPage {} }
     Component { id: audioComp; AudioPage {} }
     Component { id: wifiComp; WifiPage {} }
