@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import qs.Theme
 import qs.Widgets
 import qs.Services
@@ -25,19 +26,63 @@ ColumnLayout {
         Label { text: "Capture"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
         Segmented { model: ["Screen", "Window", "Region"]; current: ["screen", "window", "region"].indexOf(Recorder.target); onPicked: i => { Recorder.target = ["screen", "window", "region"][i]; Recorder.save() } }
     }
-    RowLayout {
+    // which screen: the monitors laid out as they stand, each a live preview
+    ColumnLayout {
         Layout.fillWidth: true
         visible: Recorder.target === "screen"
         enabled: !Recorder.recording
-        Label { text: "Screen"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
-        Segmented { model: ["focused"].concat(root.monitors); current: Recorder.screenName ? root.monitors.indexOf(Recorder.screenName) + 1 : 0
-            onPicked: i => { Recorder.screenName = i === 0 ? "" : root.monitors[i - 1]; Recorder.save() } }
+        spacing: 6
+        RowLayout {
+            Layout.fillWidth: true
+            Label { text: "Screen"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
+            Pill { text: "focused monitor"; small: true; on: Recorder.screenName === ""; onClicked: { Recorder.screenName = ""; Recorder.save() } }
+            Item { Layout.fillWidth: true }
+        }
+        Item {
+            id: map
+            readonly property var screens: Quickshell.screens
+            readonly property real minX: Math.min(...screens.map(s => s.x))
+            readonly property real minY: Math.min(...screens.map(s => s.y))
+            readonly property real totalW: Math.max(...screens.map(s => s.x + s.width)) - minX
+            readonly property real totalH: Math.max(...screens.map(s => s.y + s.height)) - minY
+            readonly property real scale: Math.min(300 / Math.max(1, totalW), 120 / Math.max(1, totalH))
+            Layout.leftMargin: 90
+            Layout.preferredWidth: totalW * scale
+            Layout.preferredHeight: totalH * scale
+            Repeater {
+                model: map.screens
+                Rectangle {
+                    id: tile
+                    required property var modelData
+                    readonly property bool on: Recorder.screenName === modelData.name
+                    readonly property bool focusedNow: Hyprland.focusedMonitor && Hyprland.focusedMonitor.name === modelData.name
+                    x: (modelData.x - map.minX) * map.scale + 2; y: (modelData.y - map.minY) * map.scale + 2
+                    width: modelData.width * map.scale - 4; height: modelData.height * map.scale - 4
+                    radius: Tokens.rXxs
+                    color: Colors.surfaceContainerHigh
+                    border.width: 2
+                    border.color: on ? Colors.primary : tma.containsMouse ? Colors.tertiary : Tokens.alpha(Colors.outline, 0.4)
+                    clip: true
+                    ScreencopyView { anchors.fill: parent; anchors.margins: 2; captureSource: tile.modelData; live: true; opacity: 0.9 }
+                    Rectangle { anchors.bottom: parent.bottom; anchors.left: parent.left; anchors.right: parent.right; height: 16; color: Tokens.alpha(Colors.surface, 0.75)
+                        Label { anchors.centerIn: parent; text: tile.modelData.name + (tile.focusedNow ? "  ·  focused" : ""); size: Tokens.fontSizeMicro; color: tile.on ? Colors.primary : Colors.surfaceFg } }
+                    MouseArea { id: tma; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { Recorder.screenName = tile.modelData.name; Recorder.save() } }
+                }
+            }
+        }
     }
     RowLayout {
         Layout.fillWidth: true
         enabled: !Recorder.recording
         Label { text: "Frame rate"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
         Segmented { model: ["30", "60"]; current: Recorder.fps === 30 ? 0 : 1; onPicked: i => { Recorder.fps = i === 0 ? 30 : 60; Recorder.save() } }
+    }
+    RowLayout {
+        Layout.fillWidth: true
+        visible: Recorder.haveGsr
+        enabled: !Recorder.recording
+        Label { text: "Encoder"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
+        Segmented { model: ["GPU, CPU if it cannot", "CPU"]; current: Recorder.encoder === "cpu" ? 1 : 0; onPicked: i => { Recorder.encoder = i === 1 ? "cpu" : "auto"; Recorder.save() } }
     }
     Divider { Layout.fillWidth: true }
 

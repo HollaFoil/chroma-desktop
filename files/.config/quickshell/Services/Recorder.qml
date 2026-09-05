@@ -28,11 +28,12 @@ Singleton {
     property string appMode: "all"            // all | only | except   (gpu-screen-recorder only)
     property var apps: []                     // application names for only/except
     property int fps: 60
+    property string encoder: "auto"          // auto (GPU, CPU if the GPU cannot) | cpu   (gpu-screen-recorder only)
     readonly property string statePath: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/quickshell/recorder.json"
     FileView { id: state; path: root.statePath; printErrors: false
         onLoaded: { try { const j = JSON.parse(text()); root.target = j.target ?? root.target; root.screenName = j.screenName ?? ""; root.desktopAudio = j.desktopAudio ?? true
-                          root.micAudio = j.micAudio ?? false; root.appMode = j.appMode ?? "all"; root.apps = j.apps ?? []; root.fps = j.fps ?? 60 } catch (e) {} } }
-    function save() { state.setText(JSON.stringify({ target, screenName, desktopAudio, micAudio, appMode, apps, fps }, null, 1)) }
+                          root.micAudio = j.micAudio ?? false; root.appMode = j.appMode ?? "all"; root.apps = j.apps ?? []; root.fps = j.fps ?? 60; root.encoder = j.encoder ?? "auto" } catch (e) {} } }
+    function save() { state.setText(JSON.stringify({ target, screenName, desktopAudio, micAudio, appMode, apps, fps, encoder }, null, 1)) }
     function toggleApp(name) { const i = apps.indexOf(name); apps = i >= 0 ? apps.filter(a => a !== name) : apps.concat([name]); save() }
 
     Timer { interval: 1000; running: root.recording; repeat: true; onTriggered: root.elapsed = Math.floor((Date.now() - root.startedAt) / 1000) }
@@ -61,7 +62,10 @@ Singleton {
     function command(where) {
         let cmd
         if (haveGsr) {
-            cmd = ["gpu-screen-recorder", "-f", String(fps), "-o", outFile]
+            // this machine's NVIDIA driver speaks an older NVENC API than gsr's FFmpeg wants, so the GPU
+            // path can fail; -fallback-cpu-encoding keeps the recording going on the CPU in that case
+            cmd = ["gpu-screen-recorder", "-f", String(fps), "-o", outFile, "-fallback-cpu-encoding", "yes"]
+            if (encoder === "cpu") cmd.push("-encoder", "cpu")
             if (where.output) cmd.push("-w", where.output)
             else { const m = where.geometry.match(/(\d+),(\d+) (\d+)x(\d+)/); cmd.push("-w", "region", "-region", m[3] + "x" + m[4] + "+" + m[1] + "+" + m[2]) }
             const srcs = []
