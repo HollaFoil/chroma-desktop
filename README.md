@@ -126,7 +126,7 @@ but they have no keys and nothing launches uninvited.
 | **awww** | Wallpaper daemon (swww fork). |
 | `relayout` | Puts a fixed "dashboard" of apps — Spotify, Slack, Discord, btop — on one monitor (`SUPER+SHIFT+R`), or on the other (`SUPER+ALT+R`), parking the rest in a scratchpad. Opt-in: unbound until `~/.config/relayout/config.sh` exists. |
 | `setwall` | `awww` → `matugen` → prompt colours. Everything downstream is a matugen `post_hook` or watches the generated file (the shell). |
-| `remote-desktop` | VNC into the desktop over Tailscale (`wayvnc`, bound to the tailnet address only, username + password): `remote-desktop on`, or the *Remote desktop* toggle in the bar's network panel; `remote-desktop password` shows the password, `autostart on` shares from login. |
+| `remote-desktop` | VNC into the desktop over Tailscale (`wayvnc`, bound to the tailnet address only, username + password): `remote-desktop on` (now and from every login), or the *Remote desktop* toggle in the bar's network panel; `remote-desktop password` shows the password. |
 | `gen-monitors` | Writes this machine's monitors and its per-monitor workspace banks (`monitors.lua`, `state/monitors.json`, which the bar reads) from `hyprctl monitors`. |
 
 ## Settings

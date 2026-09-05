@@ -109,19 +109,17 @@ Singleton {
 
     // ── remote desktop (wayvnc over Tailscale, see ~/.local/bin/remote-desktop) ──
     property bool haveVnc: false
-    property bool vncActive: false
-    property bool vncAutostart: false
+    property bool vncOn: false           // running now (and, through remote-desktop, from every login)
     property string vncOutput: ""
     property string vncAddress: ""
     property string vncPort: "5900"
     function refreshVnc() {
-        Proc.sh("command -v wayvnc >/dev/null && echo yes || echo no; systemctl --user is-active wayvnc.service; systemctl --user is-enabled wayvnc.service 2>/dev/null || echo disabled; ~/.local/bin/remote-desktop output; tailscale ip -4 2>/dev/null | head -1", (c, out) => {
+        Proc.sh("command -v wayvnc >/dev/null && echo yes || echo no; systemctl --user is-active wayvnc.service; ~/.local/bin/remote-desktop output; tailscale ip -4 2>/dev/null | head -1", (c, out) => {
             const l = out.split("\n")
-            haveVnc = l[0] === "yes"; vncActive = l[1] === "active"; vncAutostart = l[2] === "enabled"; vncOutput = l[3] || ""; vncAddress = l[4] || ""
+            haveVnc = l[0] === "yes"; vncOn = l[1] === "active"; vncOutput = l[2] || ""; vncAddress = l[3] || ""
         })
     }
     function setVnc(on, cb) { Proc.run([Hypr.home + "/.local/bin/remote-desktop", on ? "on" : "off"], (c, out, err) => { refreshVnc(); if (cb) cb(c === 0 ? null : (err.trim().split("\n").pop() || "failed")) }) }
-    function setVncAutostart(on) { Proc.run([Hypr.home + "/.local/bin/remote-desktop", "autostart", on ? "on" : "off"], () => refreshVnc()) }
     function setVncOutput(name) { Proc.run([Hypr.home + "/.local/bin/remote-desktop", "output", name], () => refreshVnc()) }
     Timer { interval: 5000; running: true; repeat: true; onTriggered: root.refreshVnc() }
 

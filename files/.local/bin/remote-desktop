@@ -1,9 +1,8 @@
 #!/bin/bash
 # remote-desktop — VNC into this desktop over Tailscale (wayvnc).
 #
-#   remote-desktop on|off        start / stop sharing now (wayvnc.service)
-#   remote-desktop status        address, output, whether it runs and autostarts
-#   remote-desktop autostart on|off   share from login on (systemctl --user enable)
+#   remote-desktop on|off        share: now and from every login on (off stops both)
+#   remote-desktop status        address, output, whether it runs
 #   remote-desktop output <name> which monitor to share (HDMI-A-1 ...); restarts if running
 #   remote-desktop password [new]  show the VNC password, or set a new one
 #   remote-desktop run           what the unit runs: writes the config and execs wayvnc
@@ -24,6 +23,11 @@ PASSFILE="$DIR/password"
 OUTFILE="$DIR/output"
 PORT=5900
 UNIT=wayvnc.service
+# Autostart is a plain Wants symlink rather than `systemctl enable`: the unit
+# file itself is a symlink into the dotfiles, and `disable` on such a "linked"
+# unit deletes it.
+WANTS="$HOME/.config/systemd/user/graphical-session.target.wants/$UNIT"
+UNITFILE="$HOME/.config/systemd/user/$UNIT"
 
 die() { echo "remote-desktop: $*" >&2; exit 1; }
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -36,7 +40,10 @@ output() {
 }
 ensure_secrets() {
     umask 077; mkdir -p "$DIR"
-    [[ -s "$KEY" ]] || openssl genrsa -out "$KEY" 2048 >/dev/null 2>&1 || die "openssl could not create $KEY"
+    # neatvnc reads the traditional PKCS#1 form ("BEGIN RSA PRIVATE KEY"), not PKCS#8
+    if [[ ! -s "$KEY" ]] || ! head -1 "$KEY" | grep -q "BEGIN RSA PRIVATE KEY"; then
+        openssl genrsa -traditional -out "$KEY" 2048 >/dev/null 2>&1 || die "openssl could not create $KEY"
+    fi
     [[ -s "$PASSFILE" ]] || openssl rand -base64 12 | tr -d '\n' > "$PASSFILE"
 }
 write_config() {
@@ -62,14 +69,17 @@ case "${1:-status}" in
         out="$(output)"
         exec wayvnc ${out:+-o "$out"} -C "$CONF"
         ;;
-    on)  systemctl --user start "$UNIT" && echo "sharing $(output) on $(address):$PORT" ;;
-    off) systemctl --user stop "$UNIT" && echo "stopped" ;;
-    autostart)
-        case "${2:-}" in
-            on)  systemctl --user enable "$UNIT" >/dev/null && echo "wayvnc starts with the session" ;;
-            off) systemctl --user disable "$UNIT" >/dev/null && echo "wayvnc no longer starts with the session" ;;
-            *)   systemctl --user is-enabled "$UNIT" 2>/dev/null || true ;;
-        esac ;;
+    on)
+        have wayvnc || die "wayvnc is not installed (sudo pacman -S wayvnc)"
+        [[ -e "$UNITFILE" ]] || die "$UNITFILE missing (cd ~/dotfiles && ./link)"
+        mkdir -p "$(dirname "$WANTS")"; ln -sfn "$(readlink -f "$UNITFILE")" "$WANTS"
+        systemctl --user daemon-reload
+        systemctl --user reset-failed "$UNIT" 2>/dev/null || true
+        systemctl --user start "$UNIT" && echo "sharing $(output) on $(address):$PORT, now and from every login" ;;
+    off)
+        systemctl --user stop "$UNIT" 2>/dev/null || true
+        rm -f "$WANTS"; systemctl --user daemon-reload
+        echo "remote desktop off" ;;
     output)
         [[ -n "${2:-}" ]] || { output; exit 0; }
         mkdir -p "$DIR"; printf '%s\n' "$2" > "$OUTFILE"
@@ -82,8 +92,7 @@ case "${1:-status}" in
     status)
         have wayvnc && echo "wayvnc: installed" || echo "wayvnc: not installed (sudo pacman -S wayvnc)"
         echo "address: $(address):$PORT   output: $(output)"
-        en="$(systemctl --user is-enabled "$UNIT" 2>/dev/null || true)"; [[ "$en" == enabled ]] || en=disabled
-        echo "running: $(systemctl --user is-active "$UNIT" 2>/dev/null || true)   autostart: $en"
+        echo "running: $(systemctl --user is-active "$UNIT" 2>/dev/null || true)   from login: $([[ -L "$WANTS" ]] && echo yes || echo no)"
         echo "user: $USER   password: remote-desktop password" ;;
     *) sed -n '2,20p' "$0"; exit 1 ;;
 esac
