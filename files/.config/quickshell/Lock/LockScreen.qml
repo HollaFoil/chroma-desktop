@@ -41,17 +41,22 @@ Item {
     }
     Rectangle { anchors.fill: parent; color: Qt.rgba(0, 0, 0, 0.30) }
 
-    // any click / drag / scroll opens or closes the form
+    // any click / drag / scroll opens or closes the form. One press is one
+    // gesture: once a drag has switched the state it is spent until release.
     MouseArea {
         anchors.fill: parent
         property real pressX: 0; property real pressY: 0
-        onPressed: mouse => { pressX = mouse.x; pressY = mouse.y; root.model.touch() }
+        property bool spent: false
+        onPressed: mouse => { pressX = mouse.x; pressY = mouse.y; spent = false; root.model.touch() }
         onPositionChanged: mouse => {
-            if (!pressed) return
-            const d = Math.hypot(mouse.x - pressX, mouse.y - pressY)
-            if (d > 80) { if (root.model.formOpen && root.model.password.length === 0) root.model.formOpen = false; else if (!root.model.formOpen) root.model.open(); pressX = mouse.x; pressY = mouse.y }
+            if (!pressed || spent) return
+            if (Math.hypot(mouse.x - pressX, mouse.y - pressY) < 80) return
+            spent = true
+            if (root.model.formOpen) { if (root.model.password.length === 0) root.model.formOpen = false }
+            else root.model.open()
         }
-        onClicked: if (!root.model.formOpen) root.model.open()
+        onClicked: if (!spent && !root.model.formOpen) root.model.open()
+        onReleased: spent = false
         onWheel: { if (!root.model.formOpen) root.model.open(); else if (!root.model.password.length) root.model.formOpen = false }
     }
     // keys reach the form from any screen
