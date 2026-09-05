@@ -14,6 +14,7 @@ ColumnLayout {
         { glyph: "󰅌", text: "Clipboard",     clip: true },
         { glyph: "󰹑", text: "Screenshot",    run: 'grim -g "$(slurp)" - | wl-copy' },
         { glyph: "󰂚", text: "Notifications", notifs: true },
+        { glyph: "󰘔", text: "Widgets",       widgets: true },
         { glyph: "󰒓", text: "Settings",      settings: true }
     ]
     readonly property var power: [
@@ -30,6 +31,7 @@ ColumnLayout {
         else if (item.launcher) Overlays.toggleLauncher()
         else if (item.clip) Overlays.toggleClip()
         else if (item.lock) Lock.lock()
+        else if (item.widgets) Desktop.editMode = !Desktop.editMode
         else Proc.detach(item.run)
     }
 

@@ -1,10 +1,55 @@
 {
   "screens": {
     "DP-2": [
-      { "id": "clock-1", "type": "Clock", "x": 48, "y": 80, "w": 320, "h": 150, "options": { "date": true } },
-      { "id": "system-1", "type": "System", "x": 48, "y": 250, "w": 320, "h": 230, "options": {} },
-      { "id": "nowplaying-1", "type": "NowPlaying", "x": -48, "y": 80, "w": 380, "h": 150, "options": {} },
-      { "id": "calendar-1", "type": "Calendar", "x": -48, "y": 250, "w": 300, "h": 290, "options": {} }
+      {
+        "id": "clock-1",
+        "type": "Clock",
+        "x": 48,
+        "y": 80,
+        "w": 320,
+        "h": 150,
+        "options": {
+          "date": true
+        }
+      },
+      {
+        "id": "system-1",
+        "type": "System",
+        "x": 48,
+        "y": 250,
+        "w": 320,
+        "h": 230,
+        "options": {}
+      },
+      {
+        "id": "nowplaying-1",
+        "type": "NowPlaying",
+        "x": -48,
+        "y": 80,
+        "w": 380,
+        "h": 150,
+        "options": {}
+      },
+      {
+        "id": "calendar-1",
+        "type": "Calendar",
+        "x": -48,
+        "y": 250,
+        "w": 300,
+        "h": 290,
+        "options": {}
+      }
+    ],
+    "HDMI-A-1": [
+      {
+        "id": "nowplaying-7e7907",
+        "type": "NowPlaying",
+        "x": 28,
+        "y": 1270,
+        "w": 503,
+        "h": 134,
+        "options": {}
+      }
     ]
   }
 }

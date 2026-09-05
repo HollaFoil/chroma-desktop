@@ -2,34 +2,41 @@ import QtQuick
 import Quickshell
 import Quickshell.Wayland
 import qs.Theme
+import qs.Widgets
 import qs.Services
 
-// One screen's widget layer: over the wallpaper, under every window. Only the
-// widgets take input (the mask), so the rest of the desktop stays as it was;
-// in edit mode the whole surface is live and the widgets grow handles.
+// One screen's widget layer: over the wallpaper, under every window. The bare
+// desktop is ours to click: a right click opens a small menu (arrange, add,
+// wallpaper, settings). In arrange mode a palette of live previews appears at
+// the top, the widgets grow handles, and everything snaps to an 8 px grid.
 PanelWindow {
     id: win
     required property var modelData
     screen: modelData
     readonly property var widgets: Desktop.revision, Desktop.widgetsOn(modelData.name)
-    visible: widgets.length > 0 || Desktop.editMode
+    visible: true
     color: "transparent"
     anchors { top: true; bottom: true; left: true; right: true }
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-desktop"
     WlrLayershell.layer: WlrLayer.Bottom
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
-    mask: Desktop.editMode ? null : maskRegion
-    Region { id: maskRegion; regions: frames.instances.map(f => f.region) }
 
-    // edit mode: a faint grid and a hint
-    Rectangle { anchors.fill: parent; visible: Desktop.editMode; color: Tokens.alpha(Colors.surface, 0.25) }
-    Text {
-        visible: Desktop.editMode
-        anchors { horizontalCenter: parent.horizontalCenter; bottom: parent.bottom; bottomMargin: 60 }
-        text: "Editing widgets: drag to move, the corner to resize, × to remove · Settings › Widgets to finish"
-        font.family: Tokens.fontFamily; font.bold: true; font.pixelSize: 14; color: Colors.surfaceFg
+    property bool menuOpen: false
+    property real menuX: 0
+    property real menuY: 0
+
+    // the bare desktop: right click for the menu, left click closes it / deselects
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onPressed: mouse => {
+            if (mouse.button === Qt.RightButton) { win.menuX = mouse.x; win.menuY = mouse.y; win.menuOpen = true }
+            else { win.menuOpen = false; Desktop.selected = "" }
+        }
     }
+    Rectangle { anchors.fill: parent; visible: Desktop.editMode; color: Tokens.alpha(Colors.surface, 0.2) }
+
     Variants {
         id: frames
         model: win.widgets
@@ -38,5 +45,19 @@ PanelWindow {
             screenW: win.width; screenH: win.height
             parent: win.contentItem
         }
+    }
+
+    WidgetPalette {
+        visible: Desktop.editMode
+        screenName: win.modelData.name
+        anchors { top: parent.top; horizontalCenter: parent.horizontalCenter; topMargin: Tokens.barHeight + 24 }
+    }
+
+    DesktopMenu {
+        visible: win.menuOpen
+        screenName: win.modelData.name
+        x: Math.min(win.menuX, win.width - width - 8)
+        y: Math.min(win.menuY, win.height - height - 8)
+        onClosed: win.menuOpen = false
     }
 }

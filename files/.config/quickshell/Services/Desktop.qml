@@ -13,7 +13,9 @@ Singleton {
     readonly property string layoutPath: Quickshell.shellDir + "/Desktop/layout.json"
     property var layout: ({ screens: {} })       // { screens: { "DP-2": [ {id, type, x, y, w, h, options} ] } }
     property bool editMode: false
+    property string selected: ""                  // widget id with the focus in arrange mode
     property int revision: 0
+    onEditModeChanged: if (!editMode) selected = ""
 
     // type -> how it is offered and what it can be told
     readonly property var catalogue: ({
@@ -45,12 +47,21 @@ Singleton {
         return o ? o.def : undefined
     }
 
-    function add(screenName, type) {
+    // A new widget lands in a free spot on a coarse grid (or the centre when
+    // asked), snapped, and becomes the selected one.
+    function add(screenName, type, centre) {
         const cat = catalogue[type]; if (!cat) return
         const list = widgetsOn(screenName).slice()
         const id = type.toLowerCase() + "-" + Math.floor(Math.random() * 0xffffff).toString(16)
-        list.push({ id, type, x: 40 + 30 * list.length, y: 80 + 30 * list.length, w: cat.w, h: cat.h, options: {} })
+        let x = 48, y = 80
+        if (centre) { x = 400; y = 300 }
+        else {
+            const taken = (px, py) => list.some(o => Math.abs(o.x - px) < 60 && Math.abs(o.y - py) < 60)
+            for (let i = 0; i < 40 && taken(x, y); i++) { y += cat.h + 24; if (y > 800) { y = 80; x += cat.w + 24 } }
+        }
+        list.push({ id, type, x: Math.round(x / 8) * 8, y: Math.round(y / 8) * 8, w: cat.w, h: cat.h, options: {} })
         const l = JSON.parse(JSON.stringify(layout)); l.screens[screenName] = list; layout = l; save()
+        selected = id
     }
     function remove(screenName, id) {
         const l = JSON.parse(JSON.stringify(layout)); l.screens[screenName] = widgetsOn(screenName).filter(w => w.id !== id); layout = l; save()
