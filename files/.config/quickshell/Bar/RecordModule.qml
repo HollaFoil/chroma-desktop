@@ -8,7 +8,7 @@ import qs.Services
 // Click for the panel, right click stops.
 Bubble {
     id: root
-    corners: "mirror"
+    corners: "slant"
     padL: 12; padR: 12
     marginL: 5; marginR: 2
     onClicked: openPopup("record", "left")

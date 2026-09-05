@@ -29,36 +29,36 @@ RowLayout {
     }
     Bubble {
         id: fwd
-        bar: root.bar; corners: Media.volumeSupported ? "none" : "capRight"; padL: 5; padR: Media.volumeSupported ? 6 : 12; marginL: 0; marginR: Media.volumeSupported ? 0 : 7
+        bar: root.bar; corners: "capRight"; padL: 5; padR: 12; marginL: 0; marginR: 7
         onClicked: Media.next()
         onScrolled: d => Media.volumeStep(d > 0 ? 0.05 : -0.05)
         Glyph { text: "󰙡"; size: 20; color: fwd.hovered ? Colors.surfaceFg : Colors.tertiary }
     }
-    // Spotify's volume: a sliver that grows into a slider under the pointer
+    // Spotify's volume: its own pill, a bar that grows into a slider under the pointer
     Bubble {
         id: vol
         visible: Media.volumeSupported
-        bar: root.bar; corners: "capRight"; padL: 6; padR: 14; marginL: 0; marginR: 7
+        bar: root.bar; corners: "slant"; padL: 16; padR: 16; marginL: 0; marginR: 7
         interactive: false
-        spacing: 6
+        spacing: 10
         readonly property bool expanded: hover.hovered || track.pressed
         HoverHandler { id: hover }
         Glyph {
             text: Media.volume === 0 ? "󰝟" : Media.volume < 0.5 ? "󰖀" : "󰕾"
-            size: 13
-            color: vol.expanded ? Colors.primary : Colors.surfaceVariantFg
+            size: 16
+            color: vol.expanded ? Colors.primary : Colors.tertiary
         }
         Item {
             id: slider
             Layout.alignment: Qt.AlignVCenter
-            implicitWidth: vol.expanded ? 90 : 34
-            implicitHeight: 14
+            implicitWidth: vol.expanded ? 130 : 70
+            implicitHeight: 16
             Behavior on implicitWidth { NumberAnimation { duration: Tokens.durNormal; easing.type: Tokens.easing } }
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 4; radius: 2; color: Colors.surfaceContainerHighest }
-            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width * Media.volume; height: 4; radius: 2; color: vol.expanded ? Colors.primary : Colors.tertiary
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width; height: 6; radius: 3; color: Colors.surfaceContainerHighest }
+            Rectangle { anchors.verticalCenter: parent.verticalCenter; width: parent.width * Media.volume; height: 6; radius: 3; color: vol.expanded ? Colors.primary : Colors.tertiary
                 Behavior on color { ColorAnimation { duration: Tokens.durFast } } }
             Rectangle {
-                width: 10; height: 10; radius: 5
+                width: 12; height: 12; radius: 6
                 anchors.verticalCenter: parent.verticalCenter
                 x: Math.max(0, Math.min(parent.width - width, parent.width * Media.volume - width / 2))
                 color: Colors.primary

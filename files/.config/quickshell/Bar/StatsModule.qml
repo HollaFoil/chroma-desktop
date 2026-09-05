@@ -11,7 +11,7 @@ RowLayout {
     property var bar: null
     spacing: 0
     Bubble {
-        bar: root.bar; corners: "capLeft"; padL: 16; padR: 7; marginL: 7; interactive: false
+        bar: root.bar; corners: "capLeftM"; padL: 16; padR: 7; marginL: 7; interactive: false
         Label { text: "󰍛 " + Stats.cpu + "%"; size: Tokens.fontSizeBar; color: Colors.tertiary }
     }
     Bubble {
@@ -19,7 +19,7 @@ RowLayout {
         Label { text: "󰢮 " + Stats.gpu; size: Tokens.fontSizeBar; color: Stats.gpuTemp >= Stats.critical ? Colors.error : Colors.primary }
     }
     Bubble {
-        bar: root.bar; corners: "capRight"; padL: 7; padR: 14; marginL: 0; interactive: false
+        bar: root.bar; corners: "capRightM"; padL: 7; padR: 14; marginL: 0; interactive: false
         Label { text: "󰔏 " + Stats.temp + "°C"; size: Tokens.fontSizeBar; color: Stats.temp >= Stats.critical ? Colors.error : Colors.tertiary }
     }
 }

@@ -6,7 +6,7 @@ import qs.Services
 
 // One island on the bar. `corners` picks the slant: "mirror" (10/24/10/24,
 // the default for standalone bubbles), "slant" (24/10/24/10), "capLeft" and
-// "capRight" (the ends of a group), "launcher" and "clock" (into the screen
+// "capRight" (the ends of a slanted group), "capLeftM"/"capRightM" (a mirrored group), "launcher" and "clock" (into the screen
 // corners), "round" (16), "none".
 Item {
     id: root
@@ -34,8 +34,10 @@ Item {
         switch (c) {
         case "slant":    return [24, 10, 24, 10]
         case "mirror":   return [10, 24, 10, 24]
-        case "capLeft":  return [24, 0, 0, 10]
+        case "capLeft":  return [24, 0, 0, 10]      // group ends, slant orientation
         case "capRight": return [0, 10, 24, 0]
+        case "capLeftM":  return [10, 0, 0, 24]     // group ends, mirror orientation
+        case "capRightM": return [0, 24, 10, 0]
         case "launcher": return [0, 0, Tokens.barCornerRadius, 0]
         case "clock":    return [0, 0, 0, Tokens.barCornerRadius]
         case "round":    return [16, 16, 16, 16]
