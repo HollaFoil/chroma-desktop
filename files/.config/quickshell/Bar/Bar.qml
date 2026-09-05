@@ -22,6 +22,7 @@ PanelWindow {
         anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
         spacing: 0
         LauncherModule { bar: bar }
+        RecordModule { bar: bar }
         MediaModule { bar: bar }
     }
     RowLayout {

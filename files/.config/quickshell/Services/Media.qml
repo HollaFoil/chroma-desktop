@@ -18,5 +18,8 @@ Singleton {
     function playPause() { if (present && player.canTogglePlaying) player.togglePlaying() }
     function next() { if (present && player.canGoNext) player.next() }
     function previous() { if (present && player.canGoPrevious) player.previous() }
-    function volumeStep(d) { if (present && player.volumeSupported) player.volume = Math.max(0, Math.min(1, player.volume + d)) }
+    readonly property bool volumeSupported: present && player.volumeSupported
+    readonly property real volume: volumeSupported ? player.volume : 0
+    function setVolume(v) { if (volumeSupported) player.volume = Math.max(0, Math.min(1, v)) }
+    function volumeStep(d) { setVolume(volume + d) }
 }

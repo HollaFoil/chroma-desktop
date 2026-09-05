@@ -50,6 +50,13 @@ ShellRoot {
     IpcHandler { target: "cheatsheet"; function toggle(): void { cheatLoader.item.toggle() } }
     IpcHandler { target: "wallstrip"; function toggle(): void { stripLoader.item.toggle() } }
     IpcHandler {
+        target: "record"
+        function toggle(): void { Recorder.toggle() }
+        function start(): void { Recorder.start() }
+        function stop(): void { Recorder.stop() }
+        function recording(): bool { return Recorder.recording }
+    }
+    IpcHandler {
         target: "lock"
         function lock(): void { Lock.lock() }
         function locked(): bool { return Lock.locked }
