@@ -82,7 +82,7 @@ ColumnLayout {
         visible: Recorder.haveGsr
         enabled: !Recorder.recording
         Label { text: "Encoder"; size: Tokens.fontSizeSmall; Layout.preferredWidth: 90 }
-        Segmented { model: ["GPU, CPU if it cannot", "CPU"]; current: Recorder.encoder === "cpu" ? 1 : 0; onPicked: i => { Recorder.encoder = i === 1 ? "cpu" : "auto"; Recorder.save() } }
+        Segmented { model: ["GPU/CPU fallback", "CPU"]; current: Recorder.encoder === "cpu" ? 1 : 0; onPicked: i => { Recorder.encoder = i === 1 ? "cpu" : "auto"; Recorder.save() } }
     }
     Divider { Layout.fillWidth: true }
 

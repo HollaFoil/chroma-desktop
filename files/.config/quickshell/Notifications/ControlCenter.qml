@@ -64,7 +64,7 @@ OverlayWindow {
                         Toggle { checked: Notifs.dnd; onToggled: v => Notifs.dnd = v }
                     }
                 }
-                // quick buttons: mute output · mute input · screenshot · lock · power off
+                // quick buttons: output · input (lit while on, glyph shows the state) · screenshot · lock · power off
                 Rectangle {
                     Layout.fillWidth: true
                     implicitHeight: 52
@@ -75,8 +75,9 @@ OverlayWindow {
                         spacing: 6
                         Repeater {
                             model: [
-                                { glyph: "󰝟", on: win.sink && win.sink.audio ? win.sink.audio.muted : false, run: () => Audio.toggleMute(win.sink) },
-                                { glyph: "󰍭", on: win.source && win.source.audio ? win.source.audio.muted : false, run: () => Audio.toggleMute(win.source) },
+                                // the glyph shows the current state; the button is lit while sound is on
+                                { glyph: (win.sink && win.sink.audio && win.sink.audio.muted) ? "󰝟" : "󰕾", on: !(win.sink && win.sink.audio && win.sink.audio.muted), run: () => Audio.toggleMute(win.sink) },
+                                { glyph: (win.source && win.source.audio && win.source.audio.muted) ? "󰍭" : "󰍬", on: !(win.source && win.source.audio && win.source.audio.muted), run: () => Audio.toggleMute(win.source) },
                                 { glyph: "󰹑", on: false, run: () => { win.isOpen = false; Proc.detach('grim -g "$(slurp)" - | wl-copy') } },
                                 { glyph: "󰌾", on: false, run: () => { win.isOpen = false; Lock.lock() } },
                                 { glyph: "󰐥", on: false, danger: true, run: () => Proc.detach("systemctl poweroff") }
