@@ -1,0 +1,21 @@
+[Unit]
+Description=Quickshell: bar, popups, notifications, launchers, lock screen
+Documentation=file:%h/.config/quickshell/shell.qml
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+# Same restart budget as the waybar drop-in it replaces: when Hyprland exits
+# the shell loses the Wayland socket; spaced retries burn one or two attempts
+# on a teardown and keep the rest for a real mid-session crash. OnFailure
+# notifies (notify-unit-failure stays silent with no compositor up).
+StartLimitIntervalSec=30s
+StartLimitBurst=5
+OnFailure=notify-unit-failure@%n.service
+
+[Service]
+ExecStart=/usr/bin/qs -p %h/.config/quickshell
+Restart=on-failure
+RestartSec=2s
+
+[Install]
+WantedBy=graphical-session.target

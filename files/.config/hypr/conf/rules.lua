@@ -160,6 +160,11 @@ for _, r in ipairs({
     { name = "frosted-barpop",  ns = "^barpop$" },
     { name = "frosted-wallstrip", ns = "^wallstrip$" },
     { name = "frosted-cheatsheet", ns = "^cheatsheet$" },
+    -- Quickshell surfaces (the bar blurs its own popups too)
+    { name = "frosted-qs-bar",     ns = "^qs-bar$", popups = true },
+    { name = "frosted-qs-overlay", ns = "^qs-overlay$" },
+    { name = "frosted-qs-notif",   ns = "^qs-notif$" },
+    { name = "frosted-qs-osd",     ns = "^qs-osd$" },
 }) do
     hl.layer_rule({
         name         = r.name,

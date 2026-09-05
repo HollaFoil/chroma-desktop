@@ -126,3 +126,8 @@
 
 # XSETTINGS for Xwayland apps (xsettingsd.service, hooked in by bootstrap)
 .config/xsettingsd/xsettingsd.conf
+
+# quickshell (the shell: bar, popups, notifications, launchers, lock screen)
+.config/quickshell
+.config/matugen/templates/quickshell.json
+.config/systemd/user/quickshell.service

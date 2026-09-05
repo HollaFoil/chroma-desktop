@@ -20,3 +20,6 @@ __pycache__/
 *.bak
 *.log
 .greeter-previous-dm
+
+# Quickshell writes this LSP config into the shell root; it is machine-specific
+files/.config/quickshell/.qmlls.ini

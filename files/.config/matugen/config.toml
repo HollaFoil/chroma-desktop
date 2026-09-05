@@ -7,6 +7,13 @@ output_path = '~/.config/waybar/colors.css'
 # reload would recreate the bar; its exclusive zone blinks and every window
 # under it gets resized (a scroll-snap page like YouTube Shorts jumps a slide).
 
+[templates.quickshell]
+# The shell's palette as JSON: every colour role plus the wallpaper path and
+# mode. No post_hook: Theme/Colors.qml watches the file and every bound colour
+# animates to the new value.
+input_path = '~/.config/matugen/templates/quickshell.json'
+output_path = '~/.config/matugen/generated/quickshell.json'
+
 [templates.swaync]
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/swaync/colors.css'
