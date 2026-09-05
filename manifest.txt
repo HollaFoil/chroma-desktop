@@ -35,6 +35,7 @@
 .local/bin/setwall
 .local/bin/relayout
 .local/bin/gen-ohmyposh-template
+.local/bin/remote-desktop
 
 # gtk
 .config/gtk-3.0/gtk.css
@@ -64,6 +65,7 @@
 .config/systemd/user/hyprland-session.target
 .config/systemd/user/notify-unit-failure@.service
 .config/systemd/user/hyprpolkitagent.service.d/override.conf
+.config/systemd/user/wayvnc.service
 .local/bin/notify-unit-failure
 
 # btop

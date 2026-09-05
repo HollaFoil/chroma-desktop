@@ -68,6 +68,7 @@ capitaine-cursors            # cursor theme named in gtk settings.ini
 fastfetch                    # Settings > About PC reads its JSON (board, BIOS, GPU drivers, disks, displays); shorter list without it
 webp-pixbuf-loader           # only if your wallpapers are .webp
 nwg-displays                 # GUI to regenerate monitors.lua for your monitors
+wayvnc                       # remote desktop over Tailscale (remote-desktop on; the network panel's Remote desktop toggle)
 python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
 greetd                       # login manager; runs the shell's greeter (quickshell from [core]). ./greeter installs and enables it

@@ -18,6 +18,8 @@ ColumnLayout {
     BluetoothSection { Layout.fillWidth: true }
     Divider { Layout.fillWidth: true; visible: Net.hasTailscale }
     TailscaleSection { Layout.fillWidth: true }
+    Divider { Layout.fillWidth: true; visible: Net.haveVnc }
+    RemoteSection { Layout.fillWidth: true }
     Divider { Layout.fillWidth: true }
     ListRow {
         accent: true

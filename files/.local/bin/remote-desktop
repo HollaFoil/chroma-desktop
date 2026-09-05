@@ -1,0 +1,89 @@
+#!/bin/bash
+# remote-desktop — VNC into this desktop over Tailscale (wayvnc).
+#
+#   remote-desktop on|off        start / stop sharing now (wayvnc.service)
+#   remote-desktop status        address, output, whether it runs and autostarts
+#   remote-desktop autostart on|off   share from login on (systemctl --user enable)
+#   remote-desktop output <name> which monitor to share (HDMI-A-1 ...); restarts if running
+#   remote-desktop password [new]  show the VNC password, or set a new one
+#   remote-desktop run           what the unit runs: writes the config and execs wayvnc
+#
+# The server binds to the Tailscale address only, so nothing is reachable from
+# the LAN or the internet, and asks for a username and password (RSA-AES,
+# which TigerVNC, RealVNC and most phone clients speak). The tailnet has other
+# people's devices on it: keep the password, and limit who may reach port 5900
+# in the Tailscale ACL if you share the tailnet. Config and key live in
+# ~/.config/wayvnc (not in the dotfiles); the password is generated on first
+# use and stays until you change it.
+set -euo pipefail
+export PATH="$HOME/.local/bin:$PATH"
+DIR="$HOME/.config/wayvnc"
+CONF="$DIR/config"
+KEY="$DIR/rsa_key.pem"
+PASSFILE="$DIR/password"
+OUTFILE="$DIR/output"
+PORT=5900
+UNIT=wayvnc.service
+
+die() { echo "remote-desktop: $*" >&2; exit 1; }
+have() { command -v "$1" >/dev/null 2>&1; }
+
+address() { tailscale ip -4 2>/dev/null | head -1; }
+output() {
+    if [[ -s "$OUTFILE" ]]; then cat "$OUTFILE"; return; fi
+    # the largest connected monitor, else whatever is first
+    hyprctl -j monitors 2>/dev/null | jq -r 'sort_by(-(.width*.height)) | .[0].name' 2>/dev/null || true
+}
+ensure_secrets() {
+    umask 077; mkdir -p "$DIR"
+    [[ -s "$KEY" ]] || openssl genrsa -out "$KEY" 2048 >/dev/null 2>&1 || die "openssl could not create $KEY"
+    [[ -s "$PASSFILE" ]] || openssl rand -base64 12 | tr -d '\n' > "$PASSFILE"
+}
+write_config() {
+    local addr; addr="$(address)"
+    [[ -n "$addr" ]] || die "no Tailscale address (is tailscale up?)"
+    ensure_secrets
+    umask 077
+    cat > "$CONF" <<CFG
+# written by remote-desktop; edit remote-desktop, not this
+address=$addr
+port=$PORT
+enable_auth=true
+username=$USER
+password=$(cat "$PASSFILE")
+rsa_private_key_file=$KEY
+CFG
+}
+
+case "${1:-status}" in
+    run)
+        have wayvnc || die "wayvnc is not installed (sudo pacman -S wayvnc)"
+        write_config
+        out="$(output)"
+        exec wayvnc ${out:+-o "$out"} -C "$CONF"
+        ;;
+    on)  systemctl --user start "$UNIT" && echo "sharing $(output) on $(address):$PORT" ;;
+    off) systemctl --user stop "$UNIT" && echo "stopped" ;;
+    autostart)
+        case "${2:-}" in
+            on)  systemctl --user enable "$UNIT" >/dev/null && echo "wayvnc starts with the session" ;;
+            off) systemctl --user disable "$UNIT" >/dev/null && echo "wayvnc no longer starts with the session" ;;
+            *)   systemctl --user is-enabled "$UNIT" 2>/dev/null || true ;;
+        esac ;;
+    output)
+        [[ -n "${2:-}" ]] || { output; exit 0; }
+        mkdir -p "$DIR"; printf '%s\n' "$2" > "$OUTFILE"
+        systemctl --user try-restart "$UNIT" 2>/dev/null || true
+        echo "sharing $2" ;;
+    password)
+        ensure_secrets
+        if [[ -n "${2:-}" ]]; then umask 077; printf '%s' "$2" > "$PASSFILE"; systemctl --user try-restart "$UNIT" 2>/dev/null || true; echo "password changed"
+        else cat "$PASSFILE"; echo; fi ;;
+    status)
+        have wayvnc && echo "wayvnc: installed" || echo "wayvnc: not installed (sudo pacman -S wayvnc)"
+        echo "address: $(address):$PORT   output: $(output)"
+        en="$(systemctl --user is-enabled "$UNIT" 2>/dev/null || true)"; [[ "$en" == enabled ]] || en=disabled
+        echo "running: $(systemctl --user is-active "$UNIT" 2>/dev/null || true)   autostart: $en"
+        echo "user: $USER   password: remote-desktop password" ;;
+    *) sed -n '2,20p' "$0"; exit 1 ;;
+esac

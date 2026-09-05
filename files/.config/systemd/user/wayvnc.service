@@ -1,0 +1,15 @@
+[Unit]
+Description=Remote desktop over Tailscale (wayvnc)
+Documentation=file:%h/.local/bin/remote-desktop
+PartOf=graphical-session.target
+After=graphical-session.target
+Requisite=graphical-session.target
+
+[Service]
+# remote-desktop writes the config (Tailscale address, password) and execs wayvnc
+ExecStart=%h/.local/bin/remote-desktop run
+Restart=on-failure
+RestartSec=3s
+
+[Install]
+WantedBy=graphical-session.target

@@ -49,6 +49,37 @@
         "w": 503,
         "h": 134,
         "options": {}
+      },
+      {
+        "id": "weather-b14d48",
+        "type": "Weather",
+        "x": 2240,
+        "y": 216,
+        "w": 304,
+        "h": 152,
+        "options": {}
+      },
+      {
+        "id": "shortcuts-3fcaa0",
+        "type": "Shortcuts",
+        "x": 32,
+        "y": 64,
+        "w": 288,
+        "h": 80,
+        "options": {
+          "apps": "firefox, kitty, nemo, codium"
+        }
+      },
+      {
+        "id": "clock-7d562d",
+        "type": "Clock",
+        "x": 2240,
+        "y": 48,
+        "w": 304,
+        "h": 152,
+        "options": {
+          "seconds": false
+        }
       }
     ]
   }
