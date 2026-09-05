@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# Callers differ in PATH: Hyprland's has ~/.local/bin and ~/.spicetify (conf/env.lua),
+# systemd's (the shell, and so the wallpaper strip and Settings) does not. The
+# tools this script and matugen's post_hooks look up by name live there
+# (oh-my-posh, spicetify, greeter-sync, matugen-icons), so set it here.
+export PATH="$HOME/.local/bin:$HOME/.spicetify:$PATH"
+
 WALL="${1:-}"
 
 if [[ -z "$WALL" ]]; then
