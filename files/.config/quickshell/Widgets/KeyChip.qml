@@ -20,13 +20,13 @@ Rectangle {
     radius: Tokens.rXs
     color: capturing ? Tokens.alpha(Colors.primary, Tokens.aActive) : Colors.surfaceContainerHigh
     Behavior on color { ColorAnimation { duration: Tokens.durFast } }
-    SequentialAnimation on opacity {
+    SequentialAnimation {
         running: root.capturing
         loops: Animation.Infinite
-        NumberAnimation { to: 0.4; duration: 700; easing.type: Easing.InOutSine }
-        NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "opacity"; to: 0.4; duration: 700; easing.type: Easing.InOutSine }
+        NumberAnimation { target: root; property: "opacity"; to: 1.0; duration: 700; easing.type: Easing.InOutSine }
+        onRunningChanged: if (!running) root.opacity = 1
     }
-    onCapturingChanged: if (!capturing) opacity = 1
 
     RowLayout {
         id: row

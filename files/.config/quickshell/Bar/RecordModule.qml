@@ -21,15 +21,18 @@ Bubble {
         Rectangle { anchors.fill: parent; radius: 8; color: "transparent"; border.width: 2; border.color: parent.c
             Behavior on border.color { ColorAnimation { duration: Tokens.durFast } } }
         Rectangle {
+            id: disk
             anchors.centerIn: parent; width: 8; height: 8; radius: 4; color: parent.c
             Behavior on color { ColorAnimation { duration: Tokens.durFast } }
-            SequentialAnimation on opacity {
+            SequentialAnimation {
+                id: pulse
                 running: Recorder.recording
                 loops: Animation.Infinite
-                NumberAnimation { to: 0.25; duration: 800; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                NumberAnimation { target: disk; property: "opacity"; to: 0.25; duration: 800; easing.type: Easing.InOutSine }
+                NumberAnimation { target: disk; property: "opacity"; to: 1.0; duration: 800; easing.type: Easing.InOutSine }
+                // a stopped animation leaves the value where it was; put it back
+                onRunningChanged: if (!running) disk.opacity = 1
             }
-            onOpacityChanged: if (!Recorder.recording && opacity !== 1) opacity = 1
         }
     }
     Label { visible: Recorder.recording; text: Recorder.clock(); size: Tokens.fontSizeBar; color: Colors.error; Layout.leftMargin: 6 }

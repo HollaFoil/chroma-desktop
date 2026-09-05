@@ -32,13 +32,13 @@ Rectangle {
              : root.kind === "muted" ? Colors.surfaceVariantFg
              : root.kind === "action" ? (root.hovered ? Colors.primary : Colors.surfaceVariantFg)
              : (root.hovered ? Colors.error : Colors.surfaceVariantFg)
-        SequentialAnimation on opacity {
+        SequentialAnimation {
             running: root.busy
             loops: Animation.Infinite
-            NumberAnimation { to: 0.3; duration: 700; easing.type: Easing.InOutSine }
-            NumberAnimation { to: 1.0; duration: 700; easing.type: Easing.InOutSine }
+            NumberAnimation { target: g; property: "opacity"; to: 0.3; duration: 700; easing.type: Easing.InOutSine }
+            NumberAnimation { target: g; property: "opacity"; to: 1.0; duration: 700; easing.type: Easing.InOutSine }
+            onRunningChanged: if (!running) g.opacity = 1
         }
-        onOpacityChanged: if (!root.busy && opacity !== 1) opacity = 1
     }
     MouseArea {
         id: ma
