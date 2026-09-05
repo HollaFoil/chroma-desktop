@@ -10,7 +10,7 @@ Bubble {
     onClicked: openPopup("network", "right")
     Glyph {
         text: Net.anyConnected ? "󰖩" : "󰖪"
-        size: Tokens.fontSizeBar
+        size: Tokens.barIconSize
         color: Net.anyConnected ? Colors.surfaceFg : Colors.error
     }
 }

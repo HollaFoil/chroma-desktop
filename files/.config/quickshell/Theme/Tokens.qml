@@ -19,6 +19,7 @@ Singleton {
     readonly property int fontSizeIcon: 18
     readonly property int fontSizeIconSmall: 14
     readonly property int fontSizeBar: 12
+    readonly property int barIconSize: 16      // glyphs beside the bar's numbers
 
     // the bar
     readonly property int barHeight: 37

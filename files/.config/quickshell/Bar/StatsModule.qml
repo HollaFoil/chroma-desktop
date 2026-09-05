@@ -11,15 +11,20 @@ RowLayout {
     property var bar: null
     spacing: 0
     Bubble {
-        bar: root.bar; corners: "capLeftM"; padL: 16; padR: 7; marginL: 7; interactive: false
-        Label { text: "󰍛 " + Stats.cpu + "%"; size: Tokens.fontSizeBar; color: Colors.tertiary }
+        bar: root.bar; corners: "capLeftM"; padL: 16; padR: 7; marginL: 7; interactive: false; spacing: 5
+        Glyph { text: "󰍛"; size: Tokens.barIconSize; color: Colors.tertiary }
+        Label { text: Stats.cpu + "%"; size: Tokens.fontSizeBar; color: Colors.tertiary }
     }
     Bubble {
-        bar: root.bar; corners: "none"; padL: 7; padR: 7; marginL: 0; interactive: false
-        Label { text: "󰢮 " + Stats.gpu; size: Tokens.fontSizeBar; color: Stats.gpuTemp >= Stats.critical ? Colors.error : Colors.primary }
+        bar: root.bar; corners: "none"; padL: 7; padR: 7; marginL: 0; interactive: false; spacing: 5
+        readonly property color c: Stats.gpuTemp >= Stats.critical ? Colors.error : Colors.primary
+        Glyph { text: "󰢮"; size: Tokens.barIconSize; color: parent.parent.parent.c }
+        Label { text: Stats.gpu; size: Tokens.fontSizeBar; color: parent.parent.parent.c }
     }
     Bubble {
-        bar: root.bar; corners: "capRightM"; padL: 7; padR: 14; marginL: 0; interactive: false
-        Label { text: "󰔏 " + Stats.temp + "°C"; size: Tokens.fontSizeBar; color: Stats.temp >= Stats.critical ? Colors.error : Colors.tertiary }
+        bar: root.bar; corners: "capRightM"; padL: 7; padR: 14; marginL: 0; interactive: false; spacing: 5
+        readonly property color c: Stats.temp >= Stats.critical ? Colors.error : Colors.tertiary
+        Glyph { text: "󰔏"; size: Tokens.barIconSize; color: parent.parent.parent.c }
+        Label { text: Stats.temp + "°C"; size: Tokens.fontSizeBar; color: parent.parent.parent.c }
     }
 }
