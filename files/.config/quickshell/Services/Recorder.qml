@@ -51,8 +51,8 @@ Singleton {
         } else if (target === "region") {
             Proc.run(["slurp", "-f", "%x,%y %wx%h"], (code, out) => { if (code !== 0 || !out.trim()) { root.abort("no region picked") } else root.launch({ geometry: out.trim() }) })
         } else {
-            // every mapped window as a rectangle slurp can snap to
-            Proc.sh("hyprctl clients -j | jq -r '.[] | select(.mapped and .workspace.id > 0) | \"\\(.at[0]),\\(.at[1]) \\(.size[0])x\\(.size[1]) \\(.title)\"' | slurp -r -f '%x,%y %wx%h'", (code, out) => {
+            // the windows on screen right now (each monitor's active workspace) as rectangles slurp snaps to
+            Proc.sh("ws=$(hyprctl -j monitors | jq -c '[.[].activeWorkspace.id]'); hyprctl -j clients | jq -r --argjson ws \"$ws\" '.[] | select(.mapped and (.hidden | not) and ((.workspace.id) as $w | $ws | index($w) != null)) | \"\\(.at[0]),\\(.at[1]) \\(.size[0])x\\(.size[1]) \\(.title)\"' | slurp -r -f '%x,%y %wx%h'", (code, out) => {
                 if (code !== 0 || !out.trim()) root.abort("no window picked"); else root.launch({ geometry: out.trim() })
             })
         }
