@@ -1,24 +1,27 @@
 #!/bin/bash
-# greeter — the login screen: greetd running wallgreet (files/.local/bin/wallgreet,
-# the same program that is the lock screen) inside Hyprland, themed from the wallpaper.
+# greeter — the login screen: greetd running the shell's greeter (quickshell,
+# files/.config/quickshell/greeter.qml, the same screen as the lock) inside
+# Hyprland, themed from the wallpaper.
 #
 #   ./greeter check     what is installed, what is enabled, what is stale
 #   ./greeter install   packages, /etc/greetd/*, the theme directory; does NOT switch login managers
 #                       --no-autologin: ask for the password on the greeter instead of booting
 #                       straight into your locked desktop (see system/greetd/config.toml.in)
-#   ./greeter preview   run the greeter over this session in demo mode (Esc quits; --form starts in the login view)
-#                       the lock screen is tried with:  wallgreet --lock --demo  (Esc unlocks)
+#                       Run it again after changing the shell: the greeter runs from a copy.
+#   ./greeter preview   run the greeter over this session in demo mode (Esc quits, Enter only
+#                       reports); QS_SCREENS=DP-2 limits it to one monitor.
+#                       the lock screen is tried with:  qs ipc call lock preview false  (Esc closes)
 #   ./greeter enable    make greetd the display manager from the next boot on
 #   ./greeter disable   go back to the previous display manager
 #
 # System side (needs sudo, asked for as it goes):
-#   /etc/greetd/config.toml   greetd: run Hyprland as `greeter` with /etc/greetd/hyprland.lua
-#   /etc/greetd/hyprland.lua  the greeter's compositor config; it runs wallgreet
-#   /usr/local/bin/wallgreet  a copy of files/.local/bin/wallgreet for the greeter user, who cannot read ~
-#   /etc/pam.d/wallgreet      PAM stack for `wallgreet --lock` (same as hyprlock's)
-#   /var/lib/wallgreet/       remembers the last user and session (owned by `greeter`)
-#   /etc/greetd/theme/        owned by you; greeter-sync (a matugen post_hook) drops the
-#                             rendered wallgreet.css, the wallpaper, monitors.lua and colors.lua here
+#   /etc/greetd/config.toml    greetd: run Hyprland as `greeter` with /etc/greetd/hyprland.lua
+#   /etc/greetd/hyprland.lua   the greeter's compositor config; it runs the greeter
+#   /etc/greetd/quickshell/    a copy of files/.config/quickshell for the greeter user, who cannot read ~
+#   /etc/pam.d/quickshell      PAM stack for the shell's lock screen
+#   /var/lib/quickshell-greeter/  remembers the last user and session (owned by `greeter`)
+#   /etc/greetd/theme/         owned by you; greeter-sync (a matugen post_hook) drops the
+#                              palette (colors.json), the wallpaper, monitors.lua and colors.lua here
 #
 # Getting back in if the greeter ever fails to start: Ctrl+Alt+F2 gives a text
 # login (greetd holds tty1), then  ./greeter disable  or  start-hyprland.
@@ -27,13 +30,14 @@ set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SYS="$REPO/system/greetd"
 THEME=/etc/greetd/theme
-CSS="$HOME/.config/matugen/generated/wallgreet.css"
-PKGS=(greetd python-gobject python-cairo gtk3 gtk-layer-shell gtk-session-lock python-pam)
+PALETTE="$HOME/.config/matugen/generated/quickshell.json"
+PKGS=(greetd quickshell)
 FILES=(hyprland.lua)          # copied as they are; config.toml is rendered from config.toml.in
 AUTOLOGIN=1
 for a in "$@"; do [[ "$a" == --no-autologin ]] && AUTOLOGIN=0; done
-SRC="$REPO/files/.local/bin/wallgreet"
-BIN=/usr/local/bin/wallgreet
+SRC="$REPO/files/.config/quickshell"
+DST=/etc/greetd/quickshell
+STATE_DIR=/var/lib/quickshell-greeter
 
 ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
@@ -70,17 +74,21 @@ check() {
         elif cmp -s "$SYS/$f" "/etc/greetd/$f"; then ok "/etc/greetd/$f matches system/greetd/$f"
         else warn "/etc/greetd/$f differs from the repo (./greeter install rewrites it)"; all=0; fi
     done
-    if [[ -x $BIN ]]; then
-        cmp -s "$SRC" "$BIN" && ok "$BIN matches files/.local/bin/wallgreet" || { warn "$BIN differs from the repo (./greeter install rewrites it)"; all=0; }
-    else miss "$BIN missing"; all=0; fi
-    [[ -f /etc/pam.d/wallgreet ]] && ok "/etc/pam.d/wallgreet present" || { warn "/etc/pam.d/wallgreet missing (the lock falls back to hyprlock's PAM stack)"; }
+    if [[ -d $DST ]]; then
+        diff -rq -x '.qmlls.ini' -x '__pycache__' "$SRC" "$DST" >/dev/null 2>&1 && ok "$DST matches files/.config/quickshell" || { warn "$DST differs from the repo (./greeter install refreshes the copy)"; all=0; }
+    else miss "$DST missing"; all=0; fi
+    [[ -f /etc/pam.d/quickshell ]] && ok "/etc/pam.d/quickshell present" || { warn "/etc/pam.d/quickshell missing (the lock falls back to hyprlock's PAM stack)"; }
+    [[ -d $STATE_DIR ]] && ok "$STATE_DIR present" || warn "$STATE_DIR missing (the greeter will not remember the last user)"
     if [[ -d $THEME && -w $THEME ]]; then
         ok "$THEME is writable by $USER"
-        for f in wallgreet.css background monitors.lua colors.lua; do
+        for f in colors.json background monitors.lua colors.lua; do
             [[ -f $THEME/$f ]] && ok "$THEME/$f present" || warn "$THEME/$f not synced yet (setwall, or ./greeter install)"
         done
     else miss "$THEME missing or not writable by $USER"; all=0; fi
-    [[ -f "$CSS" ]] && ok "wallgreet.css rendered by matugen" || warn "no rendered wallgreet.css yet: run setwall <image>"
+    [[ -f "$PALETTE" ]] && ok "palette rendered by matugen" || warn "no rendered palette yet: run setwall <image>"
+    for f in /usr/local/bin/wallgreet /etc/pam.d/wallgreet /var/lib/wallgreet; do
+        [[ -e $f ]] && warn "$f is left over from wallgreet (./greeter install removes it)"
+    done
     pacman -Qq greetd-regreet >/dev/null 2>&1 && warn "greetd-regreet is still installed and unused (./prune --remove)"
     local dm; dm="$(current_dm)"
     if [[ "$dm" == greetd ]]; then ok "display manager: greetd"
@@ -103,27 +111,32 @@ install_() {
     local tmp; tmp="$(mktemp)"; render_config > "$tmp"
     sudo install -Dm644 "$tmp" /etc/greetd/config.toml && ok "/etc/greetd/config.toml$([[ $AUTOLOGIN == 1 ]] && echo " (autologin into $USER's locked desktop)")"
     rm -f "$tmp"
-    sudo install -Dm755 "$SRC" "$BIN" && ok "$BIN"
-    sudo install -Dm644 "$SYS/pam-wallgreet" /etc/pam.d/wallgreet && ok "/etc/pam.d/wallgreet"
+    # The greeter runs from a copy: the greeter user cannot read ~.
+    local stage; stage="$(mktemp -d)"
+    cp -r "$SRC/." "$stage/"; rm -f "$stage/.qmlls.ini"; find "$stage" -name __pycache__ -prune -exec rm -rf {} + 2>/dev/null
+    sudo rm -rf "$DST" && sudo cp -r "$stage" "$DST" && sudo chown -R root:root "$DST" && sudo chmod -R a+rX "$DST" && ok "$DST (copy of files/.config/quickshell)"
+    rm -rf "$stage"
+    sudo install -Dm644 "$SYS/pam-quickshell" /etc/pam.d/quickshell && ok "/etc/pam.d/quickshell"
     # The greeter user comes from greetd's sysusers.d entry; run it now so the
-    # first boot does not have to, then give wallgreet somewhere to remember
+    # first boot does not have to, then give the greeter somewhere to remember
     # the last user and session.
     sudo systemd-sysusers >/dev/null 2>&1 || true
-    sudo install -d -m750 -o greeter -g greeter /var/lib/wallgreet && ok "/var/lib/wallgreet (owned by greeter)"
-    # Leftovers of the ReGreet version of this setup, if any.
-    sudo rm -f /etc/greetd/regreet.toml "$THEME/regreet.css" 2>/dev/null || true
+    sudo install -d -m750 -o greeter -g greeter "$STATE_DIR" && ok "$STATE_DIR (owned by greeter)"
+    # Leftovers of the ReGreet and wallgreet versions of this setup, if any.
+    sudo rm -f /etc/greetd/regreet.toml "$THEME/regreet.css" /usr/local/bin/wallgreet /etc/pam.d/wallgreet "$THEME/wallgreet.css" 2>/dev/null || true
+    sudo rm -rf /var/lib/wallgreet 2>/dev/null || true
     sudo install -d -m755 -o "$USER" -g "$(id -gn)" "$THEME" && ok "$THEME (owned by $USER)"
 
     echo "Theme"
-    if [[ ! -f "$CSS" ]]; then
+    if [[ ! -f "$PALETTE" ]]; then
         # Render it from the current wallpaper if we can tell what that is.
         local wall
         wall="$(awww query 2>/dev/null | sed -n 's/.*image: //p' | head -1)"
         if [[ -n "$wall" && -f "$wall" && -x "$HOME/.local/bin/setwall" ]]; then
-            warn "no rendered wallgreet.css yet: running setwall on the current wallpaper"
+            warn "no rendered palette yet: running setwall on the current wallpaper"
             "$HOME/.local/bin/setwall" "$wall" >/dev/null
         else
-            warn "no rendered wallgreet.css yet: run  setwall <image>  and the login screen picks it up"
+            warn "no rendered palette yet: run  setwall <image>  and the login screen picks it up"
         fi
     fi
     "$REPO/files/.local/bin/greeter-sync" && ok "greeter-sync ran"
@@ -137,18 +150,19 @@ install_() {
 preview() {
     # Demo mode: no greetd, Esc quits, Enter only reports what it would do.
     # Reads /etc/greetd/theme like the real thing, or - before ./greeter
-    # install - the rendered stylesheet and the wallpaper it names.
-    [[ -f "$CSS" ]] || die "no rendered stylesheet at $CSS; run setwall <image>"
+    # install - the rendered palette and the wallpaper it names.
+    [[ -f "$PALETTE" ]] || die "no rendered palette at $PALETTE; run setwall <image>"
     local theme="$THEME" tmp=""
-    if [[ ! -f $THEME/wallgreet.css ]]; then
+    if [[ ! -f $THEME/colors.json ]]; then
         tmp="$(mktemp -d)"; theme="$tmp"
-        cp "$CSS" "$tmp/wallgreet.css"
-        local wall; wall="$(sed -n '1s#^/\* wallpaper: \(.*\) \*/$#\1#p' "$CSS")"
+        cp "$PALETTE" "$tmp/colors.json"
+        local wall; wall="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("wallpaper",""))' "$PALETTE")"
         [[ -n "$wall" && -f "$wall" ]] && cp "$wall" "$tmp/background"
     fi
-    echo "  wallgreet in demo mode over this session (theme: $theme). Esc closes it."
-    WALLGREET_THEME="$theme" WALLGREET_STATE="${XDG_RUNTIME_DIR:-/tmp}/wallgreet-demo.json" \
-        python3 "$SRC" --demo "$@"
+    echo "  the greeter in demo mode over this session (theme: $theme). Esc closes it."
+    QS_GREETER_DEMO=1 QS_GREETER_THEME="$theme" QS_COLORS="$theme/colors.json" \
+        QS_GREETER_STATE="${XDG_RUNTIME_DIR:-/tmp}/quickshell-greeter-demo.json" \
+        qs -p "$SRC/greeter.qml" "$@"
     [[ -n "$tmp" ]] && rm -rf "$tmp"
 }
 

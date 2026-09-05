@@ -1,9 +1,0 @@
-# PAM configuration for wallgreet --lock (the lock screen). Installed to
-# /etc/pam.d/wallgreet by ./greeter install.
-#
-# Both stacks are needed: python-pam runs pam_acct_mgmt after
-# pam_authenticate, and a service with no account lines falls through to
-# /etc/pam.d/other, which denies everything (hyprlock gets away with
-# auth-only because it never asks for account management).
-auth        include     login
-account     include     login

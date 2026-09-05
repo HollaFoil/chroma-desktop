@@ -1,0 +1,5 @@
+# PAM stack for the shell's lock screen (Quickshell PamContext, auth only).
+# Installed to /etc/pam.d/quickshell by ./greeter install. The account line is
+# for completeness: PamContext runs the auth stack only.
+auth        include     login
+account     include     login

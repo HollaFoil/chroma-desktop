@@ -9,10 +9,12 @@ output_path = '~/.config/waybar/colors.css'
 
 [templates.quickshell]
 # The shell's palette as JSON: every colour role plus the wallpaper path and
-# mode. No post_hook: Theme/Colors.qml watches the file and every bound colour
-# animates to the new value.
+# mode. Theme/Colors.qml watches the file and every bound colour animates to
+# the new value; the post_hook copies it (and the wallpaper) to
+# /etc/greetd/theme for the login screen, a no-op without greetd.
 input_path = '~/.config/matugen/templates/quickshell.json'
 output_path = '~/.config/matugen/generated/quickshell.json'
+post_hook = '~/.local/bin/greeter-sync'
 
 [templates.hyprland]
 input_path = '~/.config/matugen/templates/hypr-colors.lua'

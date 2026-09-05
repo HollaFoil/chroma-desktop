@@ -3,11 +3,11 @@
 #
 # The greeter runs as the `greeter` user and cannot read ~, so the files it
 # uses are copied into /etc/greetd/theme (a directory `./greeter install`
-# makes writable by you). Runs as the post_hook of matugen's regreet template,
-# i.e. on every setwall, and once from ./greeter install:
+# makes writable by you). Runs as a matugen post_hook, i.e. on every setwall,
+# and once from ./greeter install:
 #
-#   wallgreet.css   the rendered stylesheet (~/.config/matugen/generated/wallgreet.css)
-#   background    the wallpaper it was rendered from (path in that file's first line)
+#   colors.json   the palette (~/.config/matugen/generated/quickshell.json)
+#   background    the wallpaper it was rendered from (named inside that file)
 #   monitors.lua  ~/.config/hypr/monitors.lua, so the greeter lays the outputs out like the session
 #   colors.lua    ~/.config/hypr/colors.lua, for the backdrop of the monitors without the window
 #
@@ -16,20 +16,20 @@
 set -uo pipefail
 
 THEME="${GREETER_THEME_DIR:-/etc/greetd/theme}"
-CSS="$HOME/.config/matugen/generated/wallgreet.css"
+PALETTE="$HOME/.config/matugen/generated/quickshell.json"
 HYPR="$HOME/.config/hypr"
 
 [[ -d "$THEME" && -w "$THEME" ]] || exit 0
-if [[ ! -f "$CSS" ]]; then
-    echo "greeter-sync: $CSS does not exist yet; run setwall <image>" >&2
+if [[ ! -f "$PALETTE" ]]; then
+    echo "greeter-sync: $PALETTE does not exist yet; run setwall <image>" >&2
     exit 0
 fi
 
 # install(1) rather than cp: the mode is what makes the files readable by the
 # greeter user regardless of this shell's umask.
-install -m644 "$CSS" "$THEME/wallgreet.css"
+install -m644 "$PALETTE" "$THEME/colors.json"
 
-wall="$(sed -n '1s#^/\* wallpaper: \(.*\) \*/$#\1#p' "$CSS")"
+wall="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("wallpaper",""))' "$PALETTE" 2>/dev/null)"
 if [[ -n "$wall" && -f "$wall" ]]; then
     install -m644 "$wall" "$THEME/background"
 else

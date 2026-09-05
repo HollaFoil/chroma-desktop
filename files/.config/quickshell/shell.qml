@@ -55,6 +55,7 @@ ShellRoot {
         function locked(): bool { return Lock.locked }
         // a look at the screen on the shell's first output, no lock involved
         function preview(greeter: bool): void { lockPreviewLoader.active = true; lockPreviewLoader.item.greeterLook = greeter; lockPreviewLoader.item.isOpen = !lockPreviewLoader.item.isOpen }
+        function previewForm(): void { if (lockPreviewLoader.active) lockPreviewLoader.item.openForm() }
     }
     IpcHandler {
         target: "osd"

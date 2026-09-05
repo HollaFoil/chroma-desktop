@@ -44,4 +44,5 @@ PanelWindow {
         greeter: win.greeterLook
     }
     property bool greeterLook: false
+    function openForm() { demoModel.formOpen = true }
 }
