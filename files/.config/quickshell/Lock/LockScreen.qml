@@ -55,8 +55,8 @@ Item {
             if (root.model.formOpen) { if (root.model.password.length === 0) root.model.formOpen = false }
             else root.model.open()
         }
+        // clicked arrives after released, so the flag is only cleared by the next press
         onClicked: if (!spent && !root.model.formOpen) root.model.open()
-        onReleased: spent = false
         onWheel: { if (!root.model.formOpen) root.model.open(); else if (!root.model.password.length) root.model.formOpen = false }
     }
     // keys reach the form from any screen
