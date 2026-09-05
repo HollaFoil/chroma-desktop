@@ -2,7 +2,7 @@
 -- not a reload. See https://wiki.hypr.land/Configuring/Advanced-and-Cool/Environment-variables/
 -- PATH for everything Hyprland starts. A login shell used to add these (fish's
 -- fish_user_paths) when the display manager ran the session through it; greetd
--- sources only sh's profile, so ~/.local/bin (setwall, wallgreet, the overlays)
+-- sources only sh's profile, so ~/.local/bin (setwall, greeter-sync)
 -- and ~/.spicetify (spicetify watch/refresh) have to be put back here.
 local HOME = os.getenv("HOME")
 hl.env("PATH", HOME .. "/.local/bin:" .. HOME .. "/.spicetify:" .. (os.getenv("PATH") or "/usr/local/bin:/usr/bin"))

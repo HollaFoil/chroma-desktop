@@ -7,36 +7,12 @@
 .config/hypr/hypridle.conf
 .config/hypr/hyprlock.conf
 
-# Waybar
-.config/waybar/config.jsonc
-.config/waybar/style.css
-.local/bin/barpop
-.local/lib/barpop
+# quickshell: the shell (bar, popups, settings, notifications, launcher,
+# clipboard, cheatsheet, wallpaper strip, OSD, lock screen, greeter)
+.config/quickshell
+.config/matugen/templates/quickshell.json
+.config/systemd/user/quickshell.service
 .config/networkmanagement.notifyrc
-.local/bin/waybar-widget
-.config/barpop/audio.json
-
-# swaync
-.config/swaync/style.css
-.config/swaync/config.json
-
-# rofi
-.config/rofi/config.rasi
-.config/rofi/shared.rasi
-.config/rofi/launchers/style-4.rasi
-.config/rofi/launchers/style-5.rasi
-.config/rofi/launchers/style-7.rasi
-.config/rofi/launchers/style-8.rasi
-.config/rofi/cliphist.rasi
-.config/matugen/templates/rofi-colors.rasi
-.local/bin/rofi-launcher
-.local/bin/rofi-cliphist
-.local/bin/rofi-wallthumbs
-.local/bin/wallstrip
-.local/lib/wallthumbs.py
-
-# fuzzel
-.config/fuzzel/fuzzel.ini
 
 # kitty
 .config/kitty/kitty.conf
@@ -50,7 +26,6 @@
 .config/matugen/templates/colors.sh
 .config/matugen/templates/hypr-colors.lua
 .config/matugen/templates/kitty-colors.conf
-.config/matugen/templates/fuzzel-colors.ini
 .config/matugen/templates/hyprlock-colors.conf
 .config/matugen/templates/vscode-colors
 .config/matugen/templates/vscode-colors.json
@@ -58,9 +33,7 @@
 # scripts
 .local/bin/gen-monitors
 .local/bin/setwall
-.local/bin/cheatsheet
 .local/bin/relayout
-.local/bin/powermenu
 .local/bin/gen-ohmyposh-template
 
 # gtk
@@ -90,8 +63,6 @@
 # systemd user session
 .config/systemd/user/hyprland-session.target
 .config/systemd/user/notify-unit-failure@.service
-.config/systemd/user/waybar.service.d/override.conf
-.config/systemd/user/barpop-watch.service
 .config/systemd/user/hyprpolkitagent.service.d/override.conf
 .local/bin/notify-unit-failure
 
@@ -119,15 +90,8 @@
 .config/qt6ct/qt6ct.conf
 .config/matugen/templates/qt6ct-colors.conf
 
-# login + lock screen (wallgreet; ./greeter installs the greetd side)
-.local/bin/wallgreet
-.config/matugen/templates/wallgreet.css
+# login screen (the shell's greeter.qml; ./greeter installs the greetd side)
 .local/bin/greeter-sync
 
 # XSETTINGS for Xwayland apps (xsettingsd.service, hooked in by bootstrap)
 .config/xsettingsd/xsettingsd.conf
-
-# quickshell (the shell: bar, popups, notifications, launchers, lock screen)
-.config/quickshell
-.config/matugen/templates/quickshell.json
-.config/systemd/user/quickshell.service

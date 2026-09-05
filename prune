@@ -22,15 +22,23 @@ loupe                   # images: swayimg
 eog                     # images: swayimg
 celluloid               # video: mpv + ModernZ
 totem                   # video: mpv + ModernZ
-greetd-regreet          # login screen: wallgreet
+greetd-regreet          # login screen: the shell'"'"'s greeter (./greeter)
+waybar                  # bar: the shell (quickshell)
+waybar-git              # bar: the shell (quickshell)
+swaync                  # notifications: the shell
+rofi                    # launcher and clipboard: the shell
+fuzzel                  # power menu: the shell'"'"'s launcher menu
+gtk-session-lock        # lock screen: the shell (ext-session-lock via quickshell)
+python-pam              # lock screen: the shell (PAM via quickshell)
+gtk-layer-shell         # the GTK overlays are gone
 ffmpegthumbs            # dolphin'"'"'s video thumbnails; nemo uses ffmpegthumbnailer
 plasma-desktop          # the Plasma desktop: Hyprland
 kdeplasma-addons        # Plasma widgets
 kinfocenter             # Settings > About PC (fastfetch)
 kscreen                 # monitors: nwg-displays / gen-monitors
-plasma-nm               # network: barpop network
-plasma-pa               # audio: barpop audio
-bluedevil               # bluetooth: barpop network
+plasma-nm               # network: the shell'"'"'s network panel
+plasma-pa               # audio: the shell'"'"'s audio panel
+bluedevil               # bluetooth: the shell'"'"'s network panel
 powerdevil              # idle/lock/brightness: hypridle, brightnessctl
 plasma-firewall         # ufw front end for systemsettings
 plasma-systemmonitor    # btop
@@ -49,7 +57,7 @@ cachyos-nord-kde-theme-git # Plasma theme
 # plasma-login-manager needs plasma-workspace, and so does plasma-integration
 # through its portal backend.
 PLASMA_CORE='
-plasma-login-manager    # login: greetd + ReGreet (./greeter)
+plasma-login-manager    # login: greetd + the shell'"'"'s greeter (./greeter)
 plasma-workspace        # Plasma session, kwin, plasmashell
 plasma-integration      # Qt theming: qt6ct (QT_QPA_PLATFORMTHEME=qt6ct)
 xdg-desktop-portal-kde  # portals: xdg-desktop-portal-hyprland + -gtk

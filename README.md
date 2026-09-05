@@ -18,8 +18,8 @@ packages.txt        what to install and why; read by ./bootstrap
 bootstrap           first-time setup (--check to only report, --monitors for your displays)
 link / adopt        symlink the manifest into ~ / pull live files back into the repo
 prune               list (or --remove) packages this setup makes redundant: dolphin, haruna, gwenview, vlc, the Plasma desktop...
-greeter             the login screen: ./greeter install | preview | enable (greetd + wallgreet)
-system/             files that live outside ~: greetd's config, the greeter's Hyprland config and wallgreet itself; ./greeter installs them
+greeter             the login screen: ./greeter install | preview | enable (greetd + the shell's greeter)
+system/             files that live outside ~: greetd's config, the greeter's Hyprland config and the lock's PAM stack; ./greeter installs them
 examples/           relayout.config.sh, hypr-user.lua: per-machine files that live outside the repo
 wallpapers/         one default wallpaper, so a fresh clone has colours before you pick your own
 hyprtest            integration test for the window-management scripts (moves windows around)
@@ -41,20 +41,20 @@ one. `./bootstrap --check` says so if yours is too old.
 `bootstrap` installs the packages you approve (pacman, and paru/yay for the
 AUR entries), lists what `./prune --remove` would uninstall, symlinks the manifest (anything already in the way is moved to
 `backup-<timestamp>/` in the repo), renders the one file that needs your home
-path baked in (Firefox's native-messaging manifest), enables `waybar.service`,
+path baked in (Firefox's native-messaging manifest), enables `quickshell.service`,
 offers to write your monitors and to make fish your login shell,
 sets up whichever of Steam/Spotify/Discord/btop/oh-my-posh you have, and runs
 `setwall` on the wallpaper so the colour files exist before your first login.
 
-That last step matters: waybar, rofi, hyprlock and swaync `@import` files that
-matugen generates. Without one `setwall` run there is no styling and hyprlock
-refuses to start. So if you have no wallpapers of your own yet, bootstrap
+That last step matters: the shell, hyprlock, kitty and GTK read files that
+matugen generates (the shell has a built-in fallback palette; hyprlock refuses
+to start without its colours). So if you have no wallpapers of your own yet, bootstrap
 copies `wallpapers/default.jpg` into `~/Pictures/Wallpapers` and uses that —
 a fresh clone comes up themed, not unstyled. The Hyprland config
 (`hypr/lib/palette.lua`) has a built-in fallback palette.
 
 Then log into Hyprland. It starts `hyprland-session.target` (which pulls in
-waybar), swaync, the wallpaper daemon, clipboard history, hypridle and the
+the shell), the wallpaper daemon, clipboard history, hypridle and the
 dashboard.
 
 ### Make it yours
@@ -88,15 +88,15 @@ which is also how a window crosses monitors. Nothing is bound past 5.
 Underneath, ids are banked — the primary monitor owns 1–5, the next 11–15, the
 third 21–25 — because Hyprland has a single global set of workspaces and only
 one of them can be "1". Nobody types those: `hypr/lib/workspaces.lua` maps the
-keys onto the pointed monitor's bank, and waybar's `format-icons` relabels each
-bank `1`–`5`. Changing `PER_MON` there (and in `gen-monitors`) changes how many
+keys onto the pointed monitor's bank, and the bar relabels each bank `1`–`5`
+(it reads `hypr/state/monitors.json`). Changing `PER_MON` there (and in `gen-monitors`) changes how many
 each monitor gets.
 
 The rest are one machine's values:
 
 | What | Where | Note |
 |---|---|---|
-| CPU temperature | `files/.config/waybar/config.jsonc` → `temperature.hwmon-path-abs` | Points at an AMD `k10temp` PCI path. Use `thermal-zone` or your own hwmon path. |
+| CPU temperature | `files/.config/quickshell/Services/Stats.qml` → the `hwmon` glob | Points at an AMD `k10temp` PCI path. Use your own hwmon path. |
 | Keyboard layout, terminal, file manager | Settings > Input (`kb_layout`), `files/.config/hypr/conf/actions.lua` (`terminal`, `fileManager` at the top) | Nemo is GTK3, so it follows the palette live; a Qt file manager would not. |
 | Wallpapers folder | `~/Pictures/Wallpapers` | `SUPER+W` browses it; `WALLSTRIP_DIR` overrides. |
 | The dashboard (`relayout`) | `~/.config/relayout/config.sh` | Opt-in, see below. |
@@ -118,26 +118,23 @@ but they have no keys and nothing launches uninvited.
 | Piece | Role |
 |---|---|
 | **Hyprland** (`hypr/hyprland.lua` + `hypr/conf/*.lua`) | Compositor config, one topic per file: `look` (gaps, blur, animations), `input`, `rules`, `autostart`, `actions` (every keybind as a named action). `lib/` holds the palette (matugen's `colors.lua`), the action registry, the settings-override loader and the workspace → monitor map; `state/*.json` is what the Settings window wrote. |
-| **waybar** | Bar; runs as a `systemd --user` unit so a crash restarts it. Custom modules feed from `waybar-widget` (media, GPU). |
-| **swaync** | Notifications and control centre. |
-| **rofi** | Launcher (`SUPER+R`) and clipboard history (`SUPER+SHIFT+C`, via cliphist). Styles paint crops of the current wallpaper. |
+| **quickshell** (`files/.config/quickshell/`) | The shell, one QML config: the bar (per-monitor workspace banks, Spotify transport, tray with its menus drawn in-shell, stats, volume, network, clock), its popups (launcher menu, audio with per-app routing, network with Wi-Fi/hotspot/Bluetooth/Tailscale, calendar), the **Settings** window, the notification daemon and centre, the app launcher (`SUPER+R`), clipboard history (`SUPER+SHIFT+C`, via cliphist), the cheatsheet (`SUPER+/`), the wallpaper strip (`SUPER+W`), a volume/brightness OSD, the lock screen and the greeter. Runs as a `systemd --user` unit so a crash restarts it; `Theme/Colors.qml` watches matugen's palette so everything recolours live. `qs ipc call <target> …` is how keybinds reach it. |
 | **kitty**, **fish**, **oh-my-posh** | Terminal and shell; the prompt theme is recoloured per wallpaper. `config.fish` only does anything if fish is your login shell — bootstrap offers the `chsh`. |
-| **wallgreet / hypridle** (`.local/bin/wallgreet`) | Lock screen (`wallgreet --lock`: SUPER+L, powermenu, hypridle) and, run by greetd, the login screen — one program, one look. `hyprlock` stays installed as the fallback if it cannot start, with a `hyprlock.conf` styled to match. |
-| **greetd** (`system/greetd/`, `./greeter`) | The login manager: a Hyprland instance running as the `greeter` user runs `wallgreet`. Wallpaper and palette are the last ones set while logged in — see *Login screen*. |
+| **hypridle** | Idle → the shell's lock (`qs ipc call lock lock`), then screens off. `hyprlock` stays installed as the fallback when the shell is not running, with a `hyprlock.conf` styled to match. |
+| **greetd** (`system/greetd/`, `./greeter`) | The login manager: a Hyprland instance running as the `greeter` user runs the shell's `greeter.qml` from a copy at `/etc/greetd/quickshell`. Wallpaper and palette are the last ones set while logged in — see *Login screen*. |
 | **matugen** | The colour engine: one template per app in `matugen/templates/`, wired in `matugen/config.toml`. |
 | **awww** | Wallpaper daemon (swww fork). |
-| Layer-shell overlays (Python + GTK3) | `barpop` (the bar's menus and the **Settings** window), `cheatsheet` (`SUPER+/`), `wallstrip` (`SUPER+W`, wallpaper picker). |
 | `relayout` | Puts a fixed "dashboard" of apps — Spotify, Slack, Discord, btop — on one monitor (`SUPER+SHIFT+R`), or on the other (`SUPER+ALT+R`), parking the rest in a scratchpad. Opt-in: unbound until `~/.config/relayout/config.sh` exists. |
-| `setwall` | `awww` → `matugen` → rofi thumbnails → prompt colours. Everything downstream is a matugen `post_hook`. |
-| `gen-monitors` | Writes this machine's monitors, its per-monitor workspace banks and the bar's workspace buttons and labels, from `hyprctl monitors`. |
+| `setwall` | `awww` → `matugen` → prompt colours. Everything downstream is a matugen `post_hook` or watches the generated file (the shell). |
+| `gen-monitors` | Writes this machine's monitors and its per-monitor workspace banks (`monitors.lua`, `state/monitors.json`, which the bar reads) from `hyprctl monitors`. |
 
 ## Settings
 
-Arch button (top left) → **Settings**, or `SUPER+,`, or `barpop settings
-[--page look]`. A layer-shell window, so it floats over everything and is not
+Arch button (top left) → **Settings**, or `SUPER+,`, or `qs ipc call settings
+open look`. A layer-shell window, so it floats over everything and is not
 tiled. Pages:
 
-- **About PC** — the fastfetch view: OS, kernel, Hyprland/waybar/matugen
+- **About PC** — the fastfetch view: OS, kernel, Hyprland/quickshell/matugen
   versions, theme, board, BIOS, CPU, GPUs and drivers, memory, disks, displays;
   *Copy* puts it on the clipboard for a bug report.
 - **Keybinds** — every action from `conf/actions.lua` with its keys. Click a key
@@ -157,21 +154,20 @@ tiled. Pages:
   and a button to `nwg-displays` (which writes `monitors.lua`; `gen-monitors`
   writes the workspace map to match).
 - **Wi-Fi / Bluetooth / Connections / Audio** — the bar's audio and network
-  popups (`barpop audio`, `barpop network`, opened from their bar modules) taken
-  apart into pages: Wi-Fi scans while open, Bluetooth discovers while the page
+  popups (opened from their bar modules) taken apart into pages: Wi-Fi scans while open, Bluetooth discovers while the page
   is on screen, Connections has wired/Tailscale and the nm-connection-editor
   button, Audio is the full mixer with the per-app rows open.
 - **Per-app output** — every stream's row (in Settings > Audio and in the bar's
   audio popup) has a `Device ▾`: send that app somewhere other than the default
   output, for *this stream* (one Firefox tab; forgotten when it ends), *this
   app until logout* (rule in `$XDG_RUNTIME_DIR`), or *this app always* (rule in
-  `barpop/audio.json`, in the repo). `barpop watch` applies the rules to streams
-  as they appear and when a device comes back. Bootstrap turns off WirePlumber's
+  `~/.local/state/quickshell/audio-routes.json`). The shell applies the rules to
+  streams as they appear and when a device comes back. Bootstrap turns off WirePlumber's
   own stream-target memory (`node.stream.restore-target`) so a one-off move
   does not quietly become permanent.
 
-The nav is grouped: System, Desktop, Hardware, Network, Advanced (`GROUPS` in
-`barpop/panels/settings/pages/__init__.py`; a page names its group).
+The nav is grouped: System, Desktop, Hardware, Network, Advanced (the `pages`
+list in `quickshell/Settings/SettingsWindow.qml`; a page names its group).
 
 Both state files live in the repo (they are in the manifest), so your tweaks
 travel with your dotfiles and show up in `git diff`.
@@ -186,8 +182,8 @@ sync by hand.
 
 ## Login screen and lock screen
 
-One program, `wallgreet` (Python + GTK3, like the desktop's other overlays),
-draws both. Idle it shows the date top-left, sleep/restart/power top-right, the
+One component, `quickshell/Lock/LockScreen.qml`, draws both (the lock from the
+running shell, the greeter from `greeter.qml`). Idle it shows the date top-left, sleep/restart/power top-right, the
 clock as two big numbers and "Press any key" at the bottom, over the wallpaper.
 Any key, a scroll, or a drag in any direction fades the clock out and the form
 in where it was: your name, a pill input with an Enter glyph. The drag follows
@@ -195,43 +191,45 @@ the hand and completes on its own once it has gone far enough; Escape, a drag
 with an empty input, or a while of nothing fades it back. Buttons tint softly
 under the pointer.
 
-- **Lock**: `wallgreet --lock` (SUPER+L, the powermenu, hypridle) locks the
-  session over ext-session-lock — the protocol hyprlock uses, via
-  `gtk-session-lock` — and checks the password through PAM (`python-pam`,
-  `/etc/pam.d/wallgreet`). A second instance exits at once, so hypridle can
-  fire freely. If it cannot start, `hyprlock` runs instead (its config is
-  styled to match, as far as hyprlock allows: no hover, no gestures). Should
-  a locker ever die while locked, `misc.allow_session_lock_restore` lets
-  SUPER+L (a `locked` bind) start a fresh one. `wallgreet --lock --demo` locks
-  with Esc as the unlock, for looking at it.
+- **Lock**: `qs ipc call lock lock` (SUPER+L, the launcher menu, the
+  notification centre, hypridle) locks the session over ext-session-lock —
+  the protocol hyprlock uses — and checks the password through PAM
+  (`/etc/pam.d/quickshell`, hyprlock's stack until `./greeter install`). A
+  second call while locked does nothing, so hypridle can fire freely. If the
+  shell is not running, `hyprlock` runs instead (its config is styled to
+  match, as far as hyprlock allows: no hover, no gestures). Should the shell
+  ever die while locked, `misc.allow_session_lock_restore` lets SUPER+L (a
+  `locked` bind) start a fresh one. `qs ipc call lock preview false` shows the
+  screen on one output without locking (Esc closes).
 - **Login**: optional, and the last piece that replaces KDE on a machine that
   started as a Plasma install. By default the machine boots straight into
   your Hyprland session with the lock screen up from the first frame
-  (greetd's `initial_session` sets `WALLGREET_LOCK_AT_START`, which
-  `hypr/conf/autostart.lua` honours). You type the password in front of the
+  (greetd's `initial_session` sets `QS_LOCK_AT_START`; `hypr/conf/autostart.lua`
+  leaves a flag file the shell reads when it starts and locks at once). You type the password in front of the
   finished desktop and unlocking is instant — no second compositor to start,
   no black screen between login and desktop. The trade-off is that the
   session exists before the password: fine for a desktop at home, not for a
   laptop you want encrypted-at-rest semantics from (`./greeter install
   --no-autologin` then asks on the greeter instead). Logging out lands on
   the greeter proper: a Hyprland instance running as the `greeter` user
-  (`system/greetd/hyprland.lua`) draws `wallgreet` with a small drop-up list
+  (`system/greetd/hyprland.lua`) draws the greeter with a small drop-up list
   bottom-left for the session (Wayland sessions only) and remembers the last
-  user and session in `/var/lib/wallgreet`.
+  user and session in `/var/lib/quickshell-greeter`.
 
 What changes with the wallpaper is not in `/etc`: on every `setwall`, matugen
-renders `templates/wallgreet.css` (its first line names the wallpaper; the lock
-reads that file directly) and `greeter-sync` (its post_hook) copies the
-stylesheet, that wallpaper, `monitors.lua` and `colors.lua` into
+renders `templates/quickshell.json` (the palette, which names the wallpaper;
+the lock reads that file directly) and `greeter-sync` (its post_hook) copies
+it as `colors.json`, that wallpaper, `monitors.lua` and `colors.lua` into
 `/etc/greetd/theme`, a directory `./greeter install` created and made writable
-by you. So the login screen always shows the wallpaper and palette that were
+by you. The greeter runs from a copy of the config (`/etc/greetd/quickshell`),
+so run `./greeter install` again after changing the shell. So the login screen always shows the wallpaper and palette that were
 current when you last logged in; there is no way to change them from the login
 screen itself. Until that directory exists the hook is a no-op.
 
 ```sh
-./greeter install    # greetd, gtk-session-lock, python-pam, /etc/greetd/*, /usr/local/bin/wallgreet, PAM file, theme dir
+./greeter install    # greetd, /etc/greetd/*, the config copy, /etc/pam.d/quickshell, theme dir
                      #   --no-autologin: ask on the greeter at boot instead of booting into the locked desktop
-./greeter preview    # the greeter over this session in demo mode (Esc quits; add --form for the login view)
+./greeter preview    # the greeter over this session in demo mode (Esc quits; QS_SCREENS=DP-2 for one monitor)
 ./greeter enable     # greetd becomes the display manager from the next boot
 ./greeter check      # what is installed, enabled and synced
 ```
@@ -250,11 +248,11 @@ them.
 `packages.txt` is the authoritative list with a purpose per line;
 `./bootstrap --check` diffs it against your system. Summary:
 
-- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), waybar, swaync, rofi 2.x, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python + python-gobject + python-cairo, gtk3, gtk-layer-shell, imagemagick (IM7), adw-gtk-theme, adwaita-icon-theme, breeze + breeze-icons + qqc2-breeze-style, qt6ct, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
+- **Core**: hyprland ≥ 0.56, hypridle, hyprlock, hyprpolkitagent, xdg-desktop-portal(-hyprland, -gtk), quickshell, kitty, wl-clipboard, cliphist, grim, slurp, pipewire (+pulse, wireplumber), playerctl, networkmanager, matugen, awww, brightnessctl, fish, jq, python, adw-gtk-theme, adwaita-icon-theme, breeze + breeze-icons + qqc2-breeze-style, qt6ct, nemo (+ nemo-terminal, nemo-fileroller, file-roller).
 - **Fonts**: `otf-geist-mono-nerd` (UI), `ttf-meslo-nerd` (fallback), `ttf-jetbrains-mono-nerd` (kitty), `noto-fonts`.
 - **Themed apps (optional)**: btop, spotify-launcher (+ spicetify), steam, firefox, capitaine-cursors.
-- **Login screen (optional)**: greetd (`./greeter`; wallgreet needs only the core python-gobject/gtk3/gtk-layer-shell). xsettingsd for Xwayland apps.
-- **AUR**: slack-desktop, google-chrome, oh-my-posh-bin, vesktop, vscodium-bin, waybar-git (the reference machine runs `waybar-git` for an mpris crash fix; `extra/waybar` 0.15 works). CachyOS carries vesktop and vscodium in its own repos, plain Arch does not — hence the `[aur]` section.
+- **Login screen (optional)**: greetd (`./greeter`; the greeter is the shell itself). xsettingsd for Xwayland apps.
+- **AUR**: slack-desktop, google-chrome, oh-my-posh-bin, vesktop, vscodium-bin. CachyOS carries vesktop and vscodium in its own repos, plain Arch does not — hence the `[aur]` section.
 
 Not packaged, installed by hand where wanted: [spicetify](https://spicetify.app),
 the [MatugenFox](https://github.com/Ubaidullah-Web-Dev/MatugenFox) Firefox extension,
@@ -295,9 +293,9 @@ only once configured. `bootstrap` prints which of these still need a step.
 
 Honest list of what is tuned to one machine and only *degrades* elsewhere:
 `relayout`'s built-in layout (three monitors, five specific apps — but it is
-unbound until you write your own config), `waybar-widget`'s media module
-(follows the `spotify` player only) and GPU module (`nvidia-smi`; shows `--`
-otherwise), `chrome-flags.conf` (NVIDIA workarounds), and the waybar
+unbound until you write your own config), the bar's media module (follows
+the `spotify` player only) and GPU module (`nvidia-smi`; shows `--`
+otherwise), `chrome-flags.conf` (NVIDIA workarounds), and the bar's
 temperature sensor path.
 
 Anything genuinely mine rather than the desktop's — the site styles for my own

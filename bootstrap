@@ -54,7 +54,7 @@ done < "$REPO/packages.txt"
 
 # A package counts as present if pacman has it, or if the command it provides
 # is on PATH (oh-my-posh and spicetify are often installed by hand).
-declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [waybar-git]=waybar [vscodium-bin]=codium)
+declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [vscodium-bin]=codium)
 installed() { pacman -Qq "$1" >/dev/null 2>&1 || { [[ -n "${BIN_OF[$1]:-}" ]] && command -v "${BIN_OF[$1]}" >/dev/null 2>&1; }; }
 
 # pacman -S aborts the whole transaction on one unknown name ("target not
@@ -84,8 +84,6 @@ declare -A MISSING_BY
 for p in "${ORDER[@]}"; do
     s="${PKG_SECTION[$p]}"
     if installed "$p"; then :; else
-        # waybar-git satisfies waybar, and vice versa
-        [[ "$p" == waybar ]] && installed waybar-git && continue
         MISSING_BY[$s]+=" $p"
     fi
 done
@@ -206,16 +204,16 @@ fi
 # ---- systemd user session -------------------------------------------
 bold "systemd --user"
 if [[ $CHECK == 1 ]]; then
-    systemctl --user is-enabled waybar.service >/dev/null 2>&1 && ok "waybar.service enabled" || miss "waybar.service not enabled"
+    systemctl --user is-enabled quickshell.service >/dev/null 2>&1 && ok "quickshell.service enabled" || miss "quickshell.service not enabled"
     if command -v xsettingsd >/dev/null; then
         [[ -e "$HOME/.config/systemd/user/graphical-session.target.wants/xsettingsd.service" ]] && ok "xsettingsd.service wanted by graphical-session.target" || miss "xsettingsd.service not hooked into graphical-session.target"
     fi
 else
     systemctl --user daemon-reload
-    if systemctl --user cat waybar.service >/dev/null 2>&1; then
-        systemctl --user enable waybar.service >/dev/null 2>&1 && ok "waybar.service enabled (starts with hyprland-session.target)"
+    if systemctl --user cat quickshell.service >/dev/null 2>&1; then
+        systemctl --user enable quickshell.service >/dev/null 2>&1 && ok "quickshell.service enabled (starts with hyprland-session.target)"
     else
-        warn "waybar.service unit not found; install waybar first, then re-run"
+        warn "quickshell.service unit not found; run ./link first, then re-run"
     fi
     # xsettingsd (GTK settings for Xwayland apps) ships a static unit with no
     # [Install]; add-wants is how a static unit gets pulled in by a target.
@@ -307,10 +305,10 @@ fi
 # would come back as a permanent per-app rule. Saved in WirePlumber's state.
 if command -v wpctl >/dev/null 2>&1; then
     if [[ $CHECK == 1 ]]; then
-        [[ "$(wpctl settings node.stream.restore-target 2>/dev/null)" == *false* ]] && ok "WirePlumber does not restore stream targets (barpop routes them)" || miss "WirePlumber still restores stream targets: wpctl settings -s node.stream.restore-target false"
+        [[ "$(wpctl settings node.stream.restore-target 2>/dev/null)" == *false* ]] && ok "WirePlumber does not restore stream targets (the shell routes them)" || miss "WirePlumber still restores stream targets: wpctl settings -s node.stream.restore-target false"
     else
         wpctl settings node.stream.restore-target false >/dev/null 2>&1 && wpctl settings -s node.stream.restore-target >/dev/null 2>&1
-        ok "WirePlumber stream-target memory off (barpop watch routes streams)"
+        ok "WirePlumber stream-target memory off (the shell routes streams)"
     fi
 fi
 
@@ -373,14 +371,14 @@ fi
 
 # ---- first colours --------------------------------------------------
 bold "Colours"
-if [[ -f "$HOME/.config/waybar/colors.css" ]]; then
+if [[ -f "$HOME/.config/matugen/generated/quickshell.json" ]]; then
     ok "matugen colours exist"
 elif [[ $CHECK == 1 ]]; then
-    miss "no colours yet: waybar/rofi/hyprlock will not start until setwall has run once"
+    miss "no colours yet: hyprlock and the terminal are unstyled until setwall has run once"
 fi
 # Only a first run (no colours yet) or an explicit --wallpaper picks a
 # wallpaper; re-running bootstrap on a configured machine must not swap it.
-if [[ $CHECK == 0 && ( -n "$WALL" || ! -f "$HOME/.config/waybar/colors.css" ) ]]; then
+if [[ $CHECK == 0 && ( -n "$WALL" || ! -f "$HOME/.config/matugen/generated/quickshell.json" ) ]]; then
     # SUPER+W browses this directory, so it has to exist before the first login
     # even if the wallpaper came from somewhere else.
     mkdir -p "$HOME/Pictures/Wallpapers"
@@ -388,8 +386,8 @@ if [[ $CHECK == 0 && ( -n "$WALL" || ! -f "$HOME/.config/waybar/colors.css" ) ]]
         WALL="$(find "$HOME/Pictures/Wallpapers" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) 2>/dev/null | head -1)"
     fi
     # No wallpapers of your own yet: the repo ships one, purely so that a fresh
-    # clone has colours. Every generated file the desktop @imports (waybar,
-    # swaync, rofi, hyprlock, kitty, GTK) only exists after a setwall run, and
+    # clone has colours. Every generated file the desktop reads (the shell's
+    # palette, hyprlock, kitty, GTK) only exists after a setwall run, and
     # hyprlock refuses to start without its colours - so "clone it and log in"
     # has to end somewhere other than an unstyled bar and a lock screen that
     # will not come up. Replace it with your own and run setwall again.
@@ -410,8 +408,8 @@ bold "Make it yours (see README.md, 'Make it yours')"
 echo "  ./bootstrap --monitors                 your monitors, workspace map and bar workspaces, from hyprctl"
 echo "  files/.config/hypr/conf/actions.lua    apps on SUPER+E/Q and every other action; rebind in Settings > Keybinds"
 echo "  files/.config/hypr/conf/input.lua      kb_layout (or Settings > Input)"
-echo "  files/.config/waybar/config.jsonc      temperature hwmon path (an AMD k10temp one by default)"
+echo "  files/.config/quickshell/Services/Stats.qml  temperature hwmon path (an AMD k10temp one by default)"
 echo "  ~/.config/relayout/config.sh           opt into the dashboard layout (examples/relayout.config.sh)"
 echo "  ~/.config/hypr/user/init.lua           machine-local Hyprland extras (examples/hypr-user.lua)"
-echo "  ./greeter install && ./greeter enable  login screen: greetd + wallgreet, themed by matugen (README, 'Login screen')"
+echo "  ./greeter install && ./greeter enable  login screen: greetd + the shell's greeter, themed by matugen (README, 'Login screen')"
 echo

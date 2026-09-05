@@ -1,12 +1,4 @@
 [config]
-[templates.waybar]
-input_path = '~/.config/matugen/templates/colors.css'
-output_path = '~/.config/waybar/colors.css'
-# No post_hook: waybar has "reload_style_on_change": true and its CssReloadHelper
-# follows the @import of colors.css, so the style retints on write. A SIGUSR2
-# reload would recreate the bar; its exclusive zone blinks and every window
-# under it gets resized (a scroll-snap page like YouTube Shorts jumps a slide).
-
 [templates.quickshell]
 # The shell's palette as JSON: every colour role plus the wallpaper path and
 # mode. Theme/Colors.qml watches the file and every bound colour animates to
@@ -31,8 +23,7 @@ input_path = '~/.config/matugen/templates/hyprlock-colors.conf'
 output_path = '~/.config/hypr/hyprlock-colors.conf'
 
 [templates.homelab-dash]
-# Same palette the waybar template emits (86 @define-color rules, which is
-# valid GTK CSS). No post_hook: homelab-dash watches this file itself, so it
+# The full palette as 86 @define-color rules (valid GTK CSS). No post_hook: homelab-dash watches this file itself, so it
 # restyles live and does not need to be running when matugen fires.
 input_path = '~/.config/matugen/templates/colors.css'
 output_path = '~/.config/homelab-dash/colors.css'
@@ -144,13 +135,3 @@ output_path = '~/.config/mpv/script-opts/modernz.conf'
 # kdeconnect) additionally read kdeglobals -> Matugen.colors above.
 input_path = '~/.config/matugen/templates/qt6ct-colors.conf'
 output_path = '~/.config/qt6ct/colors/matugen.conf'
-
-[templates.wallgreet]
-# The login screen (system/greetd/wallgreet). The first line of the output
-# names the wallpaper (matugen's image keyword); greeter-sync copies the
-# stylesheet, that picture, monitors.lua and colors.lua into /etc/greetd/theme,
-# which ./greeter install made writable by you. Without that directory the
-# hook is a no-op.
-input_path = '~/.config/matugen/templates/wallgreet.css'
-output_path = '~/.config/matugen/generated/wallgreet.css'
-post_hook = '~/.local/bin/greeter-sync'

@@ -69,7 +69,7 @@ hl.config({
     misc = {
         force_default_wallpaper = 0,    -- Set to 0 or 1 to disable the anime mascot wallpapers
         disable_hyprland_logo   = true, -- If true disables the random hyprland logo / anime girl background. :(
-        -- If the lock screen (wallgreet --lock) ever dies while locked, let a
+        -- If the lock screen (the shell's) ever dies while locked, let a
         -- new one take over (SUPER+L, or hypridle) instead of staying stuck.
         allow_session_lock_restore = true,
         -- The first frames, before the wallpaper daemon has drawn: the palette's

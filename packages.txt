@@ -3,7 +3,7 @@
 # without installing anything. Names are Arch/CachyOS package names.
 #
 # [core]     the desktop does not work without these
-# [fonts]    referenced by name in waybar/rofi/kitty/swaync/the GTK overlays
+# [fonts]    referenced by name in the shell (quickshell) and kitty
 # [theming]  matugen recolours these apps; skip any you do not use
 # [optional] tools bound to a key or a bar module; everything else keeps working
 # [aur]      not in the official repos: needs paru/yay, or install by hand
@@ -11,45 +11,34 @@
 [core]
 hyprland                     # compositor; must be >= 0.56 (reads hyprland.lua natively)
 hypridle                     # idle -> lock -> screen off
-hyprlock                     # lock screen fallback; wallgreet --lock is the lock screen (SUPER+L, powermenu, hypridle)
-gtk-session-lock             # ext-session-lock for wallgreet --lock (GTK3)
-python-pam                   # wallgreet --lock checks the password through PAM (/etc/pam.d/wallgreet, from ./greeter install; hyprlock's otherwise)
+hyprlock                     # lock screen fallback when the shell is not running (SUPER+L, hypridle: qs ipc call lock lock || hyprlock)
+quickshell                   # the shell: bar, popups, settings, notifications, launcher, clipboard, cheatsheet, wallpaper strip, OSD, lock screen, greeter
 hyprpolkitagent              # polkit prompts; restarted by hyprland.lua at login
 xdg-desktop-portal           # portals: file pickers, screenshare
 xdg-desktop-portal-hyprland  # Hyprland portal backend (screenshare)
 xdg-desktop-portal-gtk       # GTK portal backend (file dialogs, settings)
-waybar                       # the bar, run as a systemd user unit
-swaync                       # notifications + control centre
-rofi                         # launcher (SUPER+R), clipboard picker; rofi 2.x has Wayland built in
 kitty                        # terminal (SUPER+Q), also hosts btop in the dashboard
 wl-clipboard                 # wl-copy / wl-paste
-cliphist                     # clipboard history behind rofi-cliphist
+cliphist                     # clipboard history behind the shell's clipboard picker (SUPER+SHIFT+C)
 grim                         # screenshots
 slurp                        # region selection for screenshots
 pipewire                     # audio
-pipewire-pulse               # PulseAudio shim: pactl for volpop, waybar mute toggle
+pipewire-pulse               # PulseAudio shim for the apps
 wireplumber                  # wpctl volume keys
-libpulse                     # pactl
-playerctl                    # media keys and the waybar media modules
-networkmanager               # nmtui behind the waybar network module
+playerctl                    # media keys
+networkmanager               # the shell's network panel talks to it over D-Bus; nmcli for the hotspot
 matugen                      # generates every colours file from the wallpaper
 awww                         # wallpaper daemon (swww fork); setwall works without it, the picture just won't change
 polkit                       # required by hyprpolkitagent
 libnotify                    # notify-send, used by notify-unit-failure
 fish                         # shell the config is written for
 jq                           # relayout, gen-ohmyposh-template
-python                       # cheatsheet, volpop, wallstrip, waybar-widget, reload-steam-css
-python-gobject               # GTK bindings for the Python overlays
-python-cairo                 # wallstrip drawing
-gtk3                         # cheatsheet, volpop, wallstrip
-gtk-layer-shell              # lets those overlays be layer-shell surfaces
-gdk-pixbuf2                  # wallstrip thumbnails
-imagemagick                  # rofi-wallthumbs (needs the IM7 `magick` command)
+python                       # matugenfox-host, reload-steam-css, matugen-icons
 brightnessctl                # brightness keys
 adw-gtk-theme                # GTK theme matugen's gtk3 hook selects (adw-gtk3-dark)
 glib2                        # gsettings, used by that hook
 adwaita-icon-theme           # source SVGs for the Matugen icon theme (matugen-icons recolours its folders)
-breeze-icons                 # app icons the Matugen theme inherits; also named in rofi
+breeze-icons                 # app icons the Matugen theme inherits
 breeze                       # Qt widget style named in kdeglobals
 qt6ct                        # QT_QPA_PLATFORMTHEME=qt6ct: Breeze style + the matugen palette for Qt apps (qt6ct/qt6ct.conf)
 qqc2-breeze-style            # Breeze for QtQuick apps (kdeconnect etc.); qqc2-desktop-style comes with them
@@ -63,9 +52,9 @@ gvfs-mtp                     # phones in Nemo's sidebar
 gvfs-smb                     # network shares in Nemo's sidebar
 
 [fonts]
-otf-geist-mono-nerd          # primary UI font: waybar, swaync, rofi, the overlays
+otf-geist-mono-nerd          # primary UI font: the shell
 ttf-meslo-nerd               # fallback Nerd Font for the same
-ttf-jetbrains-mono-nerd      # kitty and fuzzel font
+ttf-jetbrains-mono-nerd      # kitty font
 noto-fonts                   # GTK default UI font (settings.ini)
 
 [theming]
@@ -79,16 +68,14 @@ capitaine-cursors            # cursor theme named in gtk settings.ini
 fastfetch                    # Settings > About PC reads its JSON (board, BIOS, GPU drivers, disks, displays); shorter list without it
 webp-pixbuf-loader           # only if your wallpapers are .webp
 nwg-displays                 # GUI to regenerate monitors.lua for your monitors
-fuzzel                       # still used by the powermenu script
 python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
-greetd                       # login manager; runs wallgreet as the greeter (python-gobject, gtk3, gtk-layer-shell from [core]). ./greeter installs and enables it
+greetd                       # login manager; runs the shell's greeter (quickshell from [core]). ./greeter installs and enables it
 xsettingsd                   # GTK theme/icons/cursor for Xwayland apps (Steam, JetBrains); xsettingsd.service is hooked into graphical-session.target by bootstrap
 
 [aur]
 mpv-modernz-git              # mpv OSC: title, rounded seekbar, centred play/skip, sub/audio buttons; colours via matugen (templates/modernz.conf)
 mpv-thumbfast-git            # seekbar hover thumbnails for ModernZ
-waybar-git                   # the reference machine runs this instead of waybar (mpris crash fix); either works
 slack-desktop                # dashboard app in relayout; dropped from the layout when absent
 google-chrome                # chrome-flags.conf; harmless without it (links follow mimeapps.list, firefox)
 oh-my-posh-bin               # prompt; fish config skips it when missing (see README for the theme file)

@@ -1,4 +1,4 @@
--- Option overrides written by the settings UI (barpop settings).
+-- Option overrides written by the settings UI (the shell's Settings window).
 --
 -- state/settings.json looks like
 --
