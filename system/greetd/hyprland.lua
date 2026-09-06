@@ -34,6 +34,6 @@ hl.config({
 hl.on("hyprland.start", function()
     -- The greeter covers every monitor with a layer surface itself, so there
     -- is nothing to place. When it exits, greetd has the session.
-    hl.exec_cmd("env QS_COLORS=" .. THEME .. "/colors.json QS_GREETER_THEME=" .. THEME
+    hl.exec_cmd("env __NV_DISABLE_EXPLICIT_SYNC=1 QS_COLORS=" .. THEME .. "/colors.json QS_GREETER_THEME=" .. THEME
         .. " qs -p /etc/greetd/quickshell/greeter.qml; hyprctl dispatch 'hl.dsp.exit()'")
 end)

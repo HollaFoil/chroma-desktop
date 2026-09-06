@@ -1,6 +1,6 @@
 # chroma-desktop
 
-[![release](https://img.shields.io/github/v/tag/HollaFoil/chroma-desktop?label=release&sort=semver&color=e8a0bf)](https://github.com/HollaFoil/chroma-desktop/releases)
+[![release](https://img.shields.io/github/v/release/HollaFoil/chroma-desktop?label=release&color=e8a0bf)](https://github.com/HollaFoil/chroma-desktop/releases)
 [![checks](https://img.shields.io/github/actions/workflow/status/HollaFoil/chroma-desktop/checks.yml?branch=master&label=checks)](https://github.com/HollaFoil/chroma-desktop/actions/workflows/checks.yml)
 ![state](https://img.shields.io/badge/state-alpha-orange)
 ![hyprland](https://img.shields.io/badge/Hyprland-%E2%89%A5%200.56-5e81ac)
@@ -46,8 +46,8 @@ Written for CachyOS/Arch.
 
 ## Install
 
-`master` is what the release badge points at; `staging` is where changes land
-first. Pull requests go to `staging`.
+Releases are tagged on `master`. Everything goes to `staging` first, and pull
+requests go there too.
 
 ```sh
 git clone https://github.com/HollaFoil/chroma-desktop ~/chroma-desktop
@@ -89,8 +89,8 @@ Things in here that reach outside the repo, or may cause problems if your machin
   desktop...). It is never run for you, and `./prune` alone only lists them.
 - **`./greeter install` changes how you log in**: installs greetd, writes
   `/etc/greetd/*` and `/etc/pam.d/quickshell`, and by default boots straight
-  into your locked desktop (the session exists before the password; use
-  `--no-autologin` on a laptop). Nothing is switched until `./greeter enable`.
+  into your locked desktop. The session exists before the password is typed,
+  so use `--no-autologin` on a laptop. Nothing is switched until `./greeter enable`.
   If the login screen ever fails, `Ctrl+Alt+F2` is a text login and
   `./greeter disable` restores the previous display manager.
 - **`./sshd install` opens SSH** on the Tailscale interface only, with password
@@ -115,14 +115,14 @@ matugen writes every app's colours on each `setwall <wallpaper path>`, dispatche
 
 | App | The one step |
 |---|---|
-| Steam | bootstrap installs Adwaita-for-Steam and the flag file above; nothing else. |
+| Steam | nothing. bootstrap installs Adwaita-for-Steam and the flag file above. |
 | Spotify | spicetify: `current_theme = Text`, `color_scheme = matugen` in `config-xpui.ini`. |
 | Discord (Vesktop) | turn on *Enable Custom CSS* in Vencord. |
-| Firefox | the [MatugenFox](https://github.com/Ubaidullah-Web-Dev/MatugenFox) extension; per-site CSS in `dusky_sites/`. |
+| Firefox | the [MatugenFox](https://github.com/Ubaidullah-Web-Dev/MatugenFox) extension. Per-site CSS lives in `dusky_sites/`. |
 | VSCodium / VS Code | the *Matugen Theme* extension (`haikalllp.matugen-theme`). |
 | btop | `color_theme = "matugen"`. |
 | GTK / Qt / KDE apps | nothing: adw-gtk3, qt6ct and `kdeglobals` are in the manifest. Qt apps recolour on relaunch. |
-| Terminal prompt | oh-my-posh; bootstrap fetches the `agnoster` theme it recolours. |
+| Terminal prompt | oh-my-posh. bootstrap fetches the `agnoster` theme that gets recoloured. |
 | Icons | nothing: a recoloured Adwaita is generated as `~/.local/share/icons/Matugen`. |
 
 ## Layout
@@ -138,10 +138,10 @@ examples/      relayout.config.sh, hypr-user.lua: per-machine files that live ou
 screenshots    retakes the images above     hyprtest       moves windows around for ~3 min
 ```
 
-Day to day: edit a file in `files/` and it is live (symlinks); templates apply
-on the next `setwall`. New config? Add its path to `manifest.txt`, `./adopt`,
+Day to day: edit a file in `files/` and it is live, because everything is
+symlinked. Templates apply on the next `setwall`. New config? Add its path to `manifest.txt`, `./adopt`,
 `./link`. Machine-local Hyprland extras go in `~/.config/hypr/user/init.lua`
 (see `examples/hypr-user.lua`). New monitors? `./bootstrap --monitors`.
 
 Anything genuinely mine rather than the desktop's lives in a private overlay
-repo that symlinks itself in on top of this one; `.gitignore` shows how.
+repo that symlinks itself in on top of this one. `.gitignore` shows how.
