@@ -14,6 +14,11 @@ OnFailure=notify-unit-failure@%n.service
 
 [Service]
 ExecStart=/usr/bin/qs -p %h/.config/quickshell
+# NVIDIA's explicit sync leaks one sync_file descriptor per surface shown (a
+# popup, the launcher, a toast) until the shell dies of "Too many open files".
+# 580 is the last driver for Pascal cards, so the shell opts out instead.
+# Other GPUs ignore the variable.
+Environment=__NV_DISABLE_EXPLICIT_SYNC=1
 Restart=on-failure
 RestartSec=2s
 
