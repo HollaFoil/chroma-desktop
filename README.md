@@ -1,9 +1,11 @@
 # dotfiles
 
-A Hyprland desktop where every colour comes from the wallpaper. Change the
+A heavily opinionated Hyprland desktop where every single app live responds to your wallpaper's palette. Change the
 wallpaper (`SUPER+W`) and matugen recolours the bar, notifications, launcher,
 terminal, lock screen, GTK and Qt apps, Discord, Spotify, Steam, btop, the
-shell prompt and the websites you visit in Firefox. Live, no restarts.
+shell prompt and the websites you visit in Firefox. 
+
+Some awesome waybar/popup designs were heavily inspired by ![Matuprland](https://github.com/Abhra00/Matuprland), thank you!
 
 ![desktop](.screenshots/desktop/overview.webp)
 
@@ -50,20 +52,30 @@ before your first login. Then log into Hyprland.
 
 ## Read this before you run it
 
-Things in here that reach outside the repo, or bite if your machine differs:
+This desktop is heavily opinionated and isn't really meant for others to use.
+If you understand Arch, you should have no problems, however, do not expect
+GUI settings to cover all possible topics, do not expect tons of personalization, etc.
 
-- **Hyprland ≥ 0.56 is required.** The config is Lua; an older Hyprland cannot
-  read it and you get a session with *no* config. `./bootstrap --check` tells you.
-- **Your existing configs are moved, not deleted.** Anything in the way of a
+There's some left over packages (tailscale, for example, since things like SSH are made VPN only here) which have integrations and
+are in the install scripts. You can safely ignore/remove them if you do not have a use for them.
+
+I will improve this repo as time goes on, perhaps one day it can be a standalone distro, but, for the time being,
+this will be a relatively de-bloated and lean desktop.
+
+Things in here that reach outside the repo, or may cause problems if your machine differs substantially:
+
+- **Hyprland ≥ 0.56 is required.** The config is written in Lua. an older Hyprland cannot
+  read it and you get a session with *no* config. `./bootstrap --check` spots this issue.
+- **Your existing configs are moved** Anything in the way of a
   symlink goes to `backup-<timestamp>/` in the repo.
 - **Steam's DevTools port.** `reload-steam-css` recolours the running Steam
   client through CEF remote debugging, which Steam hardcodes to **port 8080**
   and which bootstrap enables (`~/.steam/steam/.cef-enable-remote-debugging`).
-  Anything else you run on 8080 will fight with it, and any local process can
+  Anything else you run on 8080 will cause issues, and any local process can
   drive Steam's embedded browser while that flag exists. Delete the flag file
   if you do not want that.
 - **`./prune --remove` uninstalls packages** (Dolphin, VLC, the Plasma
-  desktop...). It is never run for you; `./prune` alone only lists them.
+  desktop...). It is never run for you, and `./prune` alone only lists them.
 - **`./greeter install` changes how you log in**: installs greetd, writes
   `/etc/greetd/*` and `/etc/pam.d/quickshell`, and by default boots straight
   into your locked desktop (the session exists before the password; use
@@ -77,9 +89,9 @@ Things in here that reach outside the repo, or bite if your machine differs:
 - **The Displays page rewrites your monitor config** (`hypr/monitors.lua`).
   Risky changes revert after 15 s unless you keep them.
 - **A Plasma leftover, `kde-gtk-config`, overwrites** `gtk-{3,4}.0/gtk.css`
-  behind matugen's back. `./prune --remove` removes it; `./link` puts the
-  symlinks back.
-- **One machine's values** that only degrade elsewhere: the bar's CPU sensor
+  behind matugen's back. `./prune --remove` removes it and `./link` puts the
+  symlinks back, if you ever encounter issues.
+- **A few scripts target my hardware** and can fail elsewhere: the bar's CPU sensor
   path (`quickshell/Services/Stats.qml`, an AMD `k10temp` hwmon), the GPU
   module (`nvidia-smi`, shows `--` without it), `chrome-flags.conf` (NVIDIA
   workarounds), and `relayout`'s three-monitor dashboard, which stays unbound
@@ -87,8 +99,8 @@ Things in here that reach outside the repo, or bite if your machine differs:
 
 ## Themed apps
 
-matugen writes every app's colours on each `setwall`; each app needs one step
-to pick them up. `bootstrap` prints which ones still need it.
+matugen writes every app's colours on each `setwall <wallpaper path>`, dispatches live reload hooks where necessary.
+`bootstrap` prints how to set up each app, and whether it is ready. Each app is optional.
 
 | App | The one step |
 |---|---|
