@@ -1,4 +1,4 @@
-# dotfiles
+# chroma-desktop
 
 A heavily opinionated Hyprland desktop where every single app live responds to your wallpaper's palette. Change the
 wallpaper (`SUPER+W`) and matugen recolours the bar, notifications, launcher,
@@ -39,8 +39,8 @@ Written for CachyOS/Arch.
 ## Install
 
 ```sh
-git clone https://github.com/HollaFoil/dotfiles ~/dotfiles
-cd ~/dotfiles
+git clone https://github.com/HollaFoil/chroma-desktop ~/chroma-desktop
+cd ~/chroma-desktop
 ./bootstrap --check                        # what is missing; changes nothing
 ./bootstrap --wallpaper ~/Pictures/some.png
 ```
