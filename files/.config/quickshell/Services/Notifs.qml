@@ -7,10 +7,11 @@ import Quickshell.Hyprland
 
 // The notification daemon. Every notification becomes an entry (a plain
 // object, so history survives a restart and the shell's own messages fit the
-// same list): shown as a toast on the focused screen until its timeout
-// (5 s low, 10 s normal, never for critical), then kept in the centre until
-// dismissed. Transient ones are not kept. Do-not-disturb keeps everything
-// in the centre and shows no toasts.
+// same list): shown as a toast on the focused screen (or the one toast.screen
+// names) until its timeout (toast.timeout.low / .normal, never for critical),
+// then kept in the centre until dismissed. Transient ones are not kept; the
+// centre holds notifs.history entries at most. Do-not-disturb keeps everything
+// in the centre and shows no toasts; so does notifs.muted for the apps it lists.
 Singleton {
     id: root
     property bool dnd: false
@@ -54,26 +55,34 @@ Singleton {
             time: Date.now(), transient: !!n.transient, resident: !!n.resident,
             actions: n.actions.map(a => ({ text: a.text, id: a.identifier })), hasReply: !!n.hasInlineReply,
             replyPlaceholder: n.inlineReplyPlaceholder || "reply", notif: n,
-            screen: Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+            screen: toastScreen()
         }
     }
+    // toast.screen when that output is connected, else the focused one
+    function toastScreen() {
+        const want = Prefs.get("toast.screen", "focused")
+        if (want !== "focused" && Quickshell.screens.some(s => s.name === want)) return want
+        return Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : ""
+    }
+    function muted(app) { return Prefs.get("notifs.muted", []).indexOf(app) >= 0 }
+    readonly property int historyCap: Math.max(1, Prefs.get("notifs.history", 200))
     function wire(n, e) {
         n.closed.connect(reason => { root.remove(e.key, false) })
     }
     function add(n, fresh) {
         const e = entryFrom(n)
         wire(n, e)
-        items = [e].concat(items)
-        if (fresh && !dnd) showToast(e)
+        items = [e].concat(items).slice(0, historyCap)
+        if (fresh && !dnd && !muted(e.app)) showToast(e)
         save()
     }
     // The shell's own messages (network changes and the like).
     function post(summary, body, icon) {
         const e = { key: nextKey++, id: -1, app: "quickshell", icon: icon || "", image: "", summary: summary, body: body || "",
                     urgency: 1, time: Date.now(), transient: true, resident: false, actions: [], hasReply: false,
-                    replyPlaceholder: "", notif: null, screen: Hyprland.focusedMonitor ? Hyprland.focusedMonitor.name : "" }
-        items = [e].concat(items)
-        if (!dnd) showToast(e)
+                    replyPlaceholder: "", notif: null, screen: toastScreen() }
+        items = [e].concat(items).slice(0, historyCap)
+        if (!dnd && !muted(e.app)) showToast(e)
     }
     function showToast(e) { popups = popups.concat([e.key]); toastRequested(e) }
     function hideToast(key) {
@@ -137,7 +146,7 @@ Singleton {
     Timer { id: saveTimer; interval: 500; onTriggered: root.saveNow() }
     function save() { saveTimer.restart() }
     function saveNow() {
-        const plain = items.filter(e => !e.transient).slice(0, 100).map(e => ({ id: e.id, app: e.app, icon: e.icon, image: e.image, summary: e.summary, body: e.body,
+        const plain = items.filter(e => !e.transient).slice(0, historyCap).map(e => ({ id: e.id, app: e.app, icon: e.icon, image: e.image, summary: e.summary, body: e.body,
                                               urgency: e.urgency, time: e.time, transient: false, resident: false, actions: [], hasReply: false, replyPlaceholder: "", screen: e.screen }))
         stateFile.setText(JSON.stringify({ dnd: dnd, items: plain }, null, 1))
     }

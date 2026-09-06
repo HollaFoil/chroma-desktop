@@ -2,11 +2,14 @@
 --
 -- state/settings.json looks like
 --
---   { "options": { "general:gaps_in": 8, "decoration:blur:enabled": false } }
+--   { "options": { "general:gaps_in": 8, "decoration:blur:enabled": false },
+--     "devices": { "logitech-g305-1": { "sensitivity": -0.2, "accel_profile": "flat" } } }
 --
--- Keys are the names `hyprctl descriptions` uses, values are already the
--- type hl.config wants (the UI knows the schema; this side does not). apply()
--- runs last in hyprland.lua, so a value set in the UI wins over conf/*.lua and
+-- `options` keys are the names `hyprctl descriptions` uses, values are already
+-- the type hl.config wants (the UI knows the schema; this side does not).
+-- `devices` is per-device input config (Settings > Mouse / Keyboard), one
+-- hl.device{} per entry, names as `hyprctl devices` lists them. apply() runs
+-- last in hyprland.lua, so a value set in the UI wins over conf/*.lua and
 -- user/*.lua; deleting the key from the file (the UI's reset button) and
 -- reloading brings the hand-written value back.
 local json = require("lib.json")
@@ -26,7 +29,7 @@ end
 --- The parsed file ({ options = {} } when missing or broken).
 function M.get()
     if cache then return cache end
-    cache = { options = {} }
+    cache = { options = {}, devices = {} }
     local f = io.open(M.path, "r")
     if not f then return cache end
     local raw = f:read("a")
@@ -37,6 +40,7 @@ function M.get()
         return cache
     end
     if type(data.options) == "table" then cache.options = data.options end
+    if type(data.devices) == "table" then cache.devices = data.devices end
     return cache
 end
 
@@ -64,6 +68,14 @@ function M.apply()
     for name, value in pairs(M.get().options) do
         local ok, err = pcall(hl.config, nested(name, value))
         if not ok then bad[#bad + 1] = name .. " (" .. tostring(err) .. ")" end
+    end
+    for name, fields in pairs(M.get().devices) do
+        if type(fields) == "table" and next(fields) ~= nil then
+            local dev = { name = name }
+            for k, v in pairs(fields) do dev[k] = v end
+            local ok, err = pcall(hl.device, dev)
+            if not ok then bad[#bad + 1] = "device " .. name .. " (" .. tostring(err) .. ")" end
+        end
     end
     if #bad > 0 then
         notify("settings.json: could not apply " .. table.concat(bad, ", "))

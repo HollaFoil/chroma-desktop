@@ -1,7 +1,13 @@
 {
+  "devices": {
+    "logitech-g305-1": {
+      "accel_profile": "flat"
+    }
+  },
   "options": {
     "decoration:rounding": 20,
     "input:rotation": 0,
-    "input:touchpad:drag_lock": 0
+    "input:touchpad:drag_lock": 0,
+    "input:sensitivity": -0.2
   }
 }

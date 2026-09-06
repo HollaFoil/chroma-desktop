@@ -10,7 +10,9 @@ import Quickshell.Io
 // to ~/.config/hypr/state/settings.json, which lib/settings.lua re-applies on
 // every load. Keybinds have no live path: state/keybinds.json is rewritten,
 // Hyprland reloads, and lib/actions.lua writes ~/.cache/hypr/binds.json,
-// which Binds watches.
+// which Binds watches. Per-device input config (Settings > Mouse / Keyboard)
+// works like options: `hyprctl eval 'hl.device{...}'` live, persisted under
+// "devices" in the same file, re-applied by lib/settings.lua.
 Singleton {
     id: root
     readonly property string home: Quickshell.env("HOME")
@@ -58,8 +60,13 @@ Singleton {
     readonly property var overrides: settings.options ?? ({})
     function isOverridden(name) { return overrides[name] !== undefined }
 
+    // Top-level keys sorted so the file diffs cleanly. (No array replacer: a
+    // spec-compliant JSON.stringify would apply it to nested keys as well and
+    // drop every option.)
     function writeJson(view, data) {
-        view.setText(JSON.stringify(data, Object.keys(data).sort(), 2) + "\n")
+        const sorted = {}
+        for (const k of Object.keys(data).sort()) sorted[k] = data[k]
+        view.setText(JSON.stringify(sorted, null, 2) + "\n")
     }
     // Apply live and persist; cb(errorText or null).
     function setOption(name, value, cb) {
@@ -82,6 +89,31 @@ Singleton {
         settings = data
         writeJson(settingsFile, data)
         reload()
+    }
+    // Several options in one hl.config call (kb_layout with kb_variant, so the
+    // lists never disagree for a moment); values: {name: value}. cb(errorText or null).
+    function setOptions(values, cb) {
+        const tree = {}
+        for (const n in values) merge(tree, nested(n, values[n]))
+        Proc.run(["hyprctl", "eval", "hl.config(" + luaLiteral(tree) + ")"], (code, out, err) => {
+            const t = (out + err).trim()
+            const e = t === "ok" ? null : (t || "hyprctl failed")
+            if (!e) {
+                const data = Object.assign({}, settings)
+                data.options = Object.assign({}, data.options ?? {})
+                for (const n in values) data.options[n] = values[n]
+                settings = data
+                writeJson(settingsFile, data)
+            }
+            if (cb) cb(e)
+        })
+    }
+    function merge(a, b) {
+        for (const k in b) {
+            if (a[k] && typeof a[k] === "object" && b[k] && typeof b[k] === "object") merge(a[k], b[k])
+            else a[k] = b[k]
+        }
+        return a
     }
     function saveKeybinds(data) {
         keybinds = data
@@ -148,5 +180,82 @@ Singleton {
             schema = s
             if (cb) cb()
         })
+    }
+
+    // The live value of an option, with Hyprland's "[[EMPTY]]" (an unset
+    // string) read as `fallback`; `fallback` also when the schema is not in yet.
+    function optionValue(name, fallback) {
+        const e = schema[name]
+        if (!e) return fallback
+        const v = e.current !== undefined ? e.current : e.default
+        if (v === undefined || v === null || v === "[[EMPTY]]") return fallback
+        return v
+    }
+
+    // ── devices (per-device input config) ──
+    // `hyprctl -j devices`: { mice: [{name, defaultSpeed, scrollFactor}],
+    // keyboards: [{name, layout, variant, options, active_keymap, main, …}],
+    // tablets, touch, switches }. Hyprland does not report a device's current
+    // settings, so a control shows the override when there is one and the
+    // matching global option otherwise.
+    property var devices: ({ mice: [], keyboards: [], tablets: [], touch: [], switches: [] })
+    function refreshDevices() {
+        json(["devices"], d => {
+            if (!d) return
+            devices = { mice: d.mice ?? [], keyboards: d.keyboards ?? [], tablets: d.tablets ?? [], touch: d.touch ?? [], switches: d.switches ?? [] }
+        })
+    }
+    // "corsair-corsair-gaming-k63-keyboard-1" -> "Corsair Gaming K63 Keyboard"
+    readonly property var acronyms: ({ hp: "HP", usb: "USB", hid: "HID", bt: "BT", ble: "BLE", ii: "II", iii: "III", iv: "IV", mx: "MX", tkl: "TKL", rgb: "RGB", wmi: "WMI", pc: "PC", inc: "Inc." })
+    function prettyDevice(name) {
+        const words = String(name).replace(/-\d+$/, "").split("-").filter(w => w.length > 0)
+        const out = []
+        for (const w of words) {
+            if (out.length && out[out.length - 1].toLowerCase() === w.toLowerCase()) continue
+            out.push(w)
+        }
+        return out.map(w => acronyms[w.toLowerCase()] ?? (w.charAt(0).toUpperCase() + w.slice(1))).join(" ")
+    }
+
+    readonly property var deviceOverrides: settings.devices ?? ({})
+    function hasDeviceOverride(name, field) {
+        const d = deviceOverrides[name]
+        return d !== undefined && d !== null && d[field] !== undefined
+    }
+    function deviceValue(name, field, fallback) {
+        return hasDeviceOverride(name, field) ? deviceOverrides[name][field] : fallback
+    }
+    // Apply live and persist under devices[name][field]; cb(errorText or null).
+    function setDevice(name, field, value, cb) {
+        const dev = { name: name }
+        dev[field] = value
+        Proc.run(["hyprctl", "eval", "hl.device(" + luaLiteral(dev) + ")"], (code, out, err) => {
+            const t = (out + err).trim()
+            const e = t === "ok" ? null : (t || "hyprctl failed")
+            if (!e) {
+                const data = Object.assign({}, settings)
+                data.devices = Object.assign({}, data.devices ?? {})
+                data.devices[name] = Object.assign({}, data.devices[name] ?? {})
+                data.devices[name][field] = value
+                settings = data
+                writeJson(settingsFile, data)
+            }
+            if (cb) cb(e)
+        })
+    }
+    // Drop one override (and the device when nothing is left); a reload puts
+    // the config's value back.
+    function resetDevice(name, field) {
+        const data = Object.assign({}, settings)
+        data.devices = Object.assign({}, data.devices ?? {})
+        if (data.devices[name]) {
+            data.devices[name] = Object.assign({}, data.devices[name])
+            delete data.devices[name][field]
+            if (Object.keys(data.devices[name]).length === 0) delete data.devices[name]
+        }
+        if (Object.keys(data.devices).length === 0) delete data.devices
+        settings = data
+        writeJson(settingsFile, data)
+        reload()
     }
 }

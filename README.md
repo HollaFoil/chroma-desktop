@@ -132,52 +132,54 @@ but they have no keys and nothing launches uninvited.
 ## Settings
 
 Arch button (top left) → **Settings**, or `SUPER+,`, or `qs ipc call settings
-open look`. A layer-shell window, so it floats over everything and is not
-tiled. Pages:
+open displays`. A layer-shell window, so it floats over everything and is not
+tiled. Every page is built the same way: a title with a one-line subtitle,
+**groups** (cards) of settings with the important ones first, an *Advanced*
+group folded away at the bottom, and one control per row (switch, pills,
+slider, dropdown, text field, or a chevron for an action). The **search box**
+above the nav filters the pages and, inside the open page, the rows. Hyprland
+option rows mark an override with ● and reset it with ↺.
 
-- **About PC** — the fastfetch view: OS, kernel, Hyprland/quickshell/matugen
-  versions, theme, board, BIOS, CPU, GPUs and drivers, memory, disks, displays;
-  *Copy* puts it on the clipboard for a bug report.
-- **Keybinds** — every action from `conf/actions.lua` with its keys. Click a key
-  (or `+`) and press the new combination; while recording, Hyprland sits in an
-  empty `capture` submap so `SUPER+…` reaches the window instead of firing.
-  Multiple keys per action, per-action cheatsheet checkbox, ↺ back to the
-  config's default, **Add command** for a shell-command action without touching
-  Lua. Writes `hypr/state/keybinds.json` and reloads Hyprland.
-- **Windows / Look / Input** — curated Hyprland options (layout, gaps, blur,
-  opacity, mouse, touchpad …). Sliders and switches apply live via
-  `hyprctl eval`, and the value is stored in `hypr/state/settings.json`, which
-  `hyprland.lua` re-applies on every reload. ● marks an override; ↺ removes it
-  (the value from `conf/*.lua` returns).
-- **All options** — everything `hyprctl descriptions` knows, typed from its
-  schema, with a filter box.
-- **Widgets** — desktop widgets: what sits on which screen, each one's
-  options, and *Arrange on the desktop*, which lets you drag, resize and
-  remove them in place. The library: Clock, Calendar, Now playing, System
-  monitor, Weather (wttr.in), Notes (a sticky, saved as you type), Shortcuts
-  (a row of app icons). Widgets sit over the wallpaper and under your windows,
-  frosted like the rest; the layout is `quickshell/Desktop/layout.json` in
-  the repo, hand-editable and picked up live. A new widget is one file in
-  `quickshell/Desktop/widgets/` plus a line in `Services/Desktop.qml`'s
-  catalogue.
-- **Wallpapers** — thumbnail grid → `setwall`. **Monitors** — what is connected
-  and a button to `nwg-displays` (which writes `monitors.lua`; `gen-monitors`
-  writes the workspace map to match).
-- **Wi-Fi / Bluetooth / Connections / Audio** — the bar's audio and network
-  popups (opened from their bar modules) taken apart into pages: Wi-Fi scans while open, Bluetooth discovers while the page
-  is on screen, Connections has wired/Tailscale and the nm-connection-editor
-  button, Audio is the full mixer with the per-app rows open.
-- **Per-app output** — every stream's row (in Settings > Audio and in the bar's
-  audio popup) has a `Device ▾`: send that app somewhere other than the default
-  output, for *this stream* (one Firefox tab; forgotten when it ends), *this
-  app until logout* (rule in `$XDG_RUNTIME_DIR`), or *this app always* (rule in
-  `~/.local/state/quickshell/audio-routes.json`). The shell applies the rules to
-  streams as they appear and when a device comes back. Bootstrap turns off WirePlumber's
-  own stream-target memory (`node.stream.restore-target`) so a one-off move
-  does not quietly become permanent.
+- **System** — *About* (fastfetch view + Copy), *Accounts* (name, password,
+  shell, hostname, sessions, greetd autologin), *Date & Time* (NTP, time zone,
+  the bar clock's format), *Region & Language* (`localectl`: language and
+  LC_* formats with a preview), *Power* (power-profiles-daemon profile, the
+  hypridle timeouts — the page rewrites `hypr/hypridle.conf` and restarts
+  hypridle — DPMS wake options, batteries), *Default apps* (`xdg-mime` per
+  role), *Accessibility* (text scaling, cursor size, zoom, animations, repeat),
+  *Updates* (checkupdates, AUR, flatpak, fwupd; opens kitty to upgrade).
+- **Desktop** — *Appearance* (wallpaper + palette, GTK/icon/cursor theme,
+  fonts, rounding, opacity, blur, shadow, animations), *Windows* (layouts,
+  gaps, focus, snapping), *Workspaces* (the per-monitor banks and the primary
+  display), *Keybinds*, *Notifications* (DND, toast duration/screen/corner,
+  per-app mute), *Shell* (bar modules, OSD, launcher keys, lock preview),
+  *Wallpapers*, *Widgets*.
+- **Hardware** — *Displays* (drag-to-arrange canvas, resolution and refresh
+  rate from the modes the display reports, scale, orientation, enable, primary,
+  VRR, 8/10-bit, colour management incl. HDR, mirroring; risky changes revert
+  after 15 s unless kept), *Mouse* (global pointer options, one group per
+  device via `hl.device`, touchpad, cursor theme), *Keyboard* (layouts and
+  variants, switch key, repeat, compose/caps options), *Audio*, *Bluetooth*,
+  *Storage* (mounts with usage bars, mount/unmount via udisks).
+- **Network** — *Wi-Fi*, *Connections* (wired, Tailscale, remote desktop).
+- **Advanced** — *All options* (everything `hyprctl descriptions` knows, with
+  a filter), *Config & logs* (open any config file in the editor, reload,
+  config errors, shell log, reset all overrides).
 
-The nav is grouped: System, Desktop, Hardware, Network, Advanced (the `pages`
-list in `quickshell/Settings/SettingsWindow.qml`; a page names its group).
+Where things land: Hyprland option overrides and per-device input settings in
+`hypr/state/settings.json` (`options`, `devices`; applied by `lib/settings.lua`
+on every reload); monitors in `hypr/monitors.lua` + `hypr/state/monitors.json`
+(`primary`, `ws_home`, `rules` — the Displays page writes both, `gen-monitors`
+still works); keybinds in `hypr/state/keybinds.json`; the shell's own
+preferences (clock format, bar modules, toast rules, OSD) in
+`~/.local/state/quickshell/prefs.json`; system things go through their daemons
+(`timedatectl`, `localectl`, `hostnamectl`, `powerprofilesctl`, `gsettings`,
+`xdg-mime`, `udisksctl`), which ask polkit when they need to.
+
+Pages are listed in `quickshell/Settings/SettingsWindow.qml` (`pages`: id,
+group, glyph, blurb and search keywords); a page is a `PageBody` of `Group`s of
+`SettingRow`s (`Settings/{PageBody,Group,SettingRow,Picker,OptionRow}.qml`),
+and `OptionsPage` builds one from a list of option names.
 
 Both state files live in the repo (they are in the manifest), so your tweaks
 travel with your dotfiles and show up in `git diff`.

@@ -8,13 +8,14 @@ import qs.Services
 
 // Status notifier icons. Left click activates, right click opens the item's
 // menu as one of our popups (no GTK popup to lag), middle click is the
-// secondary action, scrolling scrolls.
+// secondary action, scrolling scrolls. Hidden when empty or when the
+// bar.tray pref is off.
 Bubble {
     id: root
     corners: "mirror"
     interactive: false
     spacing: 8
-    visible: SystemTray.items.values.length > 0
+    visible: SystemTray.items.values.length > 0 && Prefs.get("bar.tray", true)
 
     Repeater {
         model: SystemTray.items

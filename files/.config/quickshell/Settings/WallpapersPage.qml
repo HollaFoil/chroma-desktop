@@ -8,6 +8,7 @@ import qs.Services
 PageBody {
     id: root
     title: "Wallpapers"
+    subtitle: "Pick one; the palette of everything follows it"
     readonly property var stripKeys: Binds.keysOf("util.wallpaper")
     headerItems: [ Pill { text: "Open strip" + (root.stripKeys.length ? "  (" + Binds.prettyCombo(root.stripKeys[0]) + ")" : ""); small: true
                           onClicked: { Overlays.settingsToggle(); Overlays.toggleWallStrip() } } ]

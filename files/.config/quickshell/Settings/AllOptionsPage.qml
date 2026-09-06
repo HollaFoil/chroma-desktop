@@ -4,17 +4,19 @@ import qs.Theme
 import qs.Widgets
 import qs.Services
 
-// Every option Hyprland reports, one collapsible section per config group,
-// with a filter that matches names and descriptions. Rows are built when a
-// section first opens.
+// Every option Hyprland reports, one folded Group per config section. The
+// window's search opens the sections that have a match and lists only the
+// matching rows; rows are built when a section first opens.
 PageBody {
     id: root
     title: "All options"
+    subtitle: "Every option Hyprland reports, grouped by section; use the search box to find one"
     readonly property var hidden: ["debug", "opengl", "quirks", "experimental"]
-    property string query: ""
     Component.onCompleted: Hypr.loadSchema(false)
     status: Hypr.schemaLoaded ? "" : "reading options…"
-    headerItems: [ Entry { placeholder: "filter options…"; Layout.preferredWidth: 260; onTextChanged: root.query = text.trim().toLowerCase() } ]
+    // every option name is a search word for this page, built or not
+    Connections { target: Hypr; function onSchemaChanged2() { root.addWords(Object.keys(Hypr.schema).map(n => n + " " + n.replace(/[:_.]/g, " ")).join(" ")) } }
+    onGroupsChanged: if (Hypr.schemaLoaded && root.words.length === 0) root.addWords(Object.keys(Hypr.schema).map(n => n + " " + n.replace(/[:_.]/g, " ")).join(" "))
 
     readonly property var groups: {
         const g = {}
@@ -23,40 +25,27 @@ PageBody {
             if (hidden.indexOf(head) >= 0) continue
             (g[head] = g[head] || []).push(name)
         }
-        return Object.keys(g).sort().map(k => ({ name: k, options: g[k] }))
+        return Object.keys(g).sort().map(k => ({ name: k, options: g[k].sort() }))
     }
     function hits(names) {
-        if (!query) return names
-        return names.filter(n => n.toLowerCase().indexOf(query) >= 0 || ((Hypr.schema[n] || {}).description || "").toLowerCase().indexOf(query) >= 0)
+        if (!SettingsSearch.active) return names
+        return names.filter(n => SettingsSearch.matches(n.replace(/[:_.]/g, " ") + " " + n + " " + ((Hypr.schema[n] || {}).description || "")))
     }
 
     Repeater {
         model: root.groups
-        ColumnLayout {
+        Group {
             id: sec
             required property var modelData
-            property bool opened: false
             readonly property var shown: root.hits(modelData.options)
-            readonly property bool expanded: opened || root.query.length > 0
+            title: modelData.name
+            hint: modelData.options.length + " options"
+            advanced: true
+            open: false
             visible: shown.length > 0
-            Layout.fillWidth: true
-            spacing: 4
-            ListRow {
-                Layout.fillWidth: true
-                padX: 6; padY: 4
-                onClicked: sec.opened = !sec.opened
-                Glyph { text: sec.expanded ? "󰅀" : "󰅂"; size: Tokens.fontSizeSmall; color: Colors.surfaceVariantFg; Layout.preferredWidth: 16 }
-                Label { text: sec.modelData.name; size: Tokens.fontSizeSmall; color: Colors.primary; Layout.fillWidth: true }
-                Label { text: String(sec.shown.length); size: Tokens.fontSizeSmall; dim: true }
-            }
-            Revealer {
-                open: sec.expanded
-                Layout.fillWidth: true
-                spacing: 6
-                Repeater {
-                    model: sec.expanded ? sec.shown : []
-                    OptionRow { required property var modelData; name: modelData; Layout.fillWidth: true }
-                }
+            Repeater {
+                model: sec.expanded ? sec.shown : []
+                OptionRow { required property var modelData; name: modelData }
             }
         }
     }

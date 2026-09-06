@@ -19,6 +19,7 @@ PageBody {
     id: root
     property var host: null                 // the OverlayWindow (for keyGrab)
     title: "Keybinds"
+    subtitle: "Every action and the keys that trigger it"
     property var capture: null              // { action, index } while recording
     property bool formOpen: false
     property string formCategory: Binds.categories.length ? Binds.categories[0] : "Utilities"
@@ -175,28 +176,32 @@ PageBody {
     }
     Repeater {
         model: root.byCategory
-        ColumnLayout {
+        Group {
             id: cat
             required property var modelData
-            required property int index
-            Layout.fillWidth: true
-            spacing: 4
-            SectionTitle { text: cat.modelData.name; first: cat.index === 0 }
+            title: cat.modelData.name
             Repeater {
                 model: cat.modelData.actions
+                // a custom row, but it takes part in the Group's hairlines and the search like a SettingRow
                 Rectangle {
                     id: row
                     required property var modelData
                     readonly property var a: modelData
                     readonly property bool overridden: (Hypr.keybinds.binds || {})[a.id] !== undefined
+                    readonly property bool isSettingRow: true
+                    readonly property bool hit: SettingsSearch.matches(a.name + " " + (a.keys || []).map(k => Binds.prettyCombo(k)).join(" ") + " " + (a.command || "") + " " + a.category)
+                    property bool lineAbove: false
+                    visible: hit
                     Layout.fillWidth: true
-                    implicitHeight: Math.max(34, r.implicitHeight + 8)
+                    implicitHeight: Math.max(34, r.implicitHeight + 10)
                     radius: Tokens.rSm
                     color: rh.containsMouse ? Tokens.alpha(Colors.surfaceFg, 0.04) : "transparent"
+                    Component.onCompleted: { let p = parent; while (p) { if (p.addWords !== undefined && p.settingsPageIndex !== undefined) { p.addWords(a.name + " " + (a.command || "")); break } p = p.parent } }
+                    Rectangle { visible: row.lineAbove; anchors { top: parent.top; left: parent.left; right: parent.right; leftMargin: 8; rightMargin: 8 } height: 1; color: Tokens.alpha(Colors.outlineVariant, 0.35) }
                     MouseArea { id: rh; anchors.fill: parent; hoverEnabled: true; acceptedButtons: Qt.NoButton }
                     RowLayout {
                         id: r
-                        anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 6; rightMargin: 6 }
+                        anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; leftMargin: 8; rightMargin: 8 }
                         spacing: 8
                         ColumnLayout {
                             Layout.preferredWidth: 280

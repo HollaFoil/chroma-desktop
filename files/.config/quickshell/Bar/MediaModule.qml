@@ -6,12 +6,12 @@ import qs.Services
 
 // Spotify transport (previous · play/pause · next), its own volume as a thin
 // bar that widens under the pointer, and the track label. Hidden when Spotify
-// is not running or has nothing loaded.
+// is not running or has nothing loaded, or when the bar.media pref is off.
 RowLayout {
     id: root
     property var bar: null
     spacing: 0
-    visible: !Media.stopped
+    visible: !Media.stopped && Prefs.get("bar.media", true)
 
     Bubble {
         id: back

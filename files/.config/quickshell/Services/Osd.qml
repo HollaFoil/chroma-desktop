@@ -7,6 +7,7 @@ import Quickshell.Io
 // the focused screen for a moment. Driven by the Pipewire default nodes and
 // the backlight sysfs file, so it also reacts to changes made elsewhere;
 // quiet while an audio popup is open (the slider is the feedback then).
+// Prefs: osd.enabled turns it off altogether, osd.timeout is how long it stays.
 Singleton {
     id: root
     property bool visible: false
@@ -15,11 +16,12 @@ Singleton {
     property bool muted: false
     property string kind: ""
     property bool armed: false
-    Timer { id: hide; interval: 1500; onTriggered: root.visible = false }
+    Timer { id: hide; interval: Prefs.get("osd.timeout", 1500); onTriggered: root.visible = false }
     Timer { interval: 2500; running: true; onTriggered: root.armed = true }
 
     function show(kind, glyph, value, muted) {
         if (!armed) return
+        if (!Prefs.get("osd.enabled", true)) return
         if (Popups.current !== "") return
         root.kind = kind; root.glyph = glyph; root.value = value; root.muted = muted
         visible = true

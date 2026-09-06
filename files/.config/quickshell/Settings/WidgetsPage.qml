@@ -10,20 +10,19 @@ import qs.Services
 PageBody {
     id: root
     title: "Widgets"
+    subtitle: "What sits on the desktop, per screen"
     headerItems: [ Pill { text: Desktop.editMode ? "󰄬  Done arranging" : "󰆾  Arrange on the desktop"; small: true; on: Desktop.editMode; onClicked: { Desktop.editMode = !Desktop.editMode; if (Desktop.editMode) Overlays.settingsToggle() } } ]
     property string addTo: Quickshell.screens.length ? Quickshell.screens[0].name : ""
 
-    Label { text: "Widgets sit over the wallpaper and under your windows. The desktop itself is where they are set up: right-click the wallpaper, or Arrange, for the palette, moving, resizing and each widget's options. This page is the overview; positions are saved in the config (Desktop/layout.json) and a hand-edited file is picked up live."; size: Tokens.fontSizeTiny; dim: true; regular: true; wrapMode: Text.Wrap; Layout.fillWidth: true; leftPadding: 6 }
+    Label { text: "Widgets sit over the wallpaper and under your windows. The desktop itself is where they are set up: right-click the wallpaper, or Arrange, for the palette, moving, resizing and each widget's options. Positions are saved in the config (Desktop/layout.json); a hand-edited file is picked up live."; size: Tokens.fontSizeTiny; dim: true; regular: true; wrapMode: Text.Wrap; Layout.fillWidth: true; leftPadding: 6 }
     Repeater {
         model: Quickshell.screens
-        ColumnLayout {
+        Group {
             id: scr
             required property var modelData
-            required property int index
             readonly property var widgets: Desktop.revision, Desktop.widgetsOn(modelData.name)
-            Layout.fillWidth: true
-            spacing: 4
-            SectionTitle { text: scr.modelData.name + "  ·  " + scr.modelData.width + "×" + scr.modelData.height; first: scr.index === 0 }
+            title: scr.modelData.name
+            hint: scr.modelData.width + " × " + scr.modelData.height + "  ·  " + scr.widgets.length + (scr.widgets.length === 1 ? " widget" : " widgets")
             Label { visible: scr.widgets.length === 0; text: "no widgets on this screen"; size: Tokens.fontSizeSmall; dim: true; regular: true; leftPadding: 6 }
             Repeater {
                 model: scr.widgets

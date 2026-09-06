@@ -5,13 +5,16 @@ import qs.Theme
 import qs.Widgets
 import qs.Services
 
-// About this PC: the fastfetch view, as a page.
+// About this PC: the fastfetch view, as a page. Each section is a Group of
+// read-only rows; a value too long for the right-hand column (the CPU string,
+// a disk line) wraps under its label instead.
 //   System    OS · kernel · host · uptime · packages · shell · locale · IP
 //   Desktop   Hyprland · quickshell · matugen · Qt · theme / icons / cursor / font · wallpaper · palette
 //   Hardware  board · BIOS · CPU · GPUs · memory · swap · disks · displays · audio · bluetooth
 PageBody {
     id: root
-    title: "About PC"
+    title: "About"
+    subtitle: "This machine, its software and hardware"
     property var sections: []      // [{ title, rows: [[key, value]] }]; value "@palette" renders the swatches
     property string hoverCaption: "hover a swatch for its role and hex"
     readonly property var swatches: [["primary", Colors.primary], ["secondary", Colors.secondary], ["tertiary", Colors.tertiary], ["error", Colors.error],
@@ -97,44 +100,47 @@ PageBody {
     }
     Component.onCompleted: collect()
 
+    // Values up to this long sit on the right; longer ones wrap under the label.
+    readonly property int shortValue: 40
+
     Repeater {
         model: root.sections
-        ColumnLayout {
+        Group {
             id: sec
             required property var modelData
-            required property int index
-            Layout.fillWidth: true
-            spacing: 3
-            SectionTitle { text: sec.modelData.title; first: sec.index === 0 }
+            title: sec.modelData.title
             Repeater {
                 model: sec.modelData.rows
-                RowLayout {
+                SettingRow {
                     id: kv
                     required property var modelData
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 6
-                    spacing: 18
-                    Label { text: kv.modelData[0]; size: Tokens.fontSizeSmall; dim: true; Layout.preferredWidth: 110; Layout.alignment: Qt.AlignTop }
-                    Label { visible: kv.modelData[1] !== "@palette"; text: kv.modelData[1]; size: Tokens.fontSizeSmall; regular: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
-                    RowLayout {
-                        visible: kv.modelData[1] === "@palette"
-                        spacing: 8
-                        Row {
-                            spacing: 4
-                            Repeater {
-                                model: root.swatches
-                                Rectangle {
-                                    required property var modelData
-                                    width: 22; height: 16; radius: 5
-                                    color: modelData[1]
-                                    border.width: 1; border.color: sma.containsMouse ? Colors.surfaceFg : Tokens.alpha(Colors.outline, 0.35)
-                                    Behavior on color { ColorAnimation { duration: Tokens.durSlow } }
-                                    MouseArea { id: sma; anchors.fill: parent; hoverEnabled: true; onEntered: root.hoverCaption = parent.modelData[0] + "  " + parent.modelData[1].toString() }
-                                }
+                    readonly property string key: modelData[0]
+                    readonly property string text: modelData[1]
+                    readonly property bool isPalette: text === "@palette"
+                    readonly property bool wraps: !isPalette && text.length > root.shortValue
+                    label: key
+                    keywords: isPalette ? "colours colors swatches matugen" : text
+                    wide: isPalette || wraps
+                    value: (isPalette || wraps) ? "" : text
+                    // the long form: dim prose under the label, wrapping across the row
+                    Label { visible: kv.wraps; text: kv.text; size: Tokens.fontSizeSmall; dim: true; regular: true; wrapMode: Text.Wrap; Layout.fillWidth: true }
+                    // the palette: the swatch strip with a caption for the hovered one
+                    Row {
+                        visible: kv.isPalette
+                        spacing: 4
+                        Repeater {
+                            model: kv.isPalette ? root.swatches : []
+                            Rectangle {
+                                required property var modelData
+                                width: 26; height: 18; radius: 5
+                                color: modelData[1]
+                                border.width: 1; border.color: sma.containsMouse ? Colors.surfaceFg : Tokens.alpha(Colors.outline, 0.35)
+                                Behavior on color { ColorAnimation { duration: Tokens.durSlow } }
+                                MouseArea { id: sma; anchors.fill: parent; hoverEnabled: true; onEntered: root.hoverCaption = parent.modelData[0] + "  " + parent.modelData[1].toString() }
                             }
                         }
-                        Label { text: root.hoverCaption; size: Tokens.fontSizeTiny; dim: true; regular: true }
                     }
+                    Label { visible: kv.isPalette; text: root.hoverCaption; size: Tokens.fontSizeTiny; dim: true; regular: true; Layout.fillWidth: true }
                 }
             }
         }

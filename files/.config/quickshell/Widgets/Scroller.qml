@@ -9,6 +9,7 @@ Item {
     property int maxHeight: 240
     property int spacing: 2
     default property alias content: col.data
+    readonly property alias column: col
     readonly property bool overflowing: col.implicitHeight > height + 0.5
 
     implicitHeight: Math.min(maxHeight, col.implicitHeight)

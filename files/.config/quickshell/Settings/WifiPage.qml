@@ -5,6 +5,7 @@ import qs.Popups
 import qs.Services
 PageBody {
     title: "Wi-Fi"
+    subtitle: "Networks in range and the hotspot"
     WifiSection { Layout.fillWidth: true; Layout.leftMargin: 6; Layout.rightMargin: 8; listHeight: 420 }
     Divider { Layout.fillWidth: true; visible: Net.hasHotspot }
     HotspotSection { Layout.fillWidth: true; Layout.leftMargin: 6; Layout.rightMargin: 8 }
