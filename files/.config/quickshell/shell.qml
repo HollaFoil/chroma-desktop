@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Hyprland
 import qs.Bar
 import qs.Popups
 import qs.Settings
@@ -17,6 +18,8 @@ ShellRoot {
     // Development aid: QS_SCREENS="DP-2,HDMI-A-2" limits the shell to those outputs.
     readonly property var onlyScreens: (Quickshell.env("QS_SCREENS") || "").split(",").filter(s => s.length > 0)
     readonly property var screens: Quickshell.screens.filter(s => onlyScreens.length === 0 || onlyScreens.indexOf(s.name) >= 0)
+    // The screen the pointer is on, as the overlays (Settings, launcher, ...) resolve it.
+    function focusedScreen() { const f = Hyprland.focusedMonitor; return shell.screens.find(s => f && s.name === f.name) ?? shell.screens[0] }
 
     Variants {
         model: shell.screens
@@ -38,7 +41,7 @@ ShellRoot {
     LazyLoader { id: cheatLoader; loading: true; Cheatsheet { allowedScreens: shell.screens } }
     LazyLoader { id: stripLoader; loading: true; WallStrip { allowedScreens: shell.screens } }
     LockSession {}
-    LazyLoader { id: lockPreviewLoader; LockPreview { screen: shell.screens[0] } }
+    LazyLoader { id: lockPreviewLoader; LockPreview {} }
     Connections {
         target: Overlays
         function onSettingsRequested(page) { settingsLoader.item.show(page) }
@@ -63,8 +66,8 @@ ShellRoot {
         target: "lock"
         function lock(): void { Lock.lock() }
         function locked(): bool { return Lock.locked }
-        // a look at the screen on the shell's first output, no lock involved
-        function preview(greeter: bool): void { lockPreviewLoader.active = true; lockPreviewLoader.item.greeterLook = greeter; lockPreviewLoader.item.isOpen = !lockPreviewLoader.item.isOpen }
+        // a look at the screen on the focused output, no lock involved
+        function preview(greeter: bool): void { lockPreviewLoader.active = true; if (!lockPreviewLoader.item.isOpen) lockPreviewLoader.item.screen = shell.focusedScreen(); lockPreviewLoader.item.greeterLook = greeter; lockPreviewLoader.item.isOpen = !lockPreviewLoader.item.isOpen }
         function previewForm(): void { if (lockPreviewLoader.active) lockPreviewLoader.item.openForm() }
     }
     IpcHandler {
@@ -96,7 +99,7 @@ ShellRoot {
     IpcHandler {
         target: "popup"
         function toggle(name: string): void {
-            const s = shell.screens[0]
+            const s = shell.focusedScreen()
             if (Popups.current === name) Popups.close()
             else Popups.open(name, s, 0, 10, name === "launcher" ? "left" : "right", null)
         }

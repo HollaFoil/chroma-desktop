@@ -1,0 +1,192 @@
+#!/bin/bash
+# Take the README's screenshots, on a monitor that has nothing on it, and write
+# them into .screenshots/<category>/<name>.webp where the README expects them.
+#
+#   ./screenshots                    # idle monitor, default wallpapers
+#   ./screenshots --monitor HDMI-A-2
+#   ./screenshots --walls a.png,b.png,c.png   # the palette comparison (first = the hero)
+#   ./screenshots --only shell,lock  # a subset: desktop, palette, shell, settings, lock
+#
+# It changes the wallpaper (setwall) while it runs and puts it back after.
+# Rough by design: it is run about once per redesign.
+set -uo pipefail
+export PATH="$HOME/.local/bin:$PATH"
+cd "$(dirname "$(realpath "$0")")"
+
+OUT=.screenshots
+MON=""
+WALLS=""
+ONLY="desktop,palette,shell,settings,lock"
+WIDTH=1600      # images are scaled to this width; the repo is not a wallpaper pack
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --monitor) MON="$2"; shift 2 ;;
+        --walls)   WALLS="$2"; shift 2 ;;
+        --only)    ONLY="$2"; shift 2 ;;
+        --out)     OUT="$2"; shift 2 ;;
+        -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+        *) echo "unknown option $1" >&2; exit 1 ;;
+    esac
+done
+want() { [[ ",$ONLY," == *",$1,"* ]]; }
+
+for t in grim magick jq hyprctl qs setwall awww; do
+    command -v "$t" >/dev/null || { echo "screenshots: need $t" >&2; exit 1; }
+done
+
+# --- pick a monitor: the one with the fewest windows that is not focused -----
+if [[ -z "$MON" ]]; then
+    MON=$(hyprctl monitors -j | jq -r --argjson ws "$(hyprctl workspaces -j)" '
+        map(. as $m | {name, focused, windows: ([$ws[] | select(.monitor == $m.name) | .windows] | add // 0)})
+        | sort_by(.windows, .focused) | .[0].name')
+fi
+ORIG_MON=$(hyprctl monitors -j | jq -r '.[] | select(.focused) | .name')
+ORIG_WS=$(hyprctl monitors -j | jq -r --arg m "$MON" '.[] | select(.name == $m) | .activeWorkspace.id')
+ORIG_CUR=$(hyprctl cursorpos | tr -d ",")   # parked back on the user's screen before every shot
+ORIG_WALL=$(awww query 2>/dev/null | awk -v m="$MON" '$0 ~ ": "m":" { sub(/.*image: /, ""); print; exit }')
+[[ -z "$ORIG_WALL" ]] && ORIG_WALL=$(jq -r '.wallpaper // empty' ~/.cache/matugen/quickshell.json 2>/dev/null)
+
+# a workspace of that monitor's bank with no windows on it
+WS=$ORIG_WS
+for cand in $ORIG_WS $(( ORIG_WS/10*10 + 1 )) $(( ORIG_WS/10*10 + 2 )) $(( ORIG_WS/10*10 + 3 )) $(( ORIG_WS/10*10 + 4 )) $(( ORIG_WS/10*10 + 5 )); do
+    n=$(hyprctl workspaces -j | jq -r --argjson id "$cand" '.[] | select(.id == $id) | .windows' )
+    if [[ -z "$n" || "$n" == 0 ]]; then WS=$cand; break; fi
+done
+read -r MX MY MW MH TOP < <(hyprctl monitors -j | jq -r --arg m "$MON" '.[] | select(.name == $m) | "\(.x) \(.y) \(.width) \(.height) \(.reserved[1])"')
+echo "screenshots: monitor $MON, workspace $WS, output $OUT/"
+
+# --- wallpapers ---------------------------------------------------------------
+WALLDIR="${WALLSTRIP_DIR:-$HOME/Pictures/Wallpapers}"
+if [[ -n "$WALLS" ]]; then
+    IFS=, read -r -a PALETTE <<<"$WALLS"
+else
+    # three that give clearly different palettes; fall back to whatever is there
+    PALETTE=()
+    for w in wallhaven-212z9g_2560x1440.png wallhaven-d8d3kl_2560x1440.png wallhaven-ogj2v7_2560x1440.png wallhaven-9mjoy1_2560x1440.png; do
+        [[ -f "$WALLDIR/$w" ]] && PALETTE+=("$WALLDIR/$w")
+    done
+    if [[ ${#PALETTE[@]} -lt 2 ]]; then
+        mapfile -t PALETTE < <(find "$WALLDIR" -maxdepth 1 -type f \( -name '*.png' -o -name '*.jpg' \) | sort | head -3)
+    fi
+fi
+[[ ${#PALETTE[@]} -eq 0 ]] && PALETTE=("$PWD/wallpapers/default.jpg")
+HERO="${PALETTE[0]}"
+
+# --- helpers ------------------------------------------------------------------
+# Hyprland >= 0.56 with a Lua config takes Lua for `hyprctl dispatch`.
+dsp() { hyprctl dispatch "$1" >/dev/null; }
+LAUNCHED=()   # window addresses we opened, closed at the end
+cleanup() {
+    qs ipc call popup close >/dev/null 2>&1
+    for a in "${LAUNCHED[@]}"; do dsp "hl.dsp.window.close({ window = \"address:$a\" })" >/dev/null 2>&1; done
+    # anything else we left on that workspace
+    for a in $(hyprctl clients -j | jq -r --argjson ws "$WS" '.[] | select(.workspace.id == $ws) | .address'); do
+        dsp "hl.dsp.window.close({ window = \"address:$a\" })" >/dev/null 2>&1
+    done
+    [[ -n "$ORIG_WALL" && "$(current_wall)" != "$ORIG_WALL" ]] && setwall "$ORIG_WALL" >/dev/null
+    dsp "hl.dsp.focus({ monitor = \"$MON\" })"; dsp "hl.dsp.focus({ workspace = $ORIG_WS })"
+    dsp "hl.dsp.focus({ monitor = \"$ORIG_MON\" })"
+    dsp "hl.dsp.cursor.move({ x = ${ORIG_CUR% *}, y = ${ORIG_CUR#* } })"
+    rm -f "$TMP"
+}
+trap cleanup EXIT
+TMP=$(mktemp --suffix=.png)
+current_wall() { awww query 2>/dev/null | awk -v m="$MON" '$0 ~ ": "m":" { sub(/.*image: /, ""); print; exit }'; }
+focus() { dsp "hl.dsp.focus({ monitor = \"$MON\" })"; dsp "hl.dsp.focus({ workspace = $WS })"; }
+shot() {  # shot <category/name> [delay] [gravity WxH]   e.g. shot shell/popup 1 "NorthEast 760x620"
+    sleep "${2:-1.2}"
+    mkdir -p "$OUT/$(dirname "$1")"
+    local crop=()
+    [[ -n "${3:-}" ]] && crop=(-gravity "${3% *}" -crop "${3#* }+0+0" +repage)
+    dsp "hl.dsp.cursor.move({ x = ${ORIG_CUR% *}, y = ${ORIG_CUR#* } })"; sleep 0.2
+    grim -o "$MON" "$TMP" && magick "$TMP" "${crop[@]}" -resize "${WIDTH}x>" -quality 82 "$OUT/$1.webp"
+    echo "  $OUT/$1.webp"
+}
+# open <class> <cmd...>: exec on our workspace, wait for the window, remember it
+open() {
+    local class="$1"; shift
+    local before; before=$(hyprctl clients -j | jq -r --arg c "$class" '.[] | select(.class == $c) | .address' | sort)
+    focus; dsp "hl.dsp.exec_cmd([[$*]])"
+    for _ in $(seq 40); do
+        sleep 0.25
+        local now; now=$(hyprctl clients -j | jq -r --arg c "$class" '.[] | select(.class == $c) | .address' | sort)
+        local new; new=$(comm -13 <(echo "$before") <(echo "$now") | head -1)
+        if [[ -n "$new" ]]; then LAUNCHED+=("$new"); return 0; fi
+    done
+    echo "  (no $class window appeared)" >&2
+}
+place() {
+    local a="$1" G=12 UY=$(( MY + TOP )) UH=$(( MH - TOP ))
+    local x=$(( MX + MW * $2 / 100 + G )) y=$(( UY + UH * $3 / 100 + G )) w=$(( MW * $4 / 100 - 2*G )) h=$(( UH * $5 / 100 - 2*G ))
+    hyprctl --batch "dispatch hl.dsp.focus({ window = \"address:$a\" }) ; dispatch hl.dsp.window.float({ action = \"enable\" })" >/dev/null
+    sleep 0.3
+    hyprctl --batch "dispatch hl.dsp.window.resize({ x = $w, y = $h }) ; dispatch hl.dsp.window.move({ x = $x, y = $y })" >/dev/null
+}
+close_class() { for a in $(hyprctl clients -j | jq -r --arg c "$1" --argjson ws "$WS" '.[] | select(.class == $c and .workspace.id == $ws) | .address'); do dsp "hl.dsp.window.close({ window = \"address:$a\" })" >/dev/null; done; }
+ipc() { qs ipc call "$@" >/dev/null 2>&1; }
+
+# --- go -----------------------------------------------------------------------
+focus
+ipc popup close
+[[ "$(current_wall)" != "$HERO" ]] && setwall "$HERO" >/dev/null && sleep 2
+
+# the desktop: terminal, system monitor and file manager, tiled
+scene() {
+    close_class nemo
+    # fastfetch waits until the window has been placed, or its logo wraps.
+    # Layout: fastfetch across the top, file manager and btop sharing the bottom.
+    open kitty kitty --hold sh -c \'sleep 2.5\; fastfetch\';  local k1="${LAUNCHED[-1]}"
+    open kitty kitty -o font_size=10 btop;                 local k2="${LAUNCHED[-1]}"
+    open nemo nemo "$HOME";                                local n="${LAUNCHED[-1]}"
+    sleep 0.5
+    place "$k1" 0 0 100 42; place "$n" 0 42 58 58; place "$k2" 58 42 42 58
+    sleep 3.5
+    [[ -n "${DEBUG:-}" ]] && hyprctl clients -j | jq -c --argjson ws "$WS" '.[] | select(.workspace.id == $ws) | {class, title: .title[0:20], at, size, floating}' >&2
+}
+if want desktop || want palette; then
+    scene
+    want desktop && shot desktop/overview 1
+fi
+
+# the same scene under other wallpapers: nemo does not repaint its background
+# live (icons do), so it is relaunched after every setwall
+if want palette; then
+    i=1
+    for w in "${PALETTE[@]}"; do
+        if [[ "$(current_wall)" != "$w" ]]; then
+            setwall "$w" >/dev/null; sleep 2.5
+            close_class nemo; open nemo nemo "$HOME"; place "${LAUNCHED[-1]}" 0 42 58 58; sleep 1
+        fi
+        shot "palette/$i" 2
+        i=$((i+1))
+    done
+    setwall "$HERO" >/dev/null; sleep 2.5
+fi
+
+if want shell; then
+    focus; ipc launcher toggle;    shot shell/launcher;           ipc launcher toggle; sleep 0.5
+    focus; ipc cheatsheet toggle;  shot shell/cheatsheet;         ipc cheatsheet toggle; sleep 0.5
+    focus; ipc wallstrip toggle;   shot shell/wallpapers 2;       ipc wallstrip toggle; sleep 0.5
+    # bar popups are small: crop to the corner they hang from
+    focus; ipc popup toggle launcher; shot shell/popup-launcher 1.5 "NorthWest 720x640"; ipc popup close; sleep 0.5
+    for p in audio network calendar; do
+        focus; ipc popup toggle "$p"; shot "shell/popup-$p" 1.5 "NorthEast 720x640"; ipc popup close; sleep 0.5
+    done
+fi
+
+if want settings; then
+    for page in appearance displays keybinds power; do
+        focus; ipc settings open "$page"; shot "settings/$page" 1.8
+    done
+    ipc settings toggle; sleep 0.5
+fi
+
+if want lock; then
+    focus; ipc lock preview false; shot lock/idle 2
+    ipc lock previewForm;          shot lock/form 1.5
+    ipc lock preview false; sleep 0.8
+    focus; ipc lock preview true;  shot lock/greeter 2
+    ipc lock preview true; sleep 0.5
+fi
+
+echo "screenshots: done — $(du -sh "$OUT" | cut -f1) in $OUT/"

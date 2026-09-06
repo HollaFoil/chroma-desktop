@@ -45,4 +45,5 @@ PanelWindow {
     }
     property bool greeterLook: false
     function openForm() { demoModel.formOpen = true }
+    onIsOpenChanged: if (!isOpen) { demoModel.formOpen = false; demoModel.password = ""; demoModel.status = "" }
 }
