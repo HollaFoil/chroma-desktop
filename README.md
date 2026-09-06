@@ -1,5 +1,13 @@
 # chroma-desktop
 
+[![release](https://img.shields.io/github/v/tag/HollaFoil/chroma-desktop?label=release&sort=semver&color=e8a0bf)](https://github.com/HollaFoil/chroma-desktop/releases)
+[![checks](https://img.shields.io/github/actions/workflow/status/HollaFoil/chroma-desktop/checks.yml?branch=master&label=checks)](https://github.com/HollaFoil/chroma-desktop/actions/workflows/checks.yml)
+![state](https://img.shields.io/badge/state-alpha-orange)
+![hyprland](https://img.shields.io/badge/Hyprland-%E2%89%A5%200.56-5e81ac)
+![arch](https://img.shields.io/badge/CachyOS%20%2F%20Arch-1793d1?logo=archlinux&logoColor=white)
+[![last commit](https://img.shields.io/github/last-commit/HollaFoil/chroma-desktop/master?label=master)](https://github.com/HollaFoil/chroma-desktop/commits/master)
+[![staging](https://img.shields.io/github/commits-difference/HollaFoil/chroma-desktop?base=master&head=staging&label=staging%20ahead&color=8f8f8f)](https://github.com/HollaFoil/chroma-desktop/compare/master...staging)
+
 A heavily opinionated Hyprland desktop where every single app live responds to your wallpaper's palette. Change the
 wallpaper (`SUPER+W`) and matugen recolours the bar, notifications, launcher,
 terminal, lock screen, GTK and Qt apps, Discord, Spotify, Steam, btop, the
@@ -37,6 +45,9 @@ and everything worth tweaking is in **Settings** (Arch button, or `SUPER+,`).
 Written for CachyOS/Arch.
 
 ## Install
+
+`master` is what the release badge points at; `staging` is where changes land
+first. Pull requests go to `staging`.
 
 ```sh
 git clone https://github.com/HollaFoil/chroma-desktop ~/chroma-desktop

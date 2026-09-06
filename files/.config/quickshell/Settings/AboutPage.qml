@@ -34,13 +34,14 @@ PageBody {
             let ff = {}
             try { for (const m of JSON.parse(out)) if (m.result !== undefined) ff[m.type] = m.result } catch (e) { ff = {} }
             const haveFf = code === 0 && Object.keys(ff).length > 0
-            Proc.sh("hyprctl -j version; echo @@; qs --version; echo @@; matugen --version; echo @@; qtpaths6 --qt-version; echo @@; gsettings get org.gnome.desktop.interface gtk-theme; echo @@; gsettings get org.gnome.desktop.interface icon-theme; echo @@; gsettings get org.gnome.desktop.interface cursor-theme; echo @@; gsettings get org.gnome.desktop.interface cursor-size; echo @@; gsettings get org.gnome.desktop.interface font-name; echo @@; $SHELL --version 2>/dev/null | head -1", (c2, out2) => {
+            Proc.sh("hyprctl -j version; echo @@; qs --version; echo @@; matugen --version; echo @@; qtpaths6 --qt-version; echo @@; gsettings get org.gnome.desktop.interface gtk-theme; echo @@; gsettings get org.gnome.desktop.interface icon-theme; echo @@; gsettings get org.gnome.desktop.interface cursor-theme; echo @@; gsettings get org.gnome.desktop.interface cursor-size; echo @@; gsettings get org.gnome.desktop.interface font-name; echo @@; $SHELL --version 2>/dev/null | head -1; echo @@; d=$(readlink -f ~/.config/quickshell)/../../..; v=$(cat \"$d/VERSION\" 2>/dev/null); g=$(git -C \"$d\" describe --tags --always --dirty 2>/dev/null); echo \"${v:-?}${g:+  ($g)}\"", (c2, out2) => {
                 const p = out2.split("@@").map(s => s.trim())
                 let hv = {}; try { hv = JSON.parse(p[0]) } catch (e) {}
                 const gs = i => (p[i] || "").replace(/^'|'$/g, "")
                 root.sections = [
                     { title: "System", rows: systemRows(ff, p[9] || "") },
                     { title: "Desktop", rows: [
+                        ["chroma-desktop", p[10] || ""],
                         ["Hyprland", hv.version ? hv.version + "  (" + (hv.tag || "") + ", " + String(hv.commit || "").slice(0, 8) + ")" : ""],
                         ["Session", (Quickshell.env("XDG_SESSION_TYPE") || "?") + " · " + (Quickshell.env("XDG_CURRENT_DESKTOP") || "?")],
                         ["Shell", (p[1] || "").replace("Quickshell ", "quickshell ")],

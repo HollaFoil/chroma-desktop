@@ -1,0 +1,27 @@
+# Syntax checks only: every script, Lua file and JSON state file has to parse.
+# Nothing here needs a Hyprland session.
+name: checks
+on:
+  push: { branches: [master, staging] }
+  pull_request:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get install -y -qq lua5.4 >/dev/null
+      - name: shell and python scripts parse
+        run: |
+          set -e
+          for f in $(git ls-files | grep -vE '\.(lua|qml|json|css|conf|toml|md|webp|jpg|png|ini|toml|svg|fish|txt|yml)$'); do
+            case "$(head -c 64 "$f" | head -1)" in
+              *bash*|*/sh)    bash -n "$f" ;;
+              *python*)       python3 -m py_compile "$f" ;;
+            esac
+          done
+      - name: Lua parses
+        run: git ls-files '*.lua' | xargs -n1 luac5.4 -p
+      - name: JSON parses
+        run: git ls-files '*.json' ':!files/.config/matugen/templates' | xargs -n1 python3 -m json.tool >/dev/null
+      - name: manifest paths exist
+        run: grep -vE '^\s*(#|$)' manifest.txt | while read -r p; do test -e "files/$p" || { echo "missing files/$p"; exit 1; }; done
