@@ -103,6 +103,8 @@ ShellRoot {
             if (Popups.current === name) Popups.close()
             else Popups.open(name, s, 0, 10, name === "launcher" ? "left" : "right", null)
         }
+        // opens the panel with its lists expanded, for ./screenshots
+        function showcase(name: string): void { Popups.open(name, shell.focusedScreen(), 0, 10, name === "launcher" ? "left" : "right", "showcase") }
         function close(): void { Popups.close() }
     }
 }

@@ -70,7 +70,8 @@ else
     fi
 fi
 [[ ${#PALETTE[@]} -eq 0 ]] && PALETTE=("$PWD/wallpapers/default.jpg")
-HERO="${PALETTE[0]}"
+HERO="${PALETTE[-1]}"                       # the last one is used for everything but the lock screen
+LOCK_WALL="${PALETTE[1]:-${PALETTE[0]}}"    # the lock screen gets the second
 
 # --- helpers ------------------------------------------------------------------
 # Hyprland >= 0.56 with a Lua config takes Lua for `hyprctl dispatch`.
@@ -122,6 +123,8 @@ place() {
     sleep 0.3
     hyprctl --batch "dispatch hl.dsp.window.resize({ x = $w, y = $h }) ; dispatch hl.dsp.window.move({ x = $x, y = $y })" >/dev/null
 }
+# the scene's windows would clutter the overlay shots; close what we opened
+close_scene() { for a in "${LAUNCHED[@]}"; do dsp "hl.dsp.window.close({ window = \"address:$a\" })"; done; LAUNCHED=(); sleep 0.8; }
 close_class() { for a in $(hyprctl clients -j | jq -r --arg c "$1" --argjson ws "$WS" '.[] | select(.class == $c and .workspace.id == $ws) | .address'); do dsp "hl.dsp.window.close({ window = \"address:$a\" })" >/dev/null; done; }
 ipc() { qs ipc call "$@" >/dev/null 2>&1; }
 
@@ -162,6 +165,7 @@ if want palette; then
     done
     setwall "$HERO" >/dev/null; sleep 2.5
 fi
+close_scene
 
 if want shell; then
     focus; ipc launcher toggle;    shot shell/launcher;           ipc launcher toggle; sleep 0.5
@@ -169,7 +173,8 @@ if want shell; then
     focus; ipc wallstrip toggle;   shot shell/wallpapers 2;       ipc wallstrip toggle; sleep 0.5
     # bar popups are small: crop to the corner they hang from
     focus; ipc popup toggle launcher; shot shell/popup-launcher 1.5 "NorthWest 720x640"; ipc popup close; sleep 0.5
-    for p in audio network calendar; do
+    focus; ipc popup showcase audio; shot shell/popup-audio 1.5 "NorthEast 720x460"; ipc popup close; sleep 0.5
+    for p in network calendar; do
         focus; ipc popup toggle "$p"; shot "shell/popup-$p" 1.5 "NorthEast 720x640"; ipc popup close; sleep 0.5
     done
 fi
@@ -182,11 +187,10 @@ if want settings; then
 fi
 
 if want lock; then
+    setwall "$LOCK_WALL" >/dev/null; sleep 2.5
     focus; ipc lock preview false; shot lock/idle 2
     ipc lock previewForm;          shot lock/form 1.5
     ipc lock preview false; sleep 0.8
-    focus; ipc lock preview true;  shot lock/greeter 2
-    ipc lock preview true; sleep 0.5
 fi
 
 echo "screenshots: done — $(du -sh "$OUT" | cut -f1) in $OUT/"

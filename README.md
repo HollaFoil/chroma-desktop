@@ -24,11 +24,11 @@ history, OSD, a Settings app, the lock screen and the login screen.
 | **Wallpapers** | **Bar popups** |
 | ![](.screenshots/shell/wallpapers.webp) | ![](.screenshots/shell/popup-audio.webp) |
 
-| Settings | Displays |
+| Settings | |
 |---|---|
 | ![](.screenshots/settings/appearance.webp) | ![](.screenshots/settings/displays.webp) |
-| **Lock screen** | **Login screen** |
-| ![](.screenshots/lock/idle.webp) | ![](.screenshots/lock/greeter.webp) |
+| **Lock screen** | |
+| ![](.screenshots/lock/idle.webp) | ![](.screenshots/lock/form.webp) |
 
 Hyprland is configured in **Lua** (`hypr/hyprland.lua`, needs Hyprland ≥ 0.56),
 and everything worth tweaking is in **Settings** (Arch button, or `SUPER+,`).

@@ -12,7 +12,7 @@ import qs.Services
 // row's `▾` routes that stream (or the whole app, for a session or always).
 ColumnLayout {
     id: root
-    property bool appsOpen: false
+    property bool appsOpen: Popups.extra === "showcase"   // opened via `popup show audio showcase`
     property int sliderWidth: 190
     spacing: Tokens.sp1
     Component.onCompleted: Audio.refreshPinned()
@@ -72,6 +72,7 @@ ColumnLayout {
             ColumnLayout {
                 id: app
                 required property var modelData
+                required property int index
                 readonly property var stream: modelData
                 readonly property var rule: Audio.ruleFor(stream)
                 readonly property var sinkNow: Audio.sinkOf(stream)
@@ -103,6 +104,7 @@ ColumnLayout {
                 }
                 Revealer {
                     id: route
+                    open: app.index === 0 && Popups.extra === "showcase"
                     Layout.fillWidth: true
                     Layout.leftMargin: 38
                     spacing: 4
