@@ -5,7 +5,7 @@ wallpaper (`SUPER+W`) and matugen recolours the bar, notifications, launcher,
 terminal, lock screen, GTK and Qt apps, Discord, Spotify, Steam, btop, the
 shell prompt and the websites you visit in Firefox. 
 
-Some awesome waybar/popup designs were heavily inspired by ![Matuprland](https://github.com/Abhra00/Matuprland), thank you!
+Some awesome waybar/popup designs were heavily inspired by [Matuprland](https://github.com/Abhra00/Matuprland), thank you!
 
 ![desktop](.screenshots/desktop/overview.webp)
 
