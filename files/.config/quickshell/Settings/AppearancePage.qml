@@ -16,7 +16,7 @@ import qs.Services
 // Colours are never picked here: conf/look.lua and every template read the
 // palette setwall renders, so a colour is changed by changing the wallpaper.
 // gsettings values are read on every show, because setwall's matugen run
-// resets gtk-theme to adw-gtk3-<mode> (matugen/config.toml).
+// resets gtk-theme to adw-gtk3-matugen (matugen/config.toml).
 PageBody {
     id: root
     title: "Appearance"
@@ -166,7 +166,7 @@ PageBody {
         }
         SettingRow {
             label: "GTK theme"
-            hint: "adw-gtk3 takes its colours from the palette (gtk-3.0/colors.css); setwall sets adw-gtk3-" + Colors.mode + " again on every wallpaper change"
+            hint: "adw-gtk3-matugen is adw-gtk3-dark plus the palette (~/.local/share/themes); setwall sets it again on every wallpaper change"
             keywords: "gtk3 gtk4 libadwaita adw widgets"
             Picker {
                 model: root.choices(root.gtkThemes, root.gtkTheme, "set, but no gtk-3.0 directory found for it")

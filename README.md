@@ -87,7 +87,7 @@ Things in here that reach outside the repo, or may cause problems if your machin
   and xsettingsd are user units wanted by `hyprland-session.target`, which
   only `hyprland.lua` starts, and they refuse to start unless
   `XDG_CURRENT_DESKTOP` is Hyprland, so a Plasma or GNOME login gets none of
-  them. The *files* are shared, though: `kdeglobals`, `gtk.css`, the icon
+  them. The *files* are shared, though: `kdeglobals`, the GTK theme and icon
   theme in gsettings and the default applications follow you into any desktop.
 - **Hyprland ≥ 0.56 is required.** The config is written in Lua. an older Hyprland cannot
   read it and you get a session with *no* config. `./bootstrap --check` spots this issue.
@@ -113,9 +113,10 @@ Things in here that reach outside the repo, or may cause problems if your machin
   Also opt-in, from the bar's network panel or the command.
 - **The Displays page rewrites your monitor config** (`hypr/monitors.lua`).
   Risky changes revert after 15 s unless you keep them.
-- **A Plasma leftover, `kde-gtk-config`, overwrites** `gtk-{3,4}.0/gtk.css`
-  behind matugen's back. `./prune --remove` removes it and `./link` puts the
-  symlinks back, if you ever encounter issues.
+- **A Plasma leftover, `kde-gtk-config`, overwrites** `gtk-4.0/gtk.css`, the GTK
+  `settings.ini` files and `xsettingsd.conf` behind matugen's back.
+  `./prune --remove` removes it and `./link` puts the symlinks back, if you
+  ever encounter issues.
 - **A few scripts target my hardware** and can fail elsewhere: the bar's CPU sensor
   path (`quickshell/Services/Stats.qml`, an AMD `k10temp` hwmon), the GPU
   module (`nvidia-smi`, shows `--` without it), `chrome-flags.conf` (NVIDIA
@@ -135,7 +136,7 @@ matugen writes every app's colours on each `setwall <wallpaper path>`, dispatche
 | Firefox | the [MatugenFox](https://github.com/Ubaidullah-Web-Dev/MatugenFox) extension. Per-site CSS lives in `dusky_sites/`. |
 | VSCodium / VS Code | the *Matugen Theme* extension (`haikalllp.matugen-theme`). |
 | btop | `color_theme = "matugen"`. |
-| GTK / Qt / KDE apps | nothing: adw-gtk3, qt6ct and `kdeglobals` are in the manifest. Qt apps recolour on relaunch. |
+| GTK / Qt / KDE apps | nothing: `adw-gtk3-matugen` (adw-gtk3-dark plus the palette, in `~/.local/share/themes`), qt6ct and `kdeglobals` are in the manifest. GTK3 apps recolour live, Qt apps on relaunch. |
 | Terminal prompt | oh-my-posh. bootstrap fetches the `agnoster` theme that gets recoloured. |
 | Icons | nothing: a recoloured Adwaita is generated as `~/.local/share/icons/Matugen`. |
 
