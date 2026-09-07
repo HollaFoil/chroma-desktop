@@ -4,6 +4,15 @@ Documentation=file:%h/.local/bin/remote-desktop
 PartOf=graphical-session.target
 After=graphical-session.target
 Requisite=graphical-session.target
+# A target implicitly orders itself After= every unit it Wants unless that unit
+# already orders itself against the target. Without this line the wanting
+# target would wait for us, we wait for graphical-session.target, and that one
+# waits for the wanting target: a cycle systemd breaks by dropping our job.
+After=hyprland-session.target
+# Hyprland only, like quickshell.service: wayvnc speaks wlroots' screencopy,
+# and under another desktop it would only crash-loop. remote-desktop on/off
+# manages the Wants symlink in hyprland-session.target.wants/.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 
 [Service]
 # remote-desktop writes the config (Tailscale address, password) and execs wayvnc
@@ -12,4 +21,4 @@ Restart=on-failure
 RestartSec=3s
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=hyprland-session.target

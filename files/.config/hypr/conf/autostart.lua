@@ -12,7 +12,16 @@ hl.on("hyprland.start", function()
     if os.getenv("QS_LOCK_AT_START") == "1" or os.getenv("WALLGREET_LOCK_AT_START") == "1" then
         lock_flag = "touch \"${XDG_RUNTIME_DIR:-/tmp}/qs-lock-at-start\"; "
     end
-    -- Chained with && inside ONE exec_cmd on purpose: exec_cmd is async, so as
+    -- Pending one-time migrations first (./migrate --auto, the repo found
+    -- through the hyprland.lua symlink): whatever the previous version left
+    -- behind outside the repo - a unit hooked into the wrong target, say - is
+    -- put right before the session target below is started against it. Quiet,
+    -- never asks, logs to ~/.local/state/chroma-desktop/migrate.log and sends
+    -- a notification once the shell is up. Costs a readlink when nothing is
+    -- pending. Bounded by timeout so a stuck migration cannot hold up login.
+    local migrate = 'r="$(readlink -f "$HOME/.config/hypr/hyprland.lua")"; r="${r%/files/.config/hypr/hyprland.lua}"; '
+        .. '[ -x "$r/migrate" ] && timeout 60 "$r/migrate" --auto; '
+    -- Chained inside ONE exec_cmd on purpose: exec_cmd is async, so as
     -- separate lines the environment import races the services that need it.
     --
     -- xdg-desktop-portal picks its backends from XDG_CURRENT_DESKTOP when it
@@ -26,11 +35,15 @@ hl.on("hyprland.start", function()
     -- $XDG_RUNTIME_DIR/hypr/$HYPRLAND_INSTANCE_SIGNATURE/.socket2.sock. Launched
     -- by Hyprland it would inherit that; started by systemd it does not.
     --
-    -- quickshell.service hangs off graphical-session.target (Requisite= and
-    -- WantedBy=), but that target sets RefuseManualStart and can only be
-    -- reached as a dependency - hence hyprland-session.target, which BindsTo it.
-    -- Starting ours pulls graphical-session.target up and the shell with it, and
-    -- brings both down when the session ends. Nothing else is enabled there.
+    -- quickshell.service is WantedBy=hyprland-session.target and Requisite=
+    -- graphical-session.target. Only this handler ever starts our target, so
+    -- only a Hyprland login gets the shell: graphical-session.target itself is
+    -- reached by Plasma and GNOME too, which is why nothing of ours hangs off
+    -- it directly (a Plasma login on this account used to get the bar). It
+    -- sets RefuseManualStart anyway, so ours BindsTo it: starting ours pulls
+    -- graphical-session.target up and the shell after it, and brings all of
+    -- it down when the session ends. The unit also refuses to start unless
+    -- XDG_CURRENT_DESKTOP, imported here, is Hyprland.
     --
     -- `restart`, not `start`, and this is load-bearing. Nothing tears the
     -- target down when Hyprland goes away: the compositor dies (or is killed,
@@ -58,7 +71,7 @@ hl.on("hyprland.start", function()
     -- target start: on a machine without hyprpolkitagent or the portal
     -- installed, a failed restart there would otherwise leave the session
     -- target (and so the shell) never started at all.
-    hl.exec_cmd(lock_flag .. "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal quickshell.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
+    hl.exec_cmd(lock_flag .. migrate .. "systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP HYPRLAND_INSTANCE_SIGNATURE; systemctl --user reset-failed hyprpolkitagent xdg-desktop-portal quickshell.service hyprland-session.target 2>/dev/null; systemctl --user restart hyprpolkitagent xdg-desktop-portal 2>/dev/null; systemctl --user restart hyprland-session.target")
     -- The shell runs as a systemd user unit rather than a bare exec_cmd so a
     -- crash brings it straight back (Restart=on-failure) and its output lands
     -- in `journalctl --user -u quickshell`. Started above via the target.

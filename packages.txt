@@ -72,7 +72,7 @@ wayvnc                       # remote desktop over Tailscale (remote-desktop on;
 python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
 greetd                       # login manager; runs the shell's greeter (quickshell from [core]). ./greeter installs and enables it
-xsettingsd                   # GTK theme/icons/cursor for Xwayland apps (Steam, JetBrains); xsettingsd.service is hooked into graphical-session.target by bootstrap
+xsettingsd                   # GTK theme/icons/cursor for Xwayland apps (Steam, JetBrains); xsettingsd.service is hooked into hyprland-session.target by bootstrap
 
 [aur]
 mpv-modernz-git              # mpv OSC: title, rounded seekbar, centred play/skip, sub/audio buttons; colours via matugen (templates/modernz.conf)

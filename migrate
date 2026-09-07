@@ -1,0 +1,149 @@
+#!/bin/bash
+# migrate — the one-time changes between versions of this desktop.
+#
+#   ./migrate            apply what is pending, then record VERSION as installed
+#   ./migrate --check    list what is pending; changes nothing
+#   ./migrate --auto     what hypr/conf/autostart.lua runs at every login: apply
+#                        quietly, never ask, leave anything marked "# needs: sudo"
+#                        for ./bootstrap, and say what happened in a notification
+#
+# Why this exists: the symlinks make edits to files/ live, but everything the
+# setup did *outside* the repo - a `systemctl --user enable`, a Wants symlink,
+# a gsettings key, a rendered file - happened once, and after a git pull it is
+# still exactly as the older version left it, on every machine that ran it.
+# A migration is the redo for that. One file per change in migrations/, named
+# <version it ships with>-<what-it-does>.sh; each runs once, in version order,
+# on every machine whose installed version is older than it.
+#
+# Installed version: ${XDG_STATE_HOME:-~/.local/state}/chroma-desktop/version.
+# No file means "older than 1.1.0, or never installed", and every migration
+# runs - so each one has to be safe on a machine that never had the old
+# behaviour: test for the thing to undo, then undo it. Rules for a migration:
+#   - idempotent: running it twice is the same as once
+#   - no prompts, no sudo (unless the file says `# needs: sudo`, which keeps
+#     it out of the login run; bootstrap runs those with you at the keyboard)
+#   - it may use ok/warn/miss for its report lines; $REPO is the repo root
+#   - exit non-zero and the run stops there, to resume on the next run
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chroma-desktop"
+STATE="$STATE_DIR/version"
+LOG="$STATE_DIR/migrate.log"
+TARGET="$(tr -d '[:space:]' < "$REPO/VERSION")"
+
+MODE=apply
+case "${1:-}" in
+    "")          ;;
+    --check)     MODE=check ;;
+    --auto)      MODE=auto ;;
+    -h|--help)   sed -n '2,8p' "$0"; exit 0 ;;
+    *) echo "unknown option: $1" >&2; exit 2 ;;
+esac
+
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+export -f ok warn miss
+export REPO
+
+# $1 <= $2 in version order
+ver_le() { [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" == "$1" ]]; }
+ver_of() { local n; n="$(basename "$1")"; echo "${n%%-*}"; }
+needs_sudo() { grep -qE '^#[[:space:]]*needs:[[:space:]]*sudo' "$1"; }
+
+INSTALLED=""
+[[ -f "$STATE" ]] && INSTALLED="$(tr -d '[:space:]' < "$STATE")"
+
+record() {
+    mkdir -p "$STATE_DIR"
+    printf '%s\n' "$1" > "$STATE"
+}
+
+# Pending: newer than the installed version (all of them when nothing is
+# recorded), in version order; two at the same version run in name order.
+pending=()
+while IFS= read -r f; do
+    [[ -f "$f" ]] || continue
+    v="$(ver_of "$f")"
+    if [[ -z "$INSTALLED" ]] || ! ver_le "$v" "$INSTALLED"; then pending+=("$f"); fi
+done < <(find "$REPO/migrations" -maxdepth 1 -name '*.sh' 2>/dev/null | sort -V)
+
+if [[ ${#pending[@]} -eq 0 ]]; then
+    [[ $MODE == check ]] && ok "nothing pending (installed ${INSTALLED:-unrecorded}, repo $TARGET)"
+    # A fresh machine, or a version bump with nothing to migrate: just record
+    # it. Never record backwards, so checking out an older tag and coming back
+    # does not replay everything.
+    if [[ $MODE != check ]] && { [[ -z "$INSTALLED" ]] || ! ver_le "$TARGET" "$INSTALLED"; }; then
+        record "$TARGET"
+        [[ $MODE == apply ]] && ok "installed version recorded: $TARGET"
+    fi
+    exit 0
+fi
+
+if [[ $MODE == check ]]; then
+    warn "installed ${INSTALLED:-unrecorded}, repo $TARGET: ${#pending[@]} migration(s) pending"
+    for f in "${pending[@]}"; do
+        n="$(basename "$f" .sh)"
+        if needs_sudo "$f"; then printf '      %s  (needs sudo: ./bootstrap)\n' "$n"; else printf '      %s\n' "$n"; fi
+    done
+    exit 1
+fi
+
+# Login runs go to the log, not to Hyprland's stderr.
+if [[ $MODE == auto ]]; then
+    mkdir -p "$STATE_DIR"
+    exec >>"$LOG" 2>&1
+    echo "== $(date '+%F %T') migrate --auto: installed ${INSTALLED:-unrecorded}, repo $TARGET"
+fi
+
+applied=() failed="" skipped=""
+for f in "${pending[@]}"; do
+    n="$(basename "$f" .sh)"
+    if [[ $MODE == auto ]] && needs_sudo "$f"; then
+        skipped="$n"; break
+    fi
+    echo "  $n"
+    if bash "$f"; then
+        applied+=("$f")
+    else
+        rc=$?; failed="$n"; miss "$n failed (exit $rc); stopping here, it runs again next time"; break
+    fi
+done
+
+# What to record. Everything ran: the repo version. Stopped part way: the
+# highest version below the one that stopped us, so that everything at that
+# version (there may be several files) is retried, and nothing older is.
+if [[ -z "$failed" && -z "$skipped" ]]; then
+    ver_le "$TARGET" "${INSTALLED:-0}" || record "$TARGET"
+    [[ $MODE == apply ]] && ok "installed version recorded: $TARGET"
+else
+    stop_v="$(ver_of "${failed:-$skipped}")"
+    safe=""
+    for f in "${applied[@]}"; do
+        v="$(ver_of "$f")"
+        [[ "$v" != "$stop_v" ]] && ver_le "$v" "$stop_v" && safe="$v"
+    done
+    if [[ -n "$safe" ]] && { [[ -z "$INSTALLED" ]] || ! ver_le "$safe" "$INSTALLED"; }; then record "$safe"; fi
+fi
+
+if [[ $MODE == auto ]]; then
+    # The shell (and with it the notification daemon) starts after this runs,
+    # so the notification waits for it in the background.
+    summary=""
+    [[ ${#applied[@]} -gt 0 ]] && summary="applied: $(for f in "${applied[@]}"; do basename "$f" .sh; done | paste -sd' ')"
+    [[ -n "$failed" ]]  && summary="${summary:+$summary\n}FAILED: $failed  (see $LOG)"
+    [[ -n "$skipped" ]] && summary="${summary:+$summary\n}needs you at the keyboard: $skipped  (run ./bootstrap)"
+    if [[ -n "$summary" ]]; then
+        urgency=normal; [[ -n "$failed$skipped" ]] && urgency=critical
+        ( for _ in $(seq 1 20); do
+              notify-send --app-name=chroma-desktop --urgency="$urgency" --icon=system-software-update \
+                  "chroma-desktop $TARGET" "$(printf "$summary")" 2>/dev/null && exit 0
+              sleep 2
+          done ) &
+        disown
+    fi
+fi
+
+[[ -n "$skipped" ]] && { warn "$skipped needs sudo: run ./bootstrap"; exit 1; }
+[[ -z "$failed" ]]
