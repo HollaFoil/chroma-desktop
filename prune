@@ -8,6 +8,12 @@
 # vlc-plugins-all pulls the ~80 vlc-plugin-* with it as dependencies.
 set -uo pipefail
 
+# Installed under exactly this name. `pacman -Q name` also answers for a
+# package that merely *provides* the name (waybar-git provides waybar), while
+# `pacman -R name` does not, and one such name aborts the whole removal with
+# "target not found". So ask for the installed package's real name and compare.
+installed() { [[ "$(pacman -Qq "$1" 2>/dev/null)" == "$1" ]]; }
+
 REDUNDANT='
 haruna                  # video: mpv + ModernZ
 mpvqt                   # only haruna used it
@@ -30,7 +36,6 @@ rofi                    # launcher and clipboard: the shell
 fuzzel                  # power menu: the shell'"'"'s launcher menu
 gtk-session-lock        # lock screen: the shell (ext-session-lock via quickshell)
 python-pam              # lock screen: the shell (PAM via quickshell)
-gtk-layer-shell         # the GTK overlays are gone
 ffmpegthumbs            # dolphin'"'"'s video thumbnails; nemo uses ffmpegthumbnailer
 plasma-desktop          # the Plasma desktop: Hyprland
 kdeplasma-addons        # Plasma widgets
@@ -65,7 +70,7 @@ plasma-browser-integration # needs plasmashell to do anything
 '
 dm="$(basename "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" .service 2>/dev/null)"
 core_ok=0
-if [[ "$dm" == greetd ]] && pacman -Qq qt6ct >/dev/null 2>&1; then
+if [[ "$dm" == greetd ]] && installed qt6ct; then
     core_ok=1
     REDUNDANT+="$PLASMA_CORE"
 fi
@@ -81,14 +86,32 @@ present=()
 while IFS= read -r line; do
     [[ -z "$line" ]] && continue
     name="${line%%[[:space:]]*}"
-    why="${line#*#}"
-    if pacman -Qq "$name" >/dev/null 2>&1; then
-        present+=("$name")
-        printf '  %-26s %s\n' "$name" "${why# }"
-    fi
+    installed "$name" && present+=("$name")
 done <<< "$REDUNDANT"
 
-if [[ $core_ok == 0 ]] && pacman -Qq plasma-workspace >/dev/null 2>&1; then
+# A candidate that an installed package outside this list still depends on
+# cannot go: pacman refuses the whole transaction over one such package
+# ("removing X breaks dependency 'X' required by Y"). Leave it out and say
+# why; once Y is gone it turns up as an orphan, and the sweep below takes it.
+listed() { local n; for n in "${present[@]}"; do [[ "$n" == "$1" ]] && return 0; done; return 1; }
+removable=()
+for name in "${present[@]}"; do
+    why="$(grep -m1 "^$name[[:space:]]" <<< "$REDUNDANT")"; why="${why#*#}"
+    blockers=""
+    for r in $(pacman -Qi "$name" 2>/dev/null | sed -n 's/^Required By *: *//p'); do
+        [[ "$r" == None ]] && continue
+        listed "$r" || blockers+=" $r"
+    done
+    if [[ -n "$blockers" ]]; then
+        printf '  %-26s %s\n' "$name" "kept: still needed by${blockers}"
+    else
+        removable+=("$name")
+        printf '  %-26s %s\n' "$name" "${why# }"
+    fi
+done
+present=("${removable[@]}")
+
+if [[ $core_ok == 0 ]] && installed plasma-workspace; then
     echo
     echo "  plasma-workspace (and plasma-login-manager, plasma-integration) stay until greetd is the"
     echo "  display manager (./greeter enable + reboot) and qt6ct is installed; then ./prune lists them."
@@ -105,7 +128,7 @@ echo
 read -r -p "  remove ${#present[@]} package(s) and their orphaned dependencies? [y/N] " a
 [[ "$a" =~ ^[Yy] ]] || exit 0
 keep=()
-for k in "${KEEP[@]}"; do pacman -Qq "$k" >/dev/null 2>&1 && keep+=("$k"); done
+for k in "${KEEP[@]}"; do installed "$k" && keep+=("$k"); done
 [[ ${#keep[@]} -gt 0 ]] && sudo pacman -D --asexplicit "${keep[@]}" >/dev/null
 sudo pacman -Rns "${present[@]}"
 orphans="$(pacman -Qdtq 2>/dev/null)"
