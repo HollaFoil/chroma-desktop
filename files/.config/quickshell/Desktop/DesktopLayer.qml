@@ -22,7 +22,8 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Bottom
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
 
-    property bool menuOpen: false
+    // one menu at a time, across screens: a press on any bare desktop closes it
+    readonly property bool menuOpen: Desktop.menuScreen === modelData.name
     property real menuX: 0
     property real menuY: 0
 
@@ -31,15 +32,17 @@ PanelWindow {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onPressed: mouse => {
-            if (mouse.button === Qt.RightButton) { win.menuX = mouse.x; win.menuY = mouse.y; win.menuOpen = true }
-            else { win.menuOpen = false; Desktop.selected = "" }
+            if (mouse.button === Qt.RightButton) { win.menuX = mouse.x; win.menuY = mouse.y; Desktop.menuScreen = win.modelData.name }
+            else { Desktop.menuScreen = ""; Desktop.selected = "" }
         }
     }
     Rectangle { anchors.fill: parent; visible: Desktop.editMode; color: Tokens.alpha(Colors.surface, 0.2) }
 
+    // keyed by id: a moved, resized or reconfigured widget keeps its frame (and
+    // its open options card); only adding and removing creates and destroys
     Variants {
         id: frames
-        model: win.widgets
+        model: win.widgets.map(w => w.id)
         WidgetFrame {
             screenName: win.modelData.name
             screenW: win.width; screenH: win.height
@@ -58,6 +61,6 @@ PanelWindow {
         screenName: win.modelData.name
         x: Math.min(win.menuX, win.width - width - 8)
         y: Math.min(win.menuY, win.height - height - 8)
-        onClosed: win.menuOpen = false
+        onClosed: Desktop.menuScreen = ""
     }
 }

@@ -17,11 +17,14 @@ Singleton {
     readonly property string defaultPath: Quickshell.shellDir + "/Desktop/layout.json"
     property var layout: ({ screens: {} })       // { screens: { "DP-2": [ {id, type, x, y, w, h, options} ] } }
     property bool editMode: false
+    property string menuScreen: ""                // the screen whose right-click menu is open ("" = none)
     property string selected: ""                  // widget id with the focus in arrange mode
     property int revision: 0
     onEditModeChanged: if (!editMode) selected = ""
 
-    // type -> how it is offered and what it can be told
+    // type -> how it is offered and what it can be told. Option types: bool, text,
+    // int (min/max, `zero` names the 0 value), apps (a list of desktop entry ids,
+    // stored comma separated so a hand-edited layout.json still reads).
     readonly property var catalogue: ({
         Clock:      { name: "Clock",        glyph: "󰥔", w: 300, h: 150, options: [{ key: "seconds", label: "Show seconds", type: "bool", def: false }, { key: "date", label: "Show the date", type: "bool", def: true }] },
         Calendar:   { name: "Calendar",     glyph: "󰃭", w: 300, h: 290, options: [] },
@@ -29,7 +32,8 @@ Singleton {
         System:     { name: "System monitor", glyph: "󰍛", w: 300, h: 210, options: [{ key: "disk", label: "Disk to show", type: "text", def: "/" }] },
         Weather:    { name: "Weather",      glyph: "󰖕", w: 300, h: 150, options: [{ key: "location", label: "Location (blank = by IP)", type: "text", def: "" }] },
         Notes:      { name: "Notes",        glyph: "󰠮", w: 300, h: 220, options: [{ key: "title", label: "Title", type: "text", def: "Notes" }] },
-        Shortcuts:  { name: "Shortcuts",    glyph: "󰀻", w: 300, h: 80,  options: [{ key: "apps", label: "Desktop entry ids, comma separated", type: "text", def: "firefox, kitty, nemo" }] }
+        Shortcuts:  { name: "Shortcuts",    glyph: "󰀻", w: 300, h: 80,  options: [{ key: "apps", label: "Apps", type: "apps", def: "firefox, kitty, nemo" },
+                                                                                 { key: "perRow", label: "Per row", type: "int", def: 0, min: 0, max: 12, zero: "one row" }] }
     })
     readonly property var types: Object.keys(catalogue)
 

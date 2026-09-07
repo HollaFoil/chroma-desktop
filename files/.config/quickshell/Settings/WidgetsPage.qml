@@ -4,6 +4,7 @@ import Quickshell
 import qs.Theme
 import qs.Widgets
 import qs.Services
+import qs.Desktop
 
 // Desktop widgets: what sits on which screen, their options, and edit mode
 // for arranging them on the desktop itself.
@@ -21,15 +22,18 @@ PageBody {
             id: scr
             required property var modelData
             readonly property var widgets: Desktop.revision, Desktop.widgetsOn(modelData.name)
+            // the rows are keyed by id, so changing an option keeps its row (and fold) as it is
+            readonly property string idKey: widgets.map(w => w.id).join("\n")
             title: scr.modelData.name
             hint: scr.modelData.width + " × " + scr.modelData.height + "  ·  " + scr.widgets.length + (scr.widgets.length === 1 ? " widget" : " widgets")
             Label { visible: scr.widgets.length === 0; text: "no widgets on this screen"; size: Tokens.fontSizeSmall; dim: true; regular: true; leftPadding: 6 }
             Repeater {
-                model: scr.widgets
+                model: scr.idKey ? scr.idKey.split("\n") : []
                 ColumnLayout {
                     id: row
-                    required property var modelData
-                    readonly property var cat: Desktop.catalogue[modelData.type] || { name: modelData.type, glyph: "󰘔", options: [] }
+                    required property string modelData
+                    readonly property var w: scr.widgets.find(o => o.id === modelData) || ({ id: modelData, type: "", x: 0, y: 0, w: 0, h: 0, options: {} })
+                    readonly property var cat: Desktop.catalogue[w.type] || { name: w.type, glyph: "󰘔", options: [] }
                     property bool open: false
                     Layout.fillWidth: true
                     spacing: 2
@@ -40,9 +44,9 @@ PageBody {
                         onClicked: row.open = !row.open
                         Glyph { text: row.cat.glyph; size: 17; Layout.preferredWidth: 24 }
                         Label { text: row.cat.name; Layout.fillWidth: true }
-                        Label { text: row.modelData.w + "×" + row.modelData.h + " at " + row.modelData.x + ", " + row.modelData.y; size: Tokens.fontSizeTiny; dim: true }
+                        Label { text: row.w.w + "×" + row.w.h + " at " + row.w.x + ", " + row.w.y; size: Tokens.fontSizeTiny; dim: true }
                         IconButton { glyph: row.open ? "󰅃" : "󰅀"; kind: "action"; small: true; visible: row.cat.options.length > 0; onClicked: row.open = !row.open }
-                        IconButton { glyph: "󰆴"; kind: "danger"; small: true; onClicked: Desktop.remove(scr.modelData.name, row.modelData.id) }
+                        IconButton { glyph: "󰆴"; kind: "danger"; small: true; onClicked: Desktop.remove(scr.modelData.name, row.w.id) }
                     }
                     Revealer {
                         open: row.open && row.cat.options.length > 0
@@ -50,12 +54,13 @@ PageBody {
                         Layout.leftMargin: 36
                         Repeater {
                             model: row.cat.options
-                            RowLayout {
+                            OptionEditor {
                                 required property var modelData
+                                option: modelData
+                                widget: row.w
+                                screenName: scr.modelData.name
+                                fieldWidth: 260
                                 Layout.fillWidth: true
-                                Label { text: modelData.label; size: Tokens.fontSizeSmall; Layout.fillWidth: true }
-                                Toggle { visible: modelData.type === "bool"; checked: Desktop.option(row.modelData, modelData.key) === true; onToggled: v => Desktop.setOption(scr.modelData.name, row.modelData.id, modelData.key, v) }
-                                Entry { visible: modelData.type === "text"; Layout.preferredWidth: 260; text: String(Desktop.option(row.modelData, modelData.key) ?? ""); onEditingFinished: if (text !== String(Desktop.option(row.modelData, modelData.key) ?? "")) Desktop.setOption(scr.modelData.name, row.modelData.id, modelData.key, text) }
                             }
                         }
                     }

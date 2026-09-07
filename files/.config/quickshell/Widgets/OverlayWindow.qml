@@ -1,13 +1,22 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Hyprland
 import qs.Theme
 
 // A transparent surface over one whole output that hosts one card. The card
 // hangs under the bar at an anchor (placement "bar") or floats in the middle
-// (placement "center"). Click on the backdrop or Escape (on release, so the
-// window underneath does not see a phantom press) closes it. Hyprland blurs
-// the card only: the qs-overlay layer rule ignores fully transparent pixels.
+// (placement "center"). A click anywhere outside the card - the backdrop, or
+// another monitor - or Escape (on release, so the window underneath does not
+// see a phantom press) closes it. Hyprland blurs the card only: the
+// qs-overlay layer rule ignores fully transparent pixels.
+//
+// Keyboard: on demand, held by a Hyprland focus grab while open. It used to be
+// Exclusive, which Hyprland honours by forcing pointer focus back onto the
+// exclusive surface whenever the cursor is anywhere else - so on another
+// monitor a click went nowhere and the popup stayed. With the grab the window
+// keeps the keyboard while the pointer roams, and the first click outside it
+// clears the grab (Hyprland swallows that click) and closes the popup.
 PanelWindow {
     id: root
     property string placement: "bar"          // bar | center
@@ -31,10 +40,24 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-overlay"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: open ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    readonly property bool hasKeyboard: scope.Window.active
 
     // Asks the owner to close: `open` is usually a binding, so the owner flips it in onDismissed.
     function close() { dismissed() }
+
+    // `active` goes false by itself whenever the compositor drops the grab (a
+    // click outside, or the window hiding), so it is driven by hand, not bound.
+    HyprlandFocusGrab {
+        id: grab
+        windows: [root]
+        onCleared: {
+            root.close()
+            // the owner may keep the window (Settings closes only its dropdown first): grab again
+            if (root.open) Qt.callLater(() => { if (root.open && !grab.active) grab.active = true })
+        }
+    }
+    onOpenChanged: grab.active = open
 
     MouseArea {
         anchors.fill: parent
