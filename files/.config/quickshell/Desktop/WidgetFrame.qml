@@ -7,22 +7,31 @@ import qs.Services
 
 // The frosted card a widget lives in, placed from the layout. In arrange mode:
 // drag to move, the corner to resize (both snap to 8 px), 󰒓 for the widget's
-// options right there, × to remove.
+// options right there, × to remove. The frame is keyed by the widget's id and
+// reads its entry live, so editing an option leaves the frame (and the open
+// options card) in place.
 Item {
     id: frame
-    required property var modelData
+    required property string modelData        // the widget's id
     required property string screenName
     property real screenW: 0
     property real screenH: 0
-    readonly property var w: modelData
+    readonly property var w: Desktop.revision, (Desktop.widgetsOn(screenName).find(o => o.id === modelData) || ({ id: modelData, type: "", x: 0, y: 0, w: 120, h: 60, options: {} }))
     readonly property bool selected: Desktop.selected === w.id
     readonly property var cat: Desktop.catalogue[w.type] || { name: w.type, options: [] }
     property bool optionsOpen: false
 
-    x: w.x < 0 ? screenW + w.x - width : w.x
-    y: w.y < 0 ? screenH + w.y - height : w.y
-    width: Math.max(120, w.w)
-    height: Math.max(60, w.h)
+    function placeX() { return w.x < 0 ? screenW + w.x - width : w.x }
+    function placeY() { return w.y < 0 ? screenH + w.y - height : w.y }
+    function sizeW() { return Math.max(120, w.w) }
+    function sizeH() { return Math.max(60, w.h) }
+    x: placeX()
+    y: placeY()
+    width: sizeW()
+    height: sizeH()
+    // a drag or resize writes x/y/width/height directly, which drops the
+    // bindings; once the layout has the new values, follow it again
+    function rebind() { x = Qt.binding(placeX); y = Qt.binding(placeY); width = Qt.binding(sizeW); height = Qt.binding(sizeH) }
     z: selected ? 10 : 1
     function snap(v) { return Math.round(v / 8) * 8 }
 
@@ -36,7 +45,7 @@ Item {
             Layout.fillHeight: true
             property var widget: frame.w
             property string screenName: frame.screenName
-            source: "widgets/" + frame.w.type + "Widget.qml"
+            source: frame.w.type ? "widgets/" + frame.w.type + "Widget.qml" : ""
             onStatusChanged: if (status === Loader.Error) console.warn("Desktop: no widget of type " + frame.w.type)
         }
     }
@@ -54,7 +63,7 @@ Item {
         drag.minimumX: 0; drag.minimumY: 0
         drag.maximumX: frame.screenW - frame.width; drag.maximumY: frame.screenH - frame.height
         onPressed: Desktop.selected = frame.w.id
-        onReleased: Desktop.update(frame.screenName, frame.w.id, { x: frame.snap(frame.x), y: frame.snap(frame.y) })
+        onReleased: { Desktop.update(frame.screenName, frame.w.id, { x: frame.snap(frame.x), y: frame.snap(frame.y) }); frame.rebind() }
     }
     RowLayout {
         visible: Desktop.editMode
@@ -73,7 +82,7 @@ Item {
             property real sx: 0; property real sy: 0; property real sw: 0; property real sh: 0
             onPressed: mouse => { sx = mouse.x; sy = mouse.y; sw = frame.width; sh = frame.height; Desktop.selected = frame.w.id }
             onPositionChanged: mouse => { if (pressed) { frame.width = Math.max(120, sw + mouse.x - sx); frame.height = Math.max(60, sh + mouse.y - sy) } }
-            onReleased: Desktop.update(frame.screenName, frame.w.id, { w: frame.snap(frame.width), h: frame.snap(frame.height) })
+            onReleased: { Desktop.update(frame.screenName, frame.w.id, { w: frame.snap(frame.width), h: frame.snap(frame.height) }); frame.rebind() }
         }
     }
     // the options, right under the widget
@@ -83,18 +92,17 @@ Item {
         slanted: false
         alpha: 0.9
         padX: 14; padY: 10
-        minWidth: frame.width
-        spacing: 6
+        minWidth: Math.max(frame.width, frame.cat.options.some(o => o.type === "apps") ? 360 : 0)
+        spacing: 8
         Label { text: frame.cat.name + " options"; size: Tokens.fontSizeSmall; color: Colors.primary }
         Repeater {
             model: frame.cat.options
-            RowLayout {
+            OptionEditor {
                 required property var modelData
+                option: modelData
+                widget: frame.w
+                screenName: frame.screenName
                 Layout.fillWidth: true
-                spacing: 10
-                Label { text: modelData.label; size: Tokens.fontSizeSmall; Layout.fillWidth: true }
-                Toggle { visible: modelData.type === "bool"; checked: Desktop.option(frame.w, modelData.key) === true; onToggled: v => Desktop.setOption(frame.screenName, frame.w.id, modelData.key, v) }
-                Entry { visible: modelData.type === "text"; Layout.preferredWidth: 220; text: String(Desktop.option(frame.w, modelData.key) ?? ""); onEditingFinished: if (text !== String(Desktop.option(frame.w, modelData.key) ?? "")) Desktop.setOption(frame.screenName, frame.w.id, modelData.key, text) }
             }
         }
     }

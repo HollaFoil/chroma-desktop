@@ -37,9 +37,11 @@ PanelWindow {
     }
     Rectangle { anchors.fill: parent; visible: Desktop.editMode; color: Tokens.alpha(Colors.surface, 0.2) }
 
+    // keyed by id: a moved, resized or reconfigured widget keeps its frame (and
+    // its open options card); only adding and removing creates and destroys
     Variants {
         id: frames
-        model: win.widgets
+        model: win.widgets.map(w => w.id)
         WidgetFrame {
             screenName: win.modelData.name
             screenW: win.width; screenH: win.height
