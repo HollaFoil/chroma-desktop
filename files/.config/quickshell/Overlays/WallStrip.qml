@@ -34,7 +34,10 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: "qs-overlay"
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: isOpen ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.None
+    WlrLayershell.keyboardFocus: isOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+    // see Widgets/OverlayWindow: a click anywhere outside clears the grab and closes the strip
+    HyprlandFocusGrab { id: grab; windows: [win]; onCleared: win.isOpen = false }
+    onIsOpenChanged: grab.active = isOpen
 
     function show() {
         const focused = Hyprland.focusedMonitor

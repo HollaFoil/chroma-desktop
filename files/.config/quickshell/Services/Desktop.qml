@@ -17,6 +17,7 @@ Singleton {
     readonly property string defaultPath: Quickshell.shellDir + "/Desktop/layout.json"
     property var layout: ({ screens: {} })       // { screens: { "DP-2": [ {id, type, x, y, w, h, options} ] } }
     property bool editMode: false
+    property string menuScreen: ""                // the screen whose right-click menu is open ("" = none)
     property string selected: ""                  // widget id with the focus in arrange mode
     property int revision: 0
     onEditModeChanged: if (!editMode) selected = ""
