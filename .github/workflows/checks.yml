@@ -25,3 +25,12 @@ jobs:
         run: git ls-files '*.json' ':!files/.config/matugen/templates' | xargs -n1 python3 -m json.tool >/dev/null
       - name: manifest paths exist
         run: grep -vE '^\s*(#|$)' manifest.txt | while read -r p; do test -e "files/$p" || { echo "missing files/$p"; exit 1; }; done
+      - name: migrations are <version>-<slug>.sh and no newer than VERSION
+        run: |
+          set -e; V=$(tr -d '[:space:]' < VERSION)
+          for f in migrations/*.sh; do
+            [ -e "$f" ] || continue
+            n=$(basename "$f"); v=${n%%-*}
+            echo "$n" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+-[a-z0-9-]+\.sh$' || { echo "bad migration name: $n"; exit 1; }
+            [ "$(printf '%s\n%s\n' "$v" "$V" | sort -V | tail -1)" = "$V" ] || { echo "$n is newer than VERSION $V"; exit 1; }
+          done

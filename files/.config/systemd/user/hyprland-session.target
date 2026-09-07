@@ -2,6 +2,12 @@
 Description=Hyprland session
 Documentation=man:systemd.special(7)
 
+# Everything of this desktop that runs as a user unit is WantedBy= this target
+# (quickshell.service, wayvnc.service; bootstrap add-wants xsettingsd.service),
+# never by graphical-session.target directly. Only hypr/conf/autostart.lua
+# starts this one, so a Plasma or GNOME login on the same account - which does
+# reach graphical-session.target - starts none of it.
+
 # graphical-session.target sets RefuseManualStart, so it can only be reached as
 # somebody else's dependency - that is this target's whole job. BindsTo pulls it
 # up with us, and ties our fate to it: if it goes down, we go down.

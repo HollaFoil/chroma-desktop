@@ -6,7 +6,8 @@
 #   ./bootstrap --wallpaper IMG    ...and run setwall on IMG so the colours exist at first login
 #   ./bootstrap --monitors         (re)write the monitor and workspace config for this machine
 #
-# Everything here is idempotent; run it again after pulling changes. The
+# Everything here is idempotent; run it again after pulling changes (it also
+# applies the one-time migrations in migrations/, see ./migrate). The
 # per-app integrations (Steam, Spotify, Discord, Firefox, oh-my-posh) are only
 # set up when the app is installed, and are always safe to skip.
 set -uo pipefail
@@ -201,24 +202,45 @@ else
     ok "rendered $NM_DIR/matugenfox.json"
 fi
 
-# ---- systemd user session -------------------------------------------
-bold "systemd --user"
+# ---- migrations -----------------------------------------------------
+# One-time changes between versions (migrations/, see ./migrate): everything
+# the setup did outside the repo that a git pull cannot update by itself.
+# After the symlinks, so a migration sees the new files; before the systemd
+# step, so it starts from a clean slate. autostart.lua also runs the
+# sudo-free ones at every Hyprland login.
+bold "Migrations"
 if [[ $CHECK == 1 ]]; then
-    systemctl --user is-enabled quickshell.service >/dev/null 2>&1 && ok "quickshell.service enabled" || miss "quickshell.service not enabled"
+    "$REPO/migrate" --check || true
+else
+    "$REPO/migrate" || warn "a migration failed or needs another run; see above"
+fi
+
+# ---- systemd user session -------------------------------------------
+# Every unit of this desktop is wanted by hyprland-session.target, which only
+# hyprland.lua starts. Never by graphical-session.target: Plasma and GNOME
+# reach that one too, and would start the shell on top of their own.
+bold "systemd --user"
+WANTS_DIR="$HOME/.config/systemd/user/hyprland-session.target.wants"
+if [[ $CHECK == 1 ]]; then
+    [[ -e "$WANTS_DIR/quickshell.service" ]] && ok "quickshell.service wanted by hyprland-session.target" || miss "quickshell.service not enabled"
     if command -v xsettingsd >/dev/null; then
-        [[ -e "$HOME/.config/systemd/user/graphical-session.target.wants/xsettingsd.service" ]] && ok "xsettingsd.service wanted by graphical-session.target" || miss "xsettingsd.service not hooked into graphical-session.target"
+        [[ -e "$WANTS_DIR/xsettingsd.service" ]] && ok "xsettingsd.service wanted by hyprland-session.target" || miss "xsettingsd.service not hooked into hyprland-session.target"
     fi
+    for u in quickshell wayvnc xsettingsd; do
+        [[ -e "$HOME/.config/systemd/user/graphical-session.target.wants/$u.service" ]] \
+            && miss "$u.service is still hooked into graphical-session.target: it starts under any desktop (./migrate moves it)"
+    done
 else
     systemctl --user daemon-reload
     if systemctl --user cat quickshell.service >/dev/null 2>&1; then
-        systemctl --user enable quickshell.service >/dev/null 2>&1 && ok "quickshell.service enabled (starts with hyprland-session.target)"
+        systemctl --user enable quickshell.service >/dev/null 2>&1 && ok "quickshell.service enabled (starts with hyprland-session.target, and only there)"
     else
         warn "quickshell.service unit not found; run ./link first, then re-run"
     fi
     # xsettingsd (GTK settings for Xwayland apps) ships a static unit with no
     # [Install]; add-wants is how a static unit gets pulled in by a target.
     if command -v xsettingsd >/dev/null; then
-        systemctl --user add-wants graphical-session.target xsettingsd.service >/dev/null 2>&1 && ok "xsettingsd.service wanted by graphical-session.target"
+        systemctl --user add-wants hyprland-session.target xsettingsd.service >/dev/null 2>&1 && ok "xsettingsd.service wanted by hyprland-session.target"
     fi
     # hyprland-session.target is started by hyprland.lua at login; nothing to enable.
     ok "hyprland-session.target is linked (hyprland.lua starts it at login)"

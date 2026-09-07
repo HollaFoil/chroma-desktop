@@ -4,6 +4,20 @@ Documentation=file:%h/.config/quickshell/shell.qml
 PartOf=graphical-session.target
 After=graphical-session.target
 Requisite=graphical-session.target
+# A target implicitly orders itself After= every unit it Wants unless that unit
+# already orders itself against the target. Without this line the wanting
+# target would wait for us, we wait for graphical-session.target, and that one
+# waits for the wanting target: a cycle systemd breaks by dropping our job.
+After=hyprland-session.target
+# Hyprland only. The unit is wanted by hyprland-session.target (below), which
+# nothing but hypr/conf/autostart.lua ever starts - not graphical-session.target,
+# which Plasma, GNOME and every other desktop reach too, and which is how the
+# bar and lock screen used to turn up on top of a Plasma login on the same
+# account. The condition is the second lock on the same door: even a leftover
+# Wants symlink from an older version (migrations/1.1.0-*) cannot start the
+# shell where XDG_CURRENT_DESKTOP is not Hyprland; systemd skips it, quietly.
+# autostart.lua imports that variable before it starts the target.
+ConditionEnvironment=XDG_CURRENT_DESKTOP=Hyprland
 # Same restart budget as the waybar drop-in it replaces: when Hyprland exits
 # the shell loses the Wayland socket; spaced retries burn one or two attempts
 # on a teardown and keep the rest for a real mid-session crash. OnFailure
@@ -23,4 +37,4 @@ Restart=on-failure
 RestartSec=2s
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=hyprland-session.target

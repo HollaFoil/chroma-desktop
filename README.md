@@ -61,6 +61,11 @@ symlink `manifest.txt` into `~`, set up the themed apps you have, write your
 monitors, make fish your shell, and apply the wallpaper so the colours exist
 before your first login. Then log into Hyprland.
 
+After a `git pull`, run `./bootstrap` again, or just log into Hyprland: the
+symlinks make file changes live by themselves, and the one-time changes a new
+version needs outside the repo (`migrations/`, run by `./migrate`) are applied
+at login and by bootstrap, once per machine. `./migrate --check` lists them.
+
 ## Read this before you run it
 
 This desktop is heavily opinionated and isn't really meant for others to use.
@@ -75,6 +80,12 @@ this will be a relatively de-bloated and lean desktop.
 
 Things in here that reach outside the repo, or may cause problems if your machine differs substantially:
 
+- **Other desktops on the same account are left alone.** The shell, wayvnc
+  and xsettingsd are user units wanted by `hyprland-session.target`, which
+  only `hyprland.lua` starts, and they refuse to start unless
+  `XDG_CURRENT_DESKTOP` is Hyprland, so a Plasma or GNOME login gets none of
+  them. The *files* are shared, though: `kdeglobals`, `gtk.css`, the icon
+  theme in gsettings and the default applications follow you into any desktop.
 - **Hyprland ≥ 0.56 is required.** The config is written in Lua. an older Hyprland cannot
   read it and you get a session with *no* config. `./bootstrap --check` spots this issue.
 - **Your existing configs are moved** Anything in the way of a
@@ -132,6 +143,7 @@ manifest.txt   every file that gets symlinked into ~, one path per line
 files/         the dotfiles, mirrored on ~   (files/.config/... -> ~/.config/...)
 packages.txt   what to install and why
 bootstrap      first-time setup            link / adopt   re-symlink / pull live files back in
+migrate        one-time changes between versions (migrations/<version>-<what>.sh; also run at login)
 prune          redundant packages           greeter        the login screen (greetd)
 sshd           SSH over Tailscale           system/        files outside ~, installed by greeter and sshd
 examples/      relayout.config.sh, hypr-user.lua: per-machine files that live outside the repo
