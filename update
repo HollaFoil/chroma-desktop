@@ -1,0 +1,137 @@
+#!/bin/bash
+# update — bring this desktop up to date, the safe way.
+#
+#   ./update              fetch, fast-forward to the branch you follow, then ./link (new
+#                         entries, seeds) and ./migrate (the one-time changes between versions)
+#   ./update --check      what an update would bring: version, commits, pending migrations,
+#                         and any file of yours that is in the way; changes nothing
+#   ./update --set-aside  when files of yours are in the way: keep a copy of each under
+#                         ~/.local/state/chroma-desktop/set-aside-<date>/, put the repo's
+#                         version back, and go on
+#
+# Why not `git pull`: it works, until a file you changed in the checkout is
+# also changed upstream - then it refuses, half way through nothing, and you
+# are left to sort it out. This script looks for that first and says which
+# files, never discards anything without --set-aside, and does not forget
+# ./migrate afterwards. Edits of your own to the defaults belong in
+# ~/.config/hypr/user/init.lua and the state files (README, "Where your
+# settings live"), where no update can collide with them.
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/chroma-desktop"
+CHECK=0 SET_ASIDE=0
+for a in "$@"; do
+    case "$a" in
+        --check)     CHECK=1 ;;
+        --set-aside) SET_ASIDE=1 ;;
+        -h|--help)   sed -n '2,11p' "$0"; exit 0 ;;
+        *) echo "unknown option: $a" >&2; exit 2 ;;
+    esac
+done
+
+bold() { printf '\n\033[1m%s\033[0m\n' "$1"; }
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+die()  { miss "$1"; exit 1; }
+
+cd "$REPO" || exit 1
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "$REPO is not a git checkout; nothing to update"
+BRANCH="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+UPSTREAM="$(git rev-parse --abbrev-ref '@{u}' 2>/dev/null)" || die "branch $BRANCH follows no remote branch (git branch --set-upstream-to origin/master)"
+
+bold "Fetching"
+git fetch -q "${UPSTREAM%%/*}" || die "fetch failed (offline?)"
+LOCAL_V="$(tr -d '[:space:]' < VERSION 2>/dev/null)"
+REMOTE_V="$(git show "$UPSTREAM:VERSION" 2>/dev/null | tr -d '[:space:]')"
+BEHIND="$(git rev-list --count "HEAD..$UPSTREAM")"
+AHEAD="$(git rev-list --count "$UPSTREAM..HEAD")"
+if [[ $BEHIND == 0 ]]; then
+    ok "up to date with $UPSTREAM (${LOCAL_V:-?})"
+else
+    ok "$BEHIND commit(s) behind $UPSTREAM: ${LOCAL_V:-?} -> ${REMOTE_V:-?}"
+    git log --oneline --no-decorate "HEAD..$UPSTREAM" | head -20 | sed 's/^/      /'
+    [[ $BEHIND -gt 20 ]] && echo "      ..."
+fi
+if [[ $AHEAD -gt 0 ]]; then
+    warn "this branch has $AHEAD commit(s) of its own; a fast-forward is not possible."
+    warn "  rebase them yourself (git pull --rebase), then ./update for the rest"
+    [[ $CHECK == 1 ]] || exit 1
+fi
+
+# ---- files of yours in the way ---------------------------------------
+# Tracked files changed here (edits to the defaults, or what an older
+# version's Settings app wrote through a symlink) that the incoming commits
+# also change. git would refuse to merge over them.
+bold "Your changes in the checkout"
+mapfile -t LOCAL < <(git status --porcelain --untracked-files=no | awk '{print $NF}')
+mapfile -t INCOMING < <(git diff --name-only "HEAD" "$UPSTREAM")
+COLLIDE=()
+for f in "${LOCAL[@]}"; do
+    for g in "${INCOMING[@]}"; do [[ "$f" == "$g" ]] && { COLLIDE+=("$f"); break; }; done
+done
+if [[ ${#LOCAL[@]} == 0 ]]; then
+    ok "none"
+elif [[ ${#COLLIDE[@]} == 0 ]]; then
+    ok "${#LOCAL[@]} changed file(s), none of them touched by the update; they stay as they are"
+else
+    miss "${#COLLIDE[@]} file(s) changed both here and upstream:"
+    for f in "${COLLIDE[@]}"; do printf '      %s\n' "$f"; done
+    if [[ $CHECK == 1 ]]; then
+        warn "an update would stop here.  ./update --set-aside  keeps a copy of each and continues"
+    elif [[ $SET_ASIDE == 1 ]]; then
+        ASIDE="$STATE_DIR/set-aside-$(date +%Y%m%d-%H%M%S)"
+        for f in "${COLLIDE[@]}"; do
+            mkdir -p "$ASIDE/$(dirname "$f")"
+            cp -a "$f" "$ASIDE/$f"
+            git diff -- "$f" > "$ASIDE/$f.diff"
+            git checkout -q -- "$f"
+        done
+        ok "your versions are in ${ASIDE/#$HOME/~} (with a .diff of each); the repo's are back in place"
+    else
+        echo
+        echo "  Move what is yours out of the checkout, or  git stash  it, then run ./update again;"
+        echo "  or  ./update --set-aside  to keep a copy of each of these and put the repo's version back."
+        exit 1
+    fi
+fi
+
+if [[ $CHECK == 1 ]]; then
+    bold "Migrations"
+    # what the incoming tree would want to run, if it has a runner
+    if git cat-file -e "$UPSTREAM:migrate" 2>/dev/null; then
+        INSTALLED=""; [[ -f "$STATE_DIR/version" ]] && INSTALLED="$(tr -d '[:space:]' < "$STATE_DIR/version")"
+        n=0
+        while IFS= read -r m; do
+            v="${m#migrations/}"; v="${v%%-*}"
+            # pending when nothing is recorded, or the migration is newer than what is
+            if [[ -z "$INSTALLED" || ( "$v" != "$INSTALLED" && "$(printf '%s\n%s\n' "$v" "$INSTALLED" | sort -V | tail -1)" == "$v" ) ]]; then
+                printf '      %s\n' "${m#migrations/}"; n=$((n+1))
+            fi
+        done < <(git ls-tree --name-only "$UPSTREAM" migrations/ 2>/dev/null | grep '\.sh$' | sort -V)
+        [[ $n == 0 ]] && ok "nothing pending after the update (installed ${INSTALLED:-unrecorded})" || warn "$n migration(s) would run (installed ${INSTALLED:-unrecorded})"
+    else
+        ok "the incoming version has no migrations"
+    fi
+    exit 0
+fi
+
+# ---- pull ------------------------------------------------------------
+if [[ $BEHIND -gt 0 ]]; then
+    bold "Updating"
+    git merge -q --ff-only "$UPSTREAM" || die "fast-forward failed; see git status"
+    ok "now at $(git describe --tags --always 2>/dev/null) ($(tr -d '[:space:]' < VERSION))"
+fi
+
+# ---- the rest: symlinks, seeds, one-time changes ---------------------
+bold "Symlinks and seeds"
+"$REPO/link" | grep -v '^ok' || true
+ok "manifest applied"
+
+bold "Migrations"
+"$REPO/migrate" || warn "a migration failed or needs another run (./migrate)"
+
+bold "Next"
+echo "  ./bootstrap --check      new packages or integrations the update may want"
+echo "  hyprctl reload           config changes apply on reload; the shell restarts at the next login"

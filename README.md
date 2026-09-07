@@ -61,10 +61,13 @@ symlink `manifest.txt` into `~`, set up the themed apps you have, write your
 monitors, make fish your shell, and apply the wallpaper so the colours exist
 before your first login. Then log into Hyprland.
 
-After a `git pull`, run `./bootstrap` again, or just log into Hyprland: the
-symlinks make file changes live by themselves, and the one-time changes a new
-version needs outside the repo (`migrations/`, run by `./migrate`) are applied
-at login and by bootstrap, once per machine. `./migrate --check` lists them.
+To update later, use `./update` rather than a bare `git pull`: it fetches,
+tells you if a file you changed in the checkout is also changed upstream
+(and keeps a copy with `--set-aside` instead of letting git refuse half way),
+fast-forwards, links new manifest entries, and runs the one-time changes a
+new version needs outside the repo (`migrations/`, `./migrate`). `./update
+--check` shows what it would do. If you do pull by hand, the pending
+migrations still run at your next Hyprland login.
 
 ## Read this before you run it
 
@@ -143,6 +146,7 @@ manifest.txt   every file that gets symlinked into ~, one path per line
 files/         the dotfiles, mirrored on ~   (files/.config/... -> ~/.config/...)
 packages.txt   what to install and why
 bootstrap      first-time setup            link / adopt   re-symlink / pull live files back in
+update         fetch + fast-forward + link + migrate; --check first, --set-aside for files in the way
 migrate        one-time changes between versions (migrations/<version>-<what>.sh; also run at login)
 prune          redundant packages           greeter        the login screen (greetd)
 sshd           SSH over Tailscale           system/        files outside ~, installed by greeter and sshd

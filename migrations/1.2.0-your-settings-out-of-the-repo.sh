@@ -13,9 +13,13 @@
 #   Desktop/layout.json          -> ~/.local/state/quickshell/layout.json
 #
 # Every value you had is copied over first. Then the tracked files in the
-# checkout are put back to what git has, so the working tree is clean and the
-# next release can delete them without a pull refusing; what they held is
-# also kept in a backup under ~/.local/state/chroma-desktop/.
+# checkout are put back to what git has, so the working tree is clean; what
+# they held is also kept in a backup under ~/.local/state/chroma-desktop/.
+# The tracked copies themselves (files/.config/hypr/state/*.json,
+# files/.config/hypr/monitors.lua) stay in git for good: nothing reads them,
+# but deleting or editing them upstream would make git refuse the pull on any
+# machine whose Settings app wrote to them before this migration ran - and
+# a machine can jump from 1.0.0 straight to any later version.
 set -uo pipefail
 
 HYPR="$HOME/.config/hypr"
