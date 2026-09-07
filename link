@@ -8,6 +8,30 @@ BACKUP="$REPO/backup-$(date +%Y%m%d-%H%M%S)"
 while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -z "$line" || "$line" == \#* ]] && continue
 
+    # `seed <path>`: copied once, never linked, never overwritten. A symlink
+    # into the repo (how older versions linked it) is replaced by a copy of
+    # what it points at, so what was written through it stays yours.
+    if [[ "$line" == seed\ * ]]; then
+        line="${line#seed }"
+        SRC="$HOME/$line"
+        DST="$REPO/files/$line"
+        [[ -e "$DST" ]] || { echo "not in repo: $line"; continue; }
+        if [[ -L "$SRC" ]]; then
+            # copy beside, rename over: Hyprland reloads on a change to a file it
+            # loaded, and must never see the path missing in between
+            target="$(readlink -f "$SRC")"
+            cp "$target" "$SRC.link-$$" && mv -T "$SRC.link-$$" "$SRC"
+            echo "unlinked (now your own copy): $line"
+        elif [[ -e "$SRC" ]]; then
+            echo "ok (yours): $line"
+        else
+            mkdir -p "$(dirname "$SRC")"
+            cp "$DST" "$SRC"
+            echo "seeded: $line"
+        fi
+        continue
+    fi
+
     SRC="$HOME/$line"
     DST="$REPO/files/$line"
 

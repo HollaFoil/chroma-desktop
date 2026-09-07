@@ -155,5 +155,23 @@ symlinked. Templates apply on the next `setwall`. New config? Add its path to `m
 `./link`. Machine-local Hyprland extras go in `~/.config/hypr/user/init.lua`
 (see `examples/hypr-user.lua`). New monitors? `./bootstrap --monitors`.
 
+## Where your settings live
+
+The repo is the defaults (`hypr/conf/*.lua`, the shell's QML). Everything the
+Settings app, `gen-monitors` or `nwg-displays` writes is yours, is applied on
+top, and is never inside the checkout, so `git pull` cannot touch it:
+
+| | |
+|---|---|
+| `~/.config/hypr/state/settings.json` | option and per-device overrides (Settings pages); a key here beats `conf/*.lua` |
+| `~/.config/hypr/state/keybinds.json` | rebound keys and custom actions |
+| `~/.config/hypr/state/monitors.json` | which monitor owns which workspace |
+| `~/.config/hypr/monitors.lua` | this machine's outputs |
+| `~/.config/hypr/hypridle.conf` | idle timeouts; copied from the repo once (`seed` in `manifest.txt`), then yours |
+| `~/.local/state/quickshell/` | `prefs.json` (bar, clock, OSD...), `layout.json` (desktop widgets), notes, audio routes |
+| `~/.config/hypr/user/init.lua` | anything else, in Lua |
+
+Resetting a page in Settings deletes its keys and the default comes back.
+
 Anything genuinely mine rather than the desktop's lives in a private overlay
 repo that symlinks itself in on top of this one. `.gitignore` shows how.

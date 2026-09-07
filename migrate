@@ -45,7 +45,7 @@ ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
 warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
 miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
 export -f ok warn miss
-export REPO
+export REPO STATE_DIR
 
 # $1 <= $2 in version order
 ver_le() { [[ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | head -1)" == "$1" ]]; }

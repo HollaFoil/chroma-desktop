@@ -6,6 +6,8 @@ MANIFEST="$REPO/manifest.txt"
 
 while IFS= read -r line || [[ -n "$line" ]]; do
     [[ -z "$line" || "$line" == \#* ]] && continue
+    # seeds are the user's own copy; the repo's is the default, edited by hand
+    [[ "$line" == seed\ * ]] && { echo "seed (not adopted): ${line#seed }"; continue; }
 
     SRC="$HOME/$line"
     DST="$REPO/files/$line"
