@@ -17,8 +17,11 @@ Singleton {
     id: root
     readonly property string home: Quickshell.env("HOME")
     readonly property string hyprDir: home + "/.config/hypr"
-    readonly property string settingsPath: hyprDir + "/state/settings.json"
-    readonly property string keybindsPath: hyprDir + "/state/keybinds.json"
+    // state/ is yours, not the repo's (manifest.txt); a fresh machine may not have it yet
+    readonly property string stateDir: hyprDir + "/state"
+    readonly property string settingsPath: stateDir + "/settings.json"
+    readonly property string keybindsPath: stateDir + "/keybinds.json"
+    Component.onCompleted: Proc.run(["mkdir", "-p", stateDir], () => {})
 
     // ── live ──
     function luaLiteral(v) {

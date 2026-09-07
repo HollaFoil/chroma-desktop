@@ -1,11 +1,19 @@
+# Two kinds of entry. A bare path is symlinked into ~ (edit it and it is live,
+# commit it and it is everyone's default). `seed <path>` is copied into ~ once
+# if nothing is there yet, and then left alone: it is yours, the desktop's
+# tools write to it, and a git pull never sees it. Anything the Settings app
+# or a generator writes lives outside the repo:
+#   ~/.config/hypr/state/       settings.json (option overrides), keybinds.json, monitors.json
+#   ~/.config/hypr/monitors.lua this machine's outputs (gen-monitors, Settings > Displays, nwg-displays)
+#   ~/.config/hypr/hypridle.conf  the seed below, then Settings > Power
+#   ~/.local/state/quickshell/  prefs.json, layout.json, notes, audio routes, ...
+
 # Hyprland
 .config/hypr/hyprland.lua
-.config/hypr/monitors.lua
 .config/hypr/conf
 .config/hypr/lib
-.config/hypr/state
-.config/hypr/hypridle.conf
 .config/hypr/hyprlock.conf
+seed .config/hypr/hypridle.conf
 
 # quickshell: the shell (bar, popups, settings, notifications, launcher,
 # clipboard, cheatsheet, wallpaper strip, OSD, lock screen, greeter)

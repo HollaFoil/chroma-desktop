@@ -4,13 +4,17 @@ import Quickshell
 import Quickshell.Io
 
 // Desktop widgets: what exists (the catalogue), where each one sits on which
-// screen (Desktop/layout.json, in the config so it travels with the
-// dotfiles), and edit mode, where widgets can be dragged and resized in
-// place. Positions are pixels from the screen's top-left; a negative x or y
-// counts from the right or bottom edge instead.
+// screen, and edit mode, where widgets can be dragged and resized in place.
+// The layout is yours: ~/.local/state/quickshell/layout.json, written here.
+// Until that exists, Desktop/layout.json in the config is the starting point
+// (read only; the first change is saved to the state file). Positions are
+// pixels from the screen's top-left; a negative x or y counts from the right
+// or bottom edge instead.
 Singleton {
     id: root
-    readonly property string layoutPath: Quickshell.shellDir + "/Desktop/layout.json"
+    readonly property string stateDir: (Quickshell.env("XDG_STATE_HOME") || (Quickshell.env("HOME") + "/.local/state")) + "/quickshell"
+    readonly property string layoutPath: stateDir + "/layout.json"
+    readonly property string defaultPath: Quickshell.shellDir + "/Desktop/layout.json"
     property var layout: ({ screens: {} })       // { screens: { "DP-2": [ {id, type, x, y, w, h, options} ] } }
     property bool editMode: false
     property string selected: ""                  // widget id with the focus in arrange mode
@@ -29,13 +33,26 @@ Singleton {
     })
     readonly property var types: Object.keys(catalogue)
 
+    function take(text, what) {
+        try { const j = JSON.parse(text); root.layout = j && j.screens ? j : { screens: {} }; root.revision++ }
+        catch (e) { console.warn("Desktop: bad " + what + ": " + e) }
+    }
+    Component.onCompleted: Proc.run(["mkdir", "-p", stateDir], () => {})
     FileView {
         id: file
         path: root.layoutPath
         watchChanges: true
         printErrors: false
         onFileChanged: reload()
-        onLoaded: { try { const j = JSON.parse(text()); root.layout = j && j.screens ? j : { screens: {} }; root.revision++ } catch (e) { console.warn("Desktop: bad layout.json: " + e) } }
+        onLoaded: root.take(text(), "layout.json")
+        // no layout of your own yet: start from the one in the config
+        onLoadFailed: defaults.reload()
+    }
+    FileView {
+        id: defaults
+        path: root.defaultPath
+        printErrors: false
+        onLoaded: root.take(text(), "Desktop/layout.json")
         onLoadFailed: { root.layout = { screens: {} }; root.revision++ }
     }
     function widgetsOn(screenName) { return (layout.screens || {})[screenName] || [] }

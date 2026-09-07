@@ -24,7 +24,7 @@ jobs:
       - name: JSON parses
         run: git ls-files '*.json' ':!files/.config/matugen/templates' | xargs -n1 python3 -m json.tool >/dev/null
       - name: manifest paths exist
-        run: grep -vE '^\s*(#|$)' manifest.txt | while read -r p; do test -e "files/$p" || { echo "missing files/$p"; exit 1; }; done
+        run: grep -vE '^\s*(#|$)' manifest.txt | sed 's/^seed //' | while read -r p; do test -e "files/$p" || { echo "missing files/$p"; exit 1; }; done
       - name: migrations are <version>-<slug>.sh and no newer than VERSION
         run: |
           set -e; V=$(tr -d '[:space:]' < VERSION)

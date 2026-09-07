@@ -155,12 +155,13 @@ fi
 if [[ -z "$CONNECTED" ]]; then
     warn "not in a Hyprland session; run  ./bootstrap --monitors  from inside one"
 else
-    DECLARED="$(sed -n 's/.*output *= *"\([^"]*\)".*/\1/p' "$REPO/files/.config/hypr/monitors.lua" 2>/dev/null | sort | tr '\n' ' ')"
+    # ~/.config/hypr/monitors.lua is this machine's own file, not the repo's.
+    DECLARED="$(sed -n 's/.*output *= *"\([^"]*\)".*/\1/p' "$HOME/.config/hypr/monitors.lua" 2>/dev/null | sort | tr '\n' ' ')"
     if [[ "$CONNECTED" == "$DECLARED" ]]; then
         ok "monitors.lua is this machine's: $CONNECTED"
     else
-        miss "monitors.lua describes: ${DECLARED:-nothing}"
-        miss "this machine has:      $CONNECTED"
+        miss "~/.config/hypr/monitors.lua describes: ${DECLARED:-nothing (Hyprland lays the outputs out itself)}"
+        miss "this machine has:                      $CONNECTED"
         if [[ $CHECK == 1 ]]; then
             miss "run  ./bootstrap --monitors  to write monitors.lua, the workspace map and the bar"
         elif ask "write monitors.lua, the workspace map and the bar for this machine?"; then
@@ -179,14 +180,40 @@ if [[ $CHECK == 1 ]]; then
     n=0
     while IFS= read -r line || [[ -n "$line" ]]; do
         [[ -z "$line" || "$line" == \#* ]] && continue
+        if [[ "$line" == seed\ * ]]; then
+            line="${line#seed }"
+            if [[ -L "$HOME/$line" ]]; then miss "~/$line is a symlink into the repo; it should be your own copy (./link)"; n=$((n+1))
+            elif [[ ! -e "$HOME/$line" ]]; then miss "not seeded: ~/$line"; n=$((n+1)); fi
+            continue
+        fi
         if [[ ! -L "$HOME/$line" || "$(readlink -f "$HOME/$line")" != "$(readlink -f "$REPO/files/$line")" ]]; then
             miss "not linked: ~/$line"; n=$((n+1))
         fi
     done < "$REPO/manifest.txt"
-    [[ $n == 0 ]] && ok "every manifest entry is linked"
+    [[ $n == 0 ]] && ok "every manifest entry is linked (seeds copied)"
 else
-    "$REPO/link" | grep -v '^ok:' || true
+    "$REPO/link" | grep -v '^ok' || true
     ok "manifest linked (originals, if any, went to $REPO/backup-*)"
+fi
+
+# ---- your settings ---------------------------------------------------
+# What the Settings app and the generators write is yours and lives outside
+# the repo (manifest.txt says where), so a git pull never touches it and the
+# repo's conf/*.lua stay the defaults. Older versions symlinked these into
+# the checkout; migrations/1.2.0-* moves them out.
+bold "Your settings"
+HYPR_STATE="$HOME/.config/hypr/state"
+QS_STATE="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
+if [[ $CHECK == 1 ]]; then
+    if [[ -L "$HYPR_STATE" ]]; then miss "~/.config/hypr/state is a symlink into the repo: your overrides sit in the checkout (./migrate)"
+    elif [[ -d "$HYPR_STATE" ]]; then ok "~/.config/hypr/state is yours ($(ls "$HYPR_STATE" 2>/dev/null | tr '\n' ' '))"
+    else miss "~/.config/hypr/state missing"; fi
+    [[ -L "$HOME/.config/hypr/monitors.lua" ]] && miss "~/.config/hypr/monitors.lua is a symlink into the repo (./migrate)"
+    [[ -d "$QS_STATE" ]] && ok "~/.local/state/quickshell is yours" || miss "~/.local/state/quickshell missing"
+else
+    [[ -L "$HYPR_STATE" ]] || mkdir -p "$HYPR_STATE"
+    mkdir -p "$QS_STATE"
+    ok "state directories exist: ~/.config/hypr/state, ~/.local/state/quickshell"
 fi
 
 # ---- files that have to be rendered per user ------------------------
