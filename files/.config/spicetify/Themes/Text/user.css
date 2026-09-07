@@ -1040,3 +1040,20 @@ button[data-testid="control-button-npv-episodes"] svg {
 .main-connectBar-connectBar svg {
     fill: var(--spice-accent-active);
 }
+
+/* ================================
+   additions over upstream Text (chroma-desktop)
+   ================================ */
+
+/* the initials avatar in the nav bar (an account without a picture). Spotify
+   gives it a per-account colour and black text as an inline style, and centres
+   the letter with an inline line-height equal to the box height, which the
+   global font block above overrides to 1.2 - so the letter sat in the top-left
+   of a randomly coloured disc. Take the accent, and centre with flex instead. */
+.main-userWidget-box > span {
+    background-color: var(--spice-button) !important;
+    color: var(--spice-main) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}

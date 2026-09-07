@@ -1,0 +1,14 @@
+/* adw-gtk3-matugen: adw-gtk3-dark with the wallpaper's palette on top.
+ *
+ * colors.css beside this file is rendered by matugen (templates/gtk-colors.css)
+ * on every wallpaper change, and its post_hook bounces the gtk-theme gsettings
+ * key. GTK3 re-reads the *theme* on that bounce, so every open GTK3 window
+ * (Nemo) repaints in place. It does not re-read ~/.config/gtk-3.0/gtk.css: that
+ * file is parsed once at startup, and a @define-color there outranks the
+ * theme's for the life of the process - which is why the colours live in a
+ * theme and not in the user CSS, and why nothing of the palette may go back
+ * into ~/.config/gtk-3.0/gtk.css.
+ *
+ * Dark only, like setwall (-m dark). adw-gtk3-dark is the adw-gtk-theme package. */
+@import url("/usr/share/themes/adw-gtk3-dark/gtk-3.0/gtk.css");
+@import url("colors.css");

@@ -45,8 +45,10 @@ seed .config/hypr/hypridle.conf
 .local/bin/gen-ohmyposh-template
 .local/bin/remote-desktop
 
-# gtk
-.config/gtk-3.0/gtk.css
+# gtk: GTK3 colours are a theme (imports adw-gtk3-dark, then the rendered
+# colors.css beside it) so the gtk-theme bounce repaints open windows live;
+# GTK4/libadwaita reads the same palette from the user gtk.css
+.local/share/themes/adw-gtk3-matugen/gtk-3.0/gtk.css
 .config/gtk-4.0/gtk.css
 .config/matugen/templates/gtk-colors.css
 

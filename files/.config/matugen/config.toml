@@ -50,11 +50,18 @@ ansi_magenta = { color = "#c000c0", blend = true }
 ansi_cyan    = { color = "#00c0c0", blend = true }
 
 [templates.gtk3]
+# Rendered into the adw-gtk3-matugen theme (its gtk.css, linked from the repo,
+# imports adw-gtk3-dark and then this file). The bounce makes every open GTK3
+# app re-read its theme, so Nemo repaints live. Not ~/.config/gtk-3.0/colors.css:
+# GTK3 parses the user gtk.css once, at startup, and a @define-color there
+# outranks the theme's, which would pin the colours until relaunch.
 input_path = '~/.config/matugen/templates/gtk-colors.css'
-output_path = '~/.config/gtk-3.0/colors.css'
-post_hook = 'gsettings set org.gnome.desktop.interface gtk-theme ""; gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-{{mode}}'
+output_path = '~/.local/share/themes/adw-gtk3-matugen/gtk-3.0/colors.css'
+post_hook = 'gsettings set org.gnome.desktop.interface gtk-theme ""; gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-matugen'
 
 [templates.gtk4]
+# libadwaita apps ignore gtk-theme and read ~/.config/gtk-4.0/gtk.css (linked,
+# imports this) once at startup; they recolour on relaunch.
 input_path = '~/.config/matugen/templates/gtk-colors.css'
 output_path = '~/.config/gtk-4.0/colors.css'
 

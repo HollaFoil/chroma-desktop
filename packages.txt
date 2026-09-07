@@ -35,7 +35,7 @@ fish                         # shell the config is written for
 jq                           # relayout, gen-ohmyposh-template
 python                       # matugenfox-host, reload-steam-css, matugen-icons
 brightnessctl                # brightness keys
-adw-gtk-theme                # GTK theme matugen's gtk3 hook selects (adw-gtk3-dark)
+adw-gtk-theme                # adw-gtk3-dark, the base the adw-gtk3-matugen theme imports
 glib2                        # gsettings, used by that hook
 adwaita-icon-theme           # source SVGs for the Matugen icon theme (matugen-icons recolours its folders)
 breeze-icons                 # app icons the Matugen theme inherits
