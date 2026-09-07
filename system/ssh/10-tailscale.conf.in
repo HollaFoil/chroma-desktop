@@ -1,0 +1,12 @@
+# sshd: reachable over Tailscale only. Installed by ./sshd from
+# system/ssh/10-tailscale.conf.in (edit there, then ./sshd install).
+#
+# Only the tailnet's address ranges may log in, and only as @USER@ — this holds
+# even without a firewall. Where ufw runs, ./sshd also opens port 22 on
+# tailscale0 alone, so other interfaces never see the daemon.
+AllowUsers @USER@@100.64.0.0/10 @USER@@fd7a:115c:a1e0::/48
+PermitRootLogin no
+MaxAuthTries 4
+# Password login stays on until you have a key in ~/.ssh/authorized_keys
+# (./sshd key "ssh-ed25519 AAAA..." adds one); then set this to no.
+PasswordAuthentication yes

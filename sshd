@@ -1,0 +1,110 @@
+#!/bin/bash
+# sshd — SSH into this desktop over Tailscale, and nowhere else.
+#
+#   ./sshd check           what is installed, enabled and reachable
+#   ./sshd install         openssh, /etc/ssh/sshd_config.d/10-tailscale.conf, the ufw rule
+#                          (when ufw runs), sshd enabled now and at boot
+#   ./sshd key "<pubkey>"  add a public key to ~/.ssh/authorized_keys (then turn
+#                          PasswordAuthentication off in system/ssh/10-tailscale.conf.in)
+#   ./sshd disable         stop and disable sshd, remove the drop-in and the ufw rule
+#
+# System side (needs sudo, asked for as it goes):
+#   /etc/ssh/sshd_config.d/10-tailscale.conf   AllowUsers <you>@<tailnet ranges>, no root, no inline comments
+#   ufw                                          allow 22/tcp in on tailscale0 (skipped when ufw is absent)
+#
+# Nothing binds to the Tailscale address itself: sshd listens everywhere and
+# the AllowUsers line refuses anyone who is not you on a tailnet address, so
+# it does not matter whether tailscaled is up before sshd at boot. The tailnet
+# has other people's devices on it: keep the password strong or switch to keys.
+set -uo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC="$REPO/system/ssh/10-tailscale.conf.in"
+DST=/etc/ssh/sshd_config.d/10-tailscale.conf
+UFW_RULES=/etc/ufw/user.rules
+AUTH="$HOME/.ssh/authorized_keys"
+
+ok()   { printf '  \033[32m✓\033[0m %s\n' "$1"; }
+warn() { printf '  \033[33m!\033[0m %s\n' "$1"; }
+miss() { printf '  \033[31m✗\033[0m %s\n' "$1"; }
+die()  { echo "sshd: $*" >&2; exit 1; }
+
+installed() { pacman -Qq "$1" >/dev/null 2>&1; }
+render()    { sed "s|@USER@|$USER|g" "$SRC"; }
+address()   { tailscale ip -4 2>/dev/null | head -1; }
+ufw_running() { command -v ufw >/dev/null 2>&1 && systemctl is-active ufw >/dev/null 2>&1; }
+ufw_rule_present() { grep -qE -- '-A ufw-user-input -i tailscale0 -p tcp --dport 22 -j ACCEPT' "$UFW_RULES" 2>/dev/null; }
+
+check() {
+    local all=1
+    installed openssh && ok "openssh installed" || { miss "openssh not installed"; all=0; }
+    if [[ ! -f $DST ]]; then miss "$DST missing"; all=0
+    elif render | cmp -s - "$DST"; then ok "$DST current (only $USER, only from the tailnet)"
+    else warn "$DST differs from what system/ssh/10-tailscale.conf.in renders (./sshd install rewrites it)"; all=0; fi
+    if systemctl is-active sshd >/dev/null 2>&1; then ok "sshd running"; else miss "sshd not running"; all=0; fi
+    if systemctl is-enabled sshd >/dev/null 2>&1; then ok "sshd enabled at boot"; else miss "sshd not enabled at boot"; all=0; fi
+    if ufw_running; then
+        if ufw_rule_present; then ok "ufw: 22/tcp allowed in on tailscale0"
+        elif [[ -r $UFW_RULES ]]; then miss "ufw is active but has no rule for 22/tcp on tailscale0 (./sshd install adds it)"; all=0
+        else warn "ufw is active; cannot read $UFW_RULES to confirm the rule"; fi
+    else warn "ufw not running: only the AllowUsers line keeps other networks out"; fi
+    local addr; addr="$(address)"
+    if [[ -n "$addr" ]]; then ok "tailnet address $addr  (ssh $USER@$addr, or the MagicDNS name)"
+    else miss "no Tailscale address (is tailscale up?)"; all=0; fi
+    if [[ -s $AUTH ]]; then ok "$(grep -c . "$AUTH") key(s) in ~/.ssh/authorized_keys"
+    else warn "no ~/.ssh/authorized_keys: password login (./sshd key \"<pubkey>\" to add a key)"; fi
+    return $(( all == 1 ? 0 : 1 ))
+}
+
+install_() {
+    echo "Packages"
+    sudo pacman -S --needed openssh || die "package install failed"
+
+    echo "System files"
+    local tmp; tmp="$(mktemp)"; render > "$tmp"
+    sudo install -Dm644 "$tmp" "$DST" && ok "$DST"
+    rm -f "$tmp"
+    # the host keys are made on sshd's first start; without them -t only says "no hostkeys"
+    sudo systemctl start sshdgenkeys.service && ok "host keys present"
+    sudo sshd -t || die "sshd rejects its configuration (see above); nothing enabled"
+
+    echo "Firewall"
+    if ufw_running; then
+        if ufw_rule_present; then ok "ufw rule already present"
+        else sudo ufw allow in on tailscale0 to any port 22 proto tcp comment 'ssh over Tailscale (dotfiles ./sshd)' >/dev/null && ok "ufw: allow 22/tcp in on tailscale0"; fi
+    else warn "ufw not running; skipped (sshd still refuses everyone but $USER on a tailnet address)"; fi
+
+    echo "Service"
+    sudo systemctl enable --now sshd && ok "sshd enabled and started"
+    systemctl is-active sshd >/dev/null && sudo systemctl reload sshd 2>/dev/null && ok "sshd reloaded with the drop-in"
+    echo
+    check || true
+    echo
+    echo "  From another tailnet device:  ssh $USER@$(address)"
+}
+
+key_() {
+    local k="${1:-}"
+    [[ -n "$k" ]] || die 'usage: ./sshd key "ssh-ed25519 AAAA... comment"'
+    echo "$k" | ssh-keygen -l -f /dev/stdin >/dev/null 2>&1 || die "that does not look like a public key"
+    umask 077; mkdir -p "$HOME/.ssh"; touch "$AUTH"
+    grep -qxF -- "$k" "$AUTH" && { ok "key already present"; return 0; }
+    printf '%s\n' "$k" >> "$AUTH" && ok "added to $AUTH"
+    warn "when every client has a key, set PasswordAuthentication no in system/ssh/10-tailscale.conf.in and ./sshd install"
+}
+
+disable_() {
+    sudo systemctl disable --now sshd && ok "sshd stopped and disabled"
+    sudo rm -f "$DST" && ok "$DST removed"
+    if ufw_running && ufw_rule_present; then
+        sudo ufw delete allow in on tailscale0 to any port 22 proto tcp >/dev/null && ok "ufw rule removed"
+    fi
+}
+
+case "${1:-check}" in
+    check)   check ;;
+    install) install_ ;;
+    key)     shift; key_ "$@" ;;
+    disable) disable_ ;;
+    *) sed -n '2,20p' "$0"; exit 1 ;;
+esac
