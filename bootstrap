@@ -55,7 +55,7 @@ done < "$REPO/packages.txt"
 
 # A package counts as present if pacman has it, or if the command it provides
 # is on PATH (oh-my-posh and spicetify are often installed by hand).
-declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [slack-desktop]=slack [google-chrome]=google-chrome-stable [vscodium-bin]=codium)
+declare -A BIN_OF=([oh-my-posh-bin]=oh-my-posh [vscodium-bin]=codium)
 installed() { pacman -Qq "$1" >/dev/null 2>&1 || { [[ -n "${BIN_OF[$1]:-}" ]] && command -v "${BIN_OF[$1]}" >/dev/null 2>&1; }; }
 
 # pacman -S aborts the whole transaction on one unknown name ("target not
@@ -457,8 +457,6 @@ bold "Make it yours (see README.md, 'Make it yours')"
 echo "  ./bootstrap --monitors                 your monitors, workspace map and bar workspaces, from hyprctl"
 echo "  files/.config/hypr/conf/actions.lua    apps on SUPER+E/Q and every other action; rebind in Settings > Keybinds"
 echo "  files/.config/hypr/conf/input.lua      kb_layout (or Settings > Input)"
-echo "  files/.config/quickshell/Services/Stats.qml  temperature hwmon path (an AMD k10temp one by default)"
-echo "  ~/.config/relayout/config.sh           opt into the dashboard layout (examples/relayout.config.sh)"
 echo "  ~/.config/hypr/user/init.lua           machine-local Hyprland extras (examples/hypr-user.lua)"
 echo "  ./greeter install && ./greeter enable  login screen: greetd + the shell's greeter, themed by matugen (README, 'Login screen')"
 echo

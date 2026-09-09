@@ -129,7 +129,7 @@ PageBody {
     // ── special workspace ──
     Group {
         title: "Special workspace"
-        hint: "The scratchpad floats over the current workspace; relayout parks Spotify there"
+        hint: "The scratchpad floats over the current workspace (SUPER+S; SUPER+ALT+S sends a window there)"
         Opt { name: "dwindle:special_scale_factor"; label: "Scratchpad size"; hint: "How much of the screen the scratchpad covers in the dwindle layout" }
         Opt { name: "master:special_scale_factor"; label: "Scratchpad size (master layout)" }
         Opt { name: "decoration:dim_special"; label: "Dim behind the scratchpad" }

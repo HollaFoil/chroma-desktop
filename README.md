@@ -117,11 +117,11 @@ Things in here that reach outside the repo, or may cause problems if your machin
   `settings.ini` files and `xsettingsd.conf` behind matugen's back.
   `./prune --remove` removes it and `./link` puts the symlinks back, if you
   ever encounter issues.
-- **A few scripts target my hardware** and can fail elsewhere: the bar's CPU sensor
-  path (`quickshell/Services/Stats.qml`, an AMD `k10temp` hwmon), the GPU
-  module (`nvidia-smi`, shows `--` without it), `chrome-flags.conf` (NVIDIA
-  workarounds), and `relayout`'s three-monitor dashboard, which stays unbound
-  until you write `~/.config/relayout/config.sh`.
+- **The bar's sensors are probed, not configured**: CPU temperature from the
+  first `k10temp`, `zenpower` or `coretemp` hwmon, and the GPU from `nvidia-smi`
+  when it answers, else from the `amdgpu` sysfs (the card with the most VRAM,
+  so a discrete Radeon over the CPU's graphics). Anything else, such as an Intel GPU,
+  hides the module rather than showing wrong numbers.
 
 ## Themed apps
 
@@ -140,6 +140,22 @@ matugen writes every app's colours on each `setwall <wallpaper path>`, dispatche
 | Terminal prompt | oh-my-posh. bootstrap fetches the `agnoster` theme that gets recoloured. |
 | Icons | nothing: a recoloured Adwaita is generated as `~/.local/share/icons/Matugen`. |
 
+## Games
+
+`hypr/conf/games.lua` tags Steam (`steam_app_*`) and gamescope windows as
+`game` and takes the compositor out of their way: fully opaque (the global
+translucency does not apply), no blur, shadow or animation, content type
+`game`, and `render:direct_scanout = 2` so a fullscreen game's buffer goes
+straight to the display. Tearing (`immediate`) is in the file, commented out.
+Add other launchers' classes to `GAME_CLASSES` there.
+
+To see what a stutter is, launch the game with `MANGOHUD=1 %command%` (the
+config in `MangoHud/MangoHud.conf` shows frame times and GPU/CPU clocks), press
+`Shift_L+F2` at the start and end of a session, and run `framelog`: it lists
+the worst frames with what the GPU clock, GPU load and CPU were doing at that
+moment. While a game is fullscreen, `hyprctl monitors -j` should show
+`solitary` and `directScanoutTo` set for its monitor.
+
 ## Layout
 
 ```
@@ -151,8 +167,8 @@ update         fetch + fast-forward + link + migrate; --check first, --set-aside
 migrate        one-time changes between versions (migrations/<version>-<what>.sh; also run at login)
 prune          redundant packages           greeter        the login screen (greetd)
 sshd           SSH over Tailscale           system/        files outside ~, installed by greeter and sshd
-examples/      relayout.config.sh, hypr-user.lua: per-machine files that live outside the repo
-screenshots    retakes the images above     hyprtest       moves windows around for ~3 min
+examples/      hypr-user.lua: machine-local Hyprland extras, outside the repo (~/.config/hypr/user/init.lua)
+screenshots    retakes the images above
 ```
 
 Day to day: edit a file in `files/` and it is live, because everything is

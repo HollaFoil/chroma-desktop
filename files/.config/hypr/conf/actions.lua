@@ -131,8 +131,8 @@ A.define({ id = "ws.scroll", name = "Cycle workspaces", category = "Workspaces",
                return hl.dsp.focus({ workspace = wheel == "mouse_down" and "e+1" or "e-1" })
            end })
 
--- Special workspace (scratchpad); relayout parks Spotify there.
-A.define({ id = "ws.special", name = "Toggle scratchpad (Spotify parks here)", category = "Workspaces",
+-- Special workspace (scratchpad).
+A.define({ id = "ws.special", name = "Toggle scratchpad", category = "Workspaces",
            keys = { mainMod .. " + S" }, run = hl.dsp.workspace.toggle_special("magic") })
 A.define({ id = "ws.to_special", name = "Send window to scratchpad", category = "Workspaces",
            keys = { mainMod .. " + ALT + S" }, run = hl.dsp.window.move({ workspace = "special:magic" }) })
@@ -147,26 +147,6 @@ A.define({ id = "util.notifications", name = "Toggle notification panel", catego
            keys = { mainMod .. " + SHIFT + N" }, run = hl.dsp.exec_cmd("qs ipc call notifs toggle") })
 A.define({ id = "util.clipboard", name = "Clipboard history", category = "Utilities",
            keys = { mainMod .. " + SHIFT + C" }, run = hl.dsp.exec_cmd("qs ipc call clip toggle") })
--- relayout places a fixed dashboard of apps on a fixed monitor: it only means
--- anything once you have said which monitors and which apps, so it is an
--- offering rather than a default. Both actions are always listed in Settings >
--- Keybinds (bind them there if you want them anyway), but they come with keys
--- only after you opt in by writing ~/.config/relayout/config.sh - start from
--- examples/relayout.config.sh in the repo. conf/autostart.lua gates
--- `relayout --boot` on the same file.
-local relayout_keys = { {}, {} }
-do
-    local f = io.open(HOME .. "/.config/relayout/config.sh", "r")
-    if f then
-        f:close()
-        relayout_keys = { { mainMod .. " + SHIFT + R" }, { mainMod .. " + ALT + R" } }
-    end
-end
-
-A.define({ id = "util.relayout", name = "Re-apply the dashboard layout", category = "Utilities",
-           keys = relayout_keys[1], run = hl.dsp.exec_cmd(HOME .. "/.local/bin/relayout") })
-A.define({ id = "util.relayout_toggle", name = "Move dashboard to the other monitor", category = "Utilities",
-           keys = relayout_keys[2], run = hl.dsp.exec_cmd(HOME .. "/.local/bin/relayout toggle") })
 A.define({ id = "util.wallpaper", name = "Wallpaper picker", category = "Utilities",
            keys = { mainMod .. " + W" }, run = hl.dsp.exec_cmd("qs ipc call wallstrip toggle") })
 A.define({ id = "util.settings", name = "Settings", category = "Utilities",

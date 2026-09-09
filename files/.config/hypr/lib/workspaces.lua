@@ -9,12 +9,11 @@
 --
 -- Where the map comes from, most specific first:
 --
---   1. ~/.cache/relayout-state.lua   relayout, on machines that opted into it
---   2. state/monitors.json           written by `gen-monitors`
---   3. hl.get_monitors()             derived from whatever is plugged in now
---   4. FALLBACK below                the reference machine, first load only
+--   1. state/monitors.json           written by `gen-monitors` / Settings > Displays
+--   2. hl.get_monitors()             derived from whatever is plugged in now
+--   3. FALLBACK below                the reference machine, first load only
 --
--- 3 is what makes this work on a machine that has run nothing: the same split
+-- 2 is what makes this work on a machine that has run nothing: the same split
 -- gen-monitors would write, computed live. It is only unavailable during the
 -- very first config load of a session, before the outputs exist - and a
 -- reload (matugen does one per wallpaper) replaces it with the real thing.
@@ -34,7 +33,7 @@ local FALLBACK = {
 }
 
 local HOME = os.getenv("HOME")
-local cached_map, cached_relayout, relayout_read
+local cached_map
 
 --- Monitor names of everything connected, or nil before the outputs exist.
 function M.connected()
@@ -47,15 +46,6 @@ function M.connected()
     end
     if n == 0 then return nil end
     return set
-end
-
---- relayout's state file (it owns the map when someone opted into it), or nil.
-function M.relayout()
-    if relayout_read then return cached_relayout end
-    relayout_read = true
-    local ok, res = pcall(dofile, HOME .. "/.cache/relayout-state.lua")
-    if ok and type(res) == "table" and res.dash_ws then cached_relayout = res end
-    return cached_relayout
 end
 
 --- state/monitors.json, or nil.
@@ -114,9 +104,7 @@ end
 --- workspace id -> monitor name.
 function M.map()
     if cached_map then return cached_map end
-    local rl = M.relayout()
-    cached_map = (rl and type(rl.ws_home) == "table" and next(rl.ws_home) and rl.ws_home)
-        or from_state()
+    cached_map = from_state()
         or M.derive()
         or FALLBACK
     return cached_map

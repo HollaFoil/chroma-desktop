@@ -4,6 +4,11 @@
 # uninstalls them (asks first) and sweeps the orphans they leave behind.
 # bootstrap --check calls the listing.
 #
+# Two tiers. REDUNDANT (and PLASMA_CORE once greetd is in) is replaced
+# outright and goes as one batch after one question. DROPPED is what the
+# desktop merely stopped setting up: nothing stands in for those, so each is
+# its own yes/no in --remove, and the default keeps it.
+#
 # Format: package<space>#<space>what replaces it. Only exact package names;
 # vlc-plugins-all pulls the ~80 vlc-plugin-* with it as dependencies.
 set -uo pipefail
@@ -75,6 +80,12 @@ if [[ "$dm" == greetd ]] && installed qt6ct; then
     REDUNDANT+="$PLASMA_CORE"
 fi
 
+# No longer set up by this desktop, not replaced by anything. Asked about
+# one at a time; say no and it stays exactly as it is.
+DROPPED='
+google-chrome           # 1.4.0: chrome-flags.conf left the repo; firefox is the browser the desktop themes
+'
+
 # Dependencies of the Plasma core that stay useful without it. Marked explicit
 # before the removal so the orphan sweep does not take them.
 KEEP=(breeze breeze-icons qqc2-breeze-style qqc2-desktop-style kio-extras kimageformats qtkeychain-qt6 socat hunspell)
@@ -111,26 +122,49 @@ for name in "${present[@]}"; do
 done
 present=("${removable[@]}")
 
+dropped=()
+while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    name="${line%%[[:space:]]*}"
+    installed "$name" || continue
+    dropped+=("$name")
+    why="${line#*#}"
+    printf '  %-26s %s\n' "$name" "${why# } (asked on its own)"
+done <<< "$DROPPED"
+
 if [[ $core_ok == 0 ]] && installed plasma-workspace; then
     echo
     echo "  plasma-workspace (and plasma-login-manager, plasma-integration) stay until greetd is the"
     echo "  display manager (./greeter enable + reboot) and qt6ct is installed; then ./prune lists them."
 fi
 
-if [[ ${#present[@]} -eq 0 ]]; then
+if [[ ${#present[@]} -eq 0 && ${#dropped[@]} -eq 0 ]]; then
     echo "  nothing redundant installed"
     exit 0
 fi
 
 [[ $REMOVE == 1 ]] || { echo; echo "  ./prune --remove  uninstalls these and their orphans"; exit 0; }
 
-echo
-read -r -p "  remove ${#present[@]} package(s) and their orphaned dependencies? [y/N] " a
-[[ "$a" =~ ^[Yy] ]] || exit 0
-keep=()
-for k in "${KEEP[@]}"; do installed "$k" && keep+=("$k"); done
-[[ ${#keep[@]} -gt 0 ]] && sudo pacman -D --asexplicit "${keep[@]}" >/dev/null
-sudo pacman -Rns "${present[@]}"
+# the replaced tier: one question, one transaction
+if [[ ${#present[@]} -gt 0 ]]; then
+    echo
+    read -r -p "  remove ${#present[@]} replaced package(s) and their orphaned dependencies? [y/N] " a
+    if [[ "$a" =~ ^[Yy] ]]; then
+        keep=()
+        for k in "${KEEP[@]}"; do installed "$k" && keep+=("$k"); done
+        [[ ${#keep[@]} -gt 0 ]] && sudo pacman -D --asexplicit "${keep[@]}" >/dev/null
+        sudo pacman -Rns "${present[@]}"
+    fi
+fi
+
+# the dropped tier: each one is your call
+for name in "${dropped[@]}"; do
+    why="$(grep -m1 "^$name[[:space:]]" <<< "$DROPPED")"; why="${why#*#}"
+    echo
+    read -r -p "  remove $name? (${why# }) [y/N] " a
+    [[ "$a" =~ ^[Yy] ]] && sudo pacman -Rns "$name"
+done
+
 orphans="$(pacman -Qdtq 2>/dev/null)"
 if [[ -n "$orphans" ]]; then
     echo; echo "  orphans left behind:"; echo "$orphans" | sed 's/^/    /'

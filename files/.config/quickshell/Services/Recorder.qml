@@ -62,8 +62,8 @@ Singleton {
     function command(where) {
         let cmd
         if (haveGsr) {
-            // this machine's NVIDIA driver speaks an older NVENC API than gsr's FFmpeg wants, so the GPU
-            // path can fail; -fallback-cpu-encoding keeps the recording going on the CPU in that case
+            // the GPU encoder can be unusable (an NVIDIA driver whose NVENC is older than gsr's FFmpeg
+            // wants, VA-API missing on AMD); -fallback-cpu-encoding keeps the recording going on the CPU then
             cmd = ["gpu-screen-recorder", "-f", String(fps), "-o", outFile, "-fallback-cpu-encoding", "yes"]
             if (encoder === "cpu") cmd.push("-encoder", "cpu")
             if (where.output) cmd.push("-w", where.output)
