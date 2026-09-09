@@ -1,0 +1,121 @@
+#!/usr/bin/env python3
+"""framelog: find the frame-time spikes in a MangoHud CSV log and say what the
+GPU/CPU were doing at that moment.
+
+  framelog                 newest log in ~/.local/share/mangohud-logs
+  framelog FILE.csv        a specific log
+  framelog -t 12 -n 30     spike threshold 12 ms, show 30 worst spikes
+
+Record a log: launch the game with `MANGOHUD=1 %command%`, press Shift_L+F2 to
+start and again to stop (~/.config/MangoHud/MangoHud.conf). The sensor columns
+(gpu clock/load, cpu load/MHz) are sampled by MangoHud roughly twice a second,
+so they show the state around a spike, not the exact frame.
+"""
+import csv, glob, os, statistics as st, sys
+
+LOGDIR = os.path.expanduser("~/.local/share/mangohud-logs")
+
+def usage(msg=None):
+    if msg: print(msg, file=sys.stderr)
+    print(__doc__.strip(), file=sys.stderr); sys.exit(1 if msg else 0)
+
+def parse_args(argv):
+    path, thr, top = None, None, 15
+    it = iter(argv)
+    for a in it:
+        if a in ("-h", "--help"): usage()
+        elif a == "-t": thr = float(next(it, "nan"))
+        elif a == "-n": top = int(next(it, "15"))
+        elif a.startswith("-"): usage(f"unknown option {a}")
+        else: path = a
+    return path, thr, top
+
+def newest_log():
+    os.makedirs(LOGDIR, exist_ok=True)   # MangoHud will not create it and then logs nothing
+    logs = [f for f in glob.glob(os.path.join(LOGDIR, "*.csv")) if not f.endswith("_summary.csv")]
+    if not logs: usage(f"no logs in {LOGDIR}; start one in-game with Shift_L+F2")
+    return max(logs, key=os.path.getmtime)
+
+def load(path):
+    with open(path, newline="") as fh:
+        lines = fh.read().splitlines()
+    # 2 lines of system info, then the column header, then frames
+    start = next(i for i, l in enumerate(lines) if l.startswith("fps,"))
+    sysinfo = dict(zip(lines[0].split(","), lines[1].split(","))) if start >= 2 else {}
+    rows = list(csv.DictReader(lines[start:]))
+    def f(r, k):
+        try: return float(r.get(k, "") or "nan")
+        except ValueError: return float("nan")
+    frames = []
+    for r in rows:
+        ft = f(r, "frametime")
+        if ft != ft or ft <= 0: continue
+        frames.append({
+            "t": f(r, "elapsed") / 1e9, "ft": ft,
+            "gpu_clk": f(r, "gpu_core_clock"), "gpu_load": f(r, "gpu_load"),
+            "cpu_load": f(r, "cpu_load"), "cpu_mhz": f(r, "cpu_mhz"),
+            "gpu_power": f(r, "gpu_power"), "gpu_temp": f(r, "gpu_temp"),
+        })
+    return sysinfo, frames
+
+def pct_low(fts, p):
+    """Average fps of the slowest p% of frames (the usual '1% low')."""
+    n = max(1, int(len(fts) * p / 100))
+    worst = sorted(fts, reverse=True)[:n]
+    return 1000 / (sum(worst) / n)
+
+def main():
+    path, thr, top = parse_args(sys.argv[1:])
+    path = path or newest_log()
+    sysinfo, fr = load(path)
+    if len(fr) < 50: usage(f"{path}: only {len(fr)} frames, nothing to analyse")
+
+    fts = [x["ft"] for x in fr]
+    med = st.median(fts)
+    dur = fr[-1]["t"] - fr[0]["t"]
+    if thr is None: thr = max(3 * med, med + 5)
+    med_of = lambda k: st.median(v for v in (x[k] for x in fr) if v == v) if any(x[k] == x[k] for x in fr) else float("nan")
+    m_clk, m_gl, m_cl, m_mhz = med_of("gpu_clk"), med_of("gpu_load"), med_of("cpu_load"), med_of("cpu_mhz")
+
+    print(f"log:      {path}")
+    if sysinfo: print(f"system:   {sysinfo.get('gpu','?')} | {sysinfo.get('cpu','?')} | kernel {sysinfo.get('kernel','?')}")
+    print(f"frames:   {len(fr)} over {dur:.1f} s")
+    print(f"fps:      median {1000/med:.0f}   avg {len(fr)/dur:.0f}   1% low {pct_low(fts,1):.0f}   0.1% low {pct_low(fts,0.1):.0f}")
+    print(f"frametime: median {med:.2f} ms   p99 {sorted(fts)[int(len(fts)*0.99)]:.2f} ms   max {max(fts):.1f} ms")
+    print(f"typical:  gpu clock {m_clk:.0f} MHz   gpu load {m_gl:.0f}%   cpu load {m_cl:.0f}%   cpu {m_mhz:.0f} MHz")
+
+    # group consecutive spike frames into one event
+    events, cur = [], None
+    for i, x in enumerate(fr):
+        if x["ft"] > thr:
+            if cur and i - cur["end"] <= 2: cur["end"] = i; cur["ms"] += x["ft"]; cur["peak"] = max(cur["peak"], x["ft"])
+            else:
+                cur = {"start": i, "end": i, "ms": x["ft"], "peak": x["ft"]}; events.append(cur)
+        elif cur and i - cur["end"] > 2: cur = None
+    stall = sum(e["ms"] for e in events)
+    print(f"\nspikes:   {len(events)} events above {thr:.1f} ms  ({stall/1000:.2f} s stalled = {100*stall/(dur*1000):.1f}% of the run)")
+    if not events: return
+
+    print(f"\n{'time':>7} {'peak':>8} {'~fps':>5} {'frames':>6} {'gpu MHz':>8} {'gpu%':>5} {'cpu%':>5} {'cpu MHz':>8}  hint")
+    for e in sorted(events, key=lambda e: -e["peak"])[:top]:
+        x = fr[e["start"]]
+        hints = []
+        if x["gpu_clk"] == x["gpu_clk"] and m_clk == m_clk and x["gpu_clk"] < 0.85 * m_clk: hints.append("GPU clock dropped (power management / P-state)")
+        if x["gpu_load"] == x["gpu_load"] and x["gpu_load"] < 0.5 * max(m_gl, 1): hints.append("GPU idle -> CPU/driver side stall (shader compile, EAC, scheduler)")
+        if x["cpu_load"] == x["cpu_load"] and x["cpu_load"] > 1.5 * max(m_cl, 5): hints.append("CPU busier than usual")
+        if x["cpu_mhz"] == x["cpu_mhz"] and m_mhz == m_mhz and x["cpu_mhz"] < 0.8 * m_mhz: hints.append("CPU clocked down")
+        if x["gpu_load"] == x["gpu_load"] and x["gpu_load"] > 95: hints.append("GPU saturated")
+        print(f"{x['t']:7.1f} {e['peak']:7.1f}ms {1000/e['peak']:5.0f} {e['end']-e['start']+1:6d} {x['gpu_clk']:8.0f} {x['gpu_load']:5.0f} {x['cpu_load']:5.0f} {x['cpu_mhz']:8.0f}  {'; '.join(hints) or '-'}")
+
+    # one-line-per-10s timeline: worst frame in each bucket
+    print("\ntimeline (worst frametime per 10 s):")
+    bucket, worst = None, {}
+    for x in fr:
+        b = int((x["t"] - fr[0]["t"]) // 10)
+        worst[b] = max(worst.get(b, 0), x["ft"])
+    for b in sorted(worst):
+        bar = "#" * min(60, int(worst[b] / thr * 20))
+        print(f"{b*10:5d}s {worst[b]:7.1f} ms  {bar}")
+
+if __name__ == "__main__":
+    main()

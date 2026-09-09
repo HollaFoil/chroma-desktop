@@ -107,3 +107,5 @@ seed .config/hypr/hypridle.conf
 
 # XSETTINGS for Xwayland apps (xsettingsd.service, hooked in by bootstrap)
 .config/xsettingsd/xsettingsd.conf
+.config/MangoHud/MangoHud.conf
+.local/bin/framelog
