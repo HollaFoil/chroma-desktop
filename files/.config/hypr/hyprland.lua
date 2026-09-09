@@ -29,6 +29,7 @@ end
 require("conf.look")
 require("conf.input")
 require("conf.rules")
+require("conf.games")  -- after rules: games override translucent-all
 require("conf.autostart")
 require("conf.actions")
 

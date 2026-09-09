@@ -32,7 +32,7 @@ awww                         # wallpaper daemon (swww fork); setwall works witho
 polkit                       # required by hyprpolkitagent
 libnotify                    # notify-send, used by notify-unit-failure
 fish                         # shell the config is written for
-jq                           # relayout, gen-ohmyposh-template
+jq                           # gen-monitors, bootstrap, the recorder's window picker, gen-ohmyposh-template
 python                       # matugenfox-host, reload-steam-css, matugen-icons
 brightnessctl                # brightness keys
 adw-gtk-theme                # adw-gtk3-dark, the base the adw-gtk3-matugen theme imports
@@ -74,12 +74,11 @@ python-websockets            # reload-steam-css (Steam DevTools push)
 profile-sync-daemon          # not part of the dotfiles; on the reference machine only
 greetd                       # login manager; runs the shell's greeter (quickshell from [core]). ./greeter installs and enables it
 xsettingsd                   # GTK theme/icons/cursor for Xwayland apps (Steam, JetBrains); xsettingsd.service is hooked into hyprland-session.target by bootstrap
+mangohud                     # frame-time HUD for games (MANGOHUD=1 %command%); Shift_L+F2 logs a CSV that framelog turns into a spike report
 
 [aur]
 mpv-modernz-git              # mpv OSC: title, rounded seekbar, centred play/skip, sub/audio buttons; colours via matugen (templates/modernz.conf)
 mpv-thumbfast-git            # seekbar hover thumbnails for ModernZ
-slack-desktop                # dashboard app in relayout; dropped from the layout when absent
-google-chrome                # chrome-flags.conf; harmless without it (links follow mimeapps.list, firefox)
 oh-my-posh-bin               # prompt; fish config skips it when missing (see README for the theme file)
 vesktop                      # Discord client; quickCss.css is generated (needs useQuickCss on). In CachyOS's own repo, AUR everywhere else
 vscodium-bin                 # editor theme via the haikalllp.matugen-theme extension (watches ~/.cache/matugen). CachyOS ships `vscodium`; either is fine

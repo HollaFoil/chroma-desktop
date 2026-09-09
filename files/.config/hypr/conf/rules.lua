@@ -2,16 +2,7 @@
 -- See https://wiki.hypr.land/Configuring/Basics/Window-Rules/
 -- and https://wiki.hypr.land/Configuring/Basics/Workspace-Rules/
 
--- Layout profile, written by ~/.local/bin/relayout. Read here so the window
--- rules below survive a `hyprctl reload` (matugen fires one on every wallpaper
--- change, and reload drops anything injected with `hyprctl eval`).
 local WS = require("lib.workspaces")
-
-local LP = { dash_ws = 1, work_ws = 2, stash_ws = "special:magic",
-             used_re = "^(Spotify|slack|vesktop|layout-sysmon|homelab-dash)$",
-             guard_re = "negative:^(Spotify|slack|vesktop|layout-sysmon|homelab-dash|cheatsheet|hyprland-run)$" }
-local rl = WS.relayout()
-if rl then LP = rl end
 
 -- The workspace -> monitor map (lib/workspaces.lua explains where it comes
 -- from). A rule naming a monitor that is not connected is dropped: without
@@ -40,39 +31,8 @@ local LIVE = WS.connected()
 --     rounding    = 0,
 -- })
 
--- Ordinary windows tile normally on whatever workspace they open on, so
--- several can share one and be cycled with SUPER+TAB. The only workspace
--- that is protected is the one the dashboard currently occupies.
---
--- Rule order matters: later rules win, so the guard is declared first and
--- the dashboard apps re-claim the workspace after it.
-
--- The guard skips the dashboard apps themselves and deliberate overlays such
--- as the cheatsheet, which are supposed to appear on top of whatever is on
--- screen. Hyprland's matcher has no boolean negation; the "negative:" prefix
--- on the value is what inverts the match.
-hl.window_rule({
-    name  = "relayout-dash-guard",
-    match = { workspace = tostring(LP.dash_ws), class = LP.guard_re },
-    -- deliberately not "silent": you should see the window you just opened
-    workspace = tostring(LP.work_ws),
-})
-
-hl.window_rule({
-    name  = "relayout-dash-apps",
-    match = { class = LP.used_re },
-    workspace = LP.dash_ws .. " silent",
-    float = true,
-})
-
-if LP.parked_re then
-    hl.window_rule({
-        name  = "relayout-dash-parked",
-        match = { class = LP.parked_re },
-        workspace = LP.stash_ws .. " silent",
-        float = true,
-    })
-end
+-- Windows tile on whatever workspace they open on, so several can share one
+-- and be cycled with SUPER+TAB. Rule order matters: later rules win.
 
 -- Every window is translucent; no per-app exceptions. When one needs to be
 -- solid for a while (a video, a colour-sensitive image), SUPER+T toggles the

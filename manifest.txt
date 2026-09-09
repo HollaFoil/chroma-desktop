@@ -41,7 +41,6 @@ seed .config/hypr/hypridle.conf
 # scripts
 .local/bin/gen-monitors
 .local/bin/setwall
-.local/bin/relayout
 .local/bin/gen-ohmyposh-template
 .local/bin/remote-desktop
 
@@ -68,8 +67,6 @@ seed .config/hypr/hypridle.conf
 .config/kdeglobals
 .config/matugen/templates/Matugen.colors
 
-# chrome
-.config/chrome-flags.conf
 
 # systemd user session
 .config/systemd/user/hyprland-session.target
@@ -107,3 +104,5 @@ seed .config/hypr/hypridle.conf
 
 # XSETTINGS for Xwayland apps (xsettingsd.service, hooked in by bootstrap)
 .config/xsettingsd/xsettingsd.conf
+.config/MangoHud/MangoHud.conf
+.local/bin/framelog

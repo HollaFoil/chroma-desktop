@@ -86,19 +86,4 @@ hl.on("hyprland.start", function()
     -- playback. `watch -s` sees the color.ini change and reloads the running
     -- client in place, which is the only path that repaints without a restart.
     hl.exec_cmd("spicetify watch -s")
-    -- relayout --boot launches every dashboard app that is not already
-    -- running and waits for it to map. Launching them here as well raced
-    -- with that check and produced duplicate kitty windows.
-    --
-    -- Only for machines that opted into the dashboard: without
-    -- ~/.config/relayout/config.sh, relayout would run one machine's layout
-    -- (its monitors, its five apps) at every login on a machine that never
-    -- asked for it, and starting Spotify and Slack uninvited is not a default
-    -- anyone wants. conf/actions.lua gates its two keybinds on the same file.
-    local HOME = os.getenv("HOME")
-    local relayout_conf = io.open(HOME .. "/.config/relayout/config.sh", "r")
-    if relayout_conf then
-        relayout_conf:close()
-        hl.exec_cmd(HOME .. "/.local/bin/relayout --boot")
-    end
 end)

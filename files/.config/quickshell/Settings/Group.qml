@@ -35,7 +35,7 @@ ColumnLayout {
     Layout.fillWidth: true
     spacing: 0
 
-    function relayout() {
+    function reflow() {
         let seen = 0
         for (const c of body.children) {
             if (c.isSettingRow !== true) continue
@@ -44,9 +44,9 @@ ColumnLayout {
             seen++
         }
     }
-    function watch(c) { if (c.isSettingRow === true) c.visibleChanged.connect(root.relayout) }
-    Component.onCompleted: { for (const c of body.children) watch(c); relayout() }
-    Connections { target: body; function onChildrenChanged() { for (const c of body.children) root.watch(c); root.rev++; Qt.callLater(root.relayout) } }
+    function watch(c) { if (c.isSettingRow === true) c.visibleChanged.connect(root.reflow) }
+    Component.onCompleted: { for (const c of body.children) watch(c); reflow() }
+    Connections { target: body; function onChildrenChanged() { for (const c of body.children) root.watch(c); root.rev++; Qt.callLater(root.reflow) } }
 
     Rectangle {
         Layout.fillWidth: true
