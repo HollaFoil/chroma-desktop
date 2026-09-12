@@ -72,6 +72,11 @@ hl.config({
         -- If the lock screen (the shell's) ever dies while locked, let a
         -- new one take over (SUPER+L, or hypridle) instead of staying stuck.
         allow_session_lock_restore = true,
+        -- Once hypridle has turned the displays off, a key or the mouse brings
+        -- them back. Hyprland's own default is neither, which leaves only
+        -- hypridle's on-resume - and nothing if that listener is gone.
+        mouse_move_enables_dpms = true,
+        key_press_enables_dpms  = true,
         -- The first frames, before the wallpaper daemon has drawn: the palette's
         -- surface colour rather than black.
         background_color = "rgb(" .. C.surface .. ")",
