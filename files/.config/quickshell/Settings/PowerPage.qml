@@ -83,7 +83,7 @@ PageBody {
             if (line === "}") {
                 if (block === "listener") {
                     const c = listener.cmd
-                    if (/dpms\s+off/.test(c)) st.dpms = listener.timeout
+                    if (/dpms\b.*\boff\b/.test(c)) st.dpms = listener.timeout
                     else if (/suspend|hibernate/.test(c)) st.suspend = listener.timeout
                     else if (/lock/.test(c)) st.lock = listener.timeout
                 }
@@ -114,7 +114,7 @@ PageBody {
                 + "# after_sleep_cmd can be edited here. Timeouts are seconds.\n\n"
         out += "general {\n" + g.join("\n") + "\n}\n"
         if (st.lock > 0) out += "\nlistener {\n    timeout = " + st.lock + "\n    on-timeout = loginctl lock-session\n}\n"
-        if (st.dpms > 0) out += "\nlistener {\n    timeout = " + st.dpms + "\n    on-timeout = hyprctl dispatch dpms off\n    on-resume = hyprctl dispatch dpms on\n}\n"
+        if (st.dpms > 0) out += "\nlistener {\n    timeout = " + st.dpms + "\n    on-timeout = hyprctl dispatch 'hl.dsp.dpms({action = \"off\"})'\n    on-resume = hyprctl dispatch 'hl.dsp.dpms({action = \"on\"})'\n}\n"
         if (st.suspend > 0) out += "\nlistener {\n    timeout = " + st.suspend + "\n    on-timeout = systemctl suspend\n}\n"
         return out
     }
@@ -126,7 +126,7 @@ PageBody {
     }
     function changeIdle(key, value) {
         const st = Object.assign({}, idle); st[key] = value
-        if (!st.general.length) st.general = ["    lock_cmd = loginctl lock-session", "    after_sleep_cmd = hyprctl dispatch dpms on"]
+        if (!st.general.length) st.general = ["    lock_cmd = loginctl lock-session", "    after_sleep_cmd = hyprctl dispatch 'hl.dsp.dpms({action = \"on\"})'"]
         idle = st
         Proc.run(["sh", "-c", 'printf %s "$QS_TEXT" > "$(readlink -f "$1")"', "sh", idlePath], (code, out, err) => {
             if (code !== 0) { root.status = "could not write hypridle.conf: " + err.trim(); root.statusError = true; return }
@@ -251,7 +251,7 @@ PageBody {
             hint: "Any key or mouse movement wakes them"
             keywords: "dpms screen monitor off now"
             clickable: true
-            onClicked: Proc.detach(["hyprctl", "dispatch", "dpms", "off"])
+            onClicked: Hypr.dispatchLua('hl.dsp.dpms({action = "off"})')
         }
         SettingRow {
             label: "Suspend"
