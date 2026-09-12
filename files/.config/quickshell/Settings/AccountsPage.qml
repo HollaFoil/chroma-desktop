@@ -14,7 +14,7 @@ import qs.Services
 //   Login (adv.)     greetd autologin, read from /etc/greetd/config.toml
 // Backed by `getent passwd`, `hostnamectl --json=short` / `set-hostname`,
 // `loginctl list-sessions` + `show-session`, `loginctl lock-session` and
-// `hyprctl dispatch exit`. Anything that asks for the password (chfn, passwd,
+// `hyprctl dispatch 'hl.dsp.exit()'`. Anything that asks for the password (chfn, passwd,
 // chsh) runs in a kitty window after this one closes.
 PageBody {
     id: root
@@ -243,7 +243,7 @@ PageBody {
             hint: "Ends this Hyprland session and every program in it, right away"
             keywords: "logout exit quit session end"
             clickable: true
-            onClicked: Proc.detach(["hyprctl", "dispatch", "exit"])
+            onClicked: Hypr.dispatchLua("hl.dsp.exit()")
         }
     }
 
